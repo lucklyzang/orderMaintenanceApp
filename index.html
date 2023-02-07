@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport">
+    <title>陪护管理</title>
+    <meta name="screen-orientation" content="portrait" />
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="format-detection" content="telephone=no">
+    <meta name="full-screen" content="yes">
+    <meta name="x5-fullscreen" content="true">
+    <style type="text/css">
+        html,
+        body {
+            touch-action: none;
+            touch-action: pan-y;
+            -webkit-overflow-scrolling: touch;
+        }
+        
+        #app {
+            overflow: hidden;
+            -webkit-overflow-scrolling: touch;
+            position: relative;
+        }
+        
+        ;
+    </style>
+    <script>
+        // 禁止ios10以上H5页面手势、双击缩放
+        window.onload = function() {
+            // 阻止双击放大
+            var lastTouchEnd = 0;
+            document.addEventListener('touchstart', function(event) {
+                if (event.touches.length > 1) {
+                    event.preventDefault();
+                }
+            });
+            document.addEventListener('touchend', function(event) {
+                var now = (new Date()).getTime();
+                if (now - lastTouchEnd <= 300) {
+                    event.preventDefault();
+                }
+                lastTouchEnd = now;
+            }, false);
+
+            // 阻止双指放大
+            document.addEventListener('gesturestart', function(event) {
+                event.preventDefault();
+            });
+        };
+
+        function pushHistory() {
+            var state = {
+                title: '',
+                url: ''
+            };
+            window.history.pushState(state, state.title, state.url);
+        };
+        // 判断是否为PC方法
+        function IsPC() {
+            let flag;　
+            let system = {　　
+                win: false,
+                　　mac: false,
+                　　xll: false,
+                　　ipad: false
+            };　 //检测平台
+            　
+            let p = navigator.platform;　　
+            system.win = p.indexOf("Win") == 0;　　
+            system.mac = p.indexOf("Mac") == 0;　　
+            system.x11 = (p == "X11") || (p.indexOf("Linux") == 0);　　
+            system.ipad = (navigator.userAgent.match(/iPad/i) != null) ? true : false;　
+            if (system.win || system.mac || system.xll || system.ipad) {
+                flag = true　
+            } else {
+                flag = false　
+            }
+            return flag
+        };
+        if (!IsPC()) {
+            pushHistory();
+        };
+    </script>
+</head>
+
+<body>
+    <div id="app">
+    </div>
+</body>
+
+</html>

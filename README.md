@@ -1,2 +1,2 @@
 # DigitalProductsApp
-专注于将产品数字化的项目
+专注于医院秩序维护的项目

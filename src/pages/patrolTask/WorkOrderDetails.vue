@@ -3,15 +3,12 @@
     <van-loading size="35px" vertical color="#e6e6e6" v-show="loadingShow">{{ loadText }}</van-loading>
     <van-overlay :show="overlayShow" />
     <div class="nav">
-        <van-nav-bar title="工单详情" left-text="返回" left-arrow @click-left="onClickLeft" :border="false">
-            <template #right>
-                <van-icon @click="scanQRCodeEvent" name="scan" size="26" color="#fff" />
-            </template>
-        </van-nav-bar>
+      <van-nav-bar title="巡更详情" left-text="返回" left-arrow @click-left="onClickLeft" @click-right="onClickRight" right-text="事件登记" :border="false">
+      </van-nav-bar>
     </div>
     <div class="content">
         <div class="content-top-area">
-            <img :src="statusBackgroundPng" />
+          <img :src="statusBackgroundPng" />
         </div>
         <div class="content-box">
             <div class="location task-number">
@@ -27,11 +24,11 @@
                 <span>{{ taskSetTransition(patrolTaskListMessage.type) }}</span>
             </div>
             <div class="location task-create-time">
-                <span>该任务生成时间</span>
+                <span>预计开始时间</span>
                 <span>{{ patrolTaskListMessage.createTime }}</span>
             </div>
             <div class="patrol-site">
-                <div>巡查地点</div>
+                <div>巡更地点</div>
                 <div class="patrol-site-list-box" v-if="queryDataSuccess">
                     <div class="patrol-site-list" :class="{'patrolSiteListStyle': patrolTaskListMessage.hasArray.indexOf(item.name) > -1 }" v-for="(item,index) in patrolTaskListMessage.needSpaces" :key="index" @click="patrolSiteEvent(item)">
                       {{ item.name }}
@@ -41,7 +38,7 @@
         </div>
     </div>
     <div class="task-operation-box">
-      <div class="task-no-complete" :class="{'operationStyle': patrolTaskListMessage.state == 4 }" @click="viewProblemItemsEvent">查看问题项</div>
+      <div class="task-no-complete" :class="{'operationStyle': patrolTaskListMessage.state == 4 }" @click="viewProblemItemsEvent">打卡</div>
       <div class="task-complete" v-show="patrolTaskListMessage.state !=4 " @click="completeTaskEvent">完成任务</div>
     </div>
   </div>
@@ -128,14 +125,8 @@ export default {
       this.$router.push({path: '/workOrderElectronicSignature'})
     },
 
-    // 扫码事件
-    scanQRCodeEvent () {
-      this.scanQRCode()
-    },
-
-    // 扫描二维码方法
-    scanQRCode () {
-      window.android.scanQRcode();
+    // 事件登记事件
+    onClickRight () {
     },
 
     // 获取任务详情

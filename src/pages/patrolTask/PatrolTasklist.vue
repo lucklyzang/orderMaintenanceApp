@@ -3,7 +3,7 @@
     <van-loading size="35px" vertical color="#e6e6e6" v-show="loadingShow">加载中...</van-loading>
     <van-overlay :show="overlayShow" z-index="100000" />
     <div class="nav">
-        <NavBar path="/home" title="巡查任务" />
+        <NavBar path="/home" title="巡更任务" />
     </div>
     <div class="content">
         <div class="content-top-area">
@@ -34,20 +34,12 @@
                                     <span>{{ taskSetTransition(item.type) }}</span>
                                 </div>
                                 <div class="task-create-time">
-                                    <span>任务生成时间:</span>
+                                    <span>预计开始时间:</span>
                                     <span>{{ item.createTime }}</span>
                                 </div>
                                 <div class="complete-patrol-area">
                                     <span>已完成巡查区域:</span>
-                                    <span>{{ item.finishSpacesCount }}</span>
-                                </div>
-                                <div class="unfinished-patrol-area">
-                                    <span>未完成巡查区域:</span>
-                                    <span>{{ item.noFinishSpacesCount }}</span>
-                                </div>
-                                <div class="taskset-number">
-                                    <span>任务集编号:</span>
-                                    <span>{{ item.configNumber }}</span>
+                                    <span>{{ `${item.finishSpacesCount}/${item.finishSpacesCount + item.noFinishSpacesCount}` }}</span>
                                 </div>
                                 <div class="right-arrow-box" @click="taskDetailsEvent(item)">
                                     <van-icon name="arrow" color="#1684FC" size="24" />
@@ -57,7 +49,7 @@
                         <div class="no-more-data" v-show="isShowBacklogTaskNoMoreData">没有更多数据了</div>
                     </div>    
                 </van-tab>
-                <van-tab title="已完成" name="completetedTask">
+                <van-tab title="历史任务" name="completetedTask">
                     <van-empty description="暂无数据" v-show="completedEmptyShow" />
                     <div class="backlog-task-list-box" ref="scrollCompletetedTask" v-show="!completedEmptyShow">
                         <div class="backlog-task-list" v-for="(item,index) in completedTaskList" :key="index">
@@ -80,20 +72,12 @@
                                     <span>{{ taskSetTransition(item.type) }}</span>
                                 </div>
                                 <div class="task-create-time">
-                                    <span>任务生成时间:</span>
+                                    <span>预计开始时间:</span>
                                     <span>{{ item.createTime }}</span>
                                 </div>
                                 <div class="complete-patrol-area">
                                     <span>已完成巡查区域:</span>
-                                    <span>{{ item.finishSpacesCount }}</span>
-                                </div>
-                                <div class="unfinished-patrol-area">
-                                    <span>未完成巡查区域:</span>
-                                    <span>{{ item.noFinishSpacesCount }}</span>
-                                </div>
-                                <div class="taskset-number">
-                                    <span>任务集编号:</span>
-                                    <span>{{ item.configNumber }}</span>
+                                    <span>{{ `${item.finishSpacesCount}/${item.finishSpacesCount + item.noFinishSpacesCount}` }}</span>
                                 </div>
                                 <div class="right-arrow-box" @click="taskDetailsEvent(item)">
                                     <van-icon name="arrow" color="#1684FC" size="24" />

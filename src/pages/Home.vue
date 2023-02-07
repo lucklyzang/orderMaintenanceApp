@@ -1,7 +1,7 @@
 <template>
   <div class="page-box" ref="wrapper">
     <div class="nav">
-        <NavBar title="陪护管理系统" :leftArrow="false" leftText="" />
+        <NavBar title="秩序维护系统" :leftArrow="false" leftText="" />
     </div>
     <div class="content">
         <div class="content-top-area">
@@ -21,7 +21,7 @@
 			</div>
 		</div>
         <div class="task-board">
-            <h2>任务看板</h2>
+            <h2>全部功能</h2>
             <div class="subproject-list-box">
                 <div class="subproject-list" v-for="(item,index) in cleaningManagementList" 
                     :key="index"
@@ -52,8 +52,20 @@
             return {
                 cleaningManagementList: [
                     {
-                        name: '巡查任务',
+                        name: '巡更任务',
                         imgUrl: require("@/common/images/home/task-list.png")
+                    },
+                    {
+                        name: '事件登记',
+                        imgUrl: require("@/common/images/home/event-registration.png")
+                    },
+                    {
+                        name: '排班管理',
+                        imgUrl: require("@/common/images/home/workforce-management.png")
+                    },
+                    {
+                        name: '留言薄',
+                        imgUrl: require("@/common/images/home/guest-book.png")
                     }
                 ],
                 defaultPersonPng: require("@/common/images/home/default-person.png"),
@@ -188,19 +200,21 @@
             };
            .task-board {
                 width: 95%;
-                height: 184px;
                 background: #fff;
                 border-radius: 8px;
                 margin: 0 auto;
                 margin-top: 40px;
-                padding: 10px 12px;
+                padding-bottom: 10px;
                 box-sizing: border-box;
                 display: flex;
                 flex-direction: column;
                 justify-content: center;
                 h2 {
                     width: 100%;
-                    height: 24px;
+                    height: 55px;
+                    padding-left: 26px;
+                    box-sizing: border-box;
+                    line-height: 55px;
                     font-size: 16px;
                     color: #242424;
                     font-weight: bold;
@@ -208,20 +222,22 @@
                 .subproject-list-box {
                     width: 100%;
                     display: flex;
-                    height: 100px;
+                    flex-flow: row wrap;
+                    flex: 1;
                     .subproject-list {
-                        flex: 1;
+                        width: 33.3%;
                         display: flex;
+                        margin-bottom: 25px;
                         flex-direction: column;
                         justify-content: center;
-                        align-items: flex-start;
+                        align-items: center;
                         >img {
                             width: 50px;
                             height: 50px;
                             margin-left: 6px;
                         };
                         >span {
-                            margin-top: 10px;
+                            margin-top: 14px;
                             font-size: 16px;
                             color: #101010
                         }

@@ -9,7 +9,8 @@
           <img :src="projectLogoPng" />
         </div>
         <div>
-          <span>陪 护 管 理 系 统</span>
+          <p>一站式智慧后勤</p>
+          <p>秩序维护系统</p>
         </div>
       </div>
       <div class="form-box">
@@ -28,7 +29,7 @@
       </div>
       <div class="remember-password">
         <div class="remember-password-content">
-          <van-checkbox v-model="checked" checked-color="#289E8E"
+          <van-checkbox v-model="checked" checked-color="#1864FF"
             >记住账号密码</van-checkbox
           >
         </div>
@@ -200,16 +201,23 @@ export default {
         &:first-child {
           margin-top: -80px;
           margin-bottom: 8px;
-          width: 135px;
-          height: 30px;
+          width: 140px;
           img {
-            width: 100%;
-            height: 100%;
+            width: 100%
           }
         }
         &:last-child {
-          margin-left: -6px;
-          font-size: 16px;
+          >p {
+            &:nth-child(1) {
+              margin-left: -6px;
+              font-size: 20px
+            };
+            &:nth-child(2) {
+              text-align: center;
+              margin-top: 10px;
+              font-size: 14px
+            }
+          }
         }
       }
     }

@@ -12,8 +12,6 @@ const PatrolTasklist = () =>
     import ('@/pages/patrolTask/PatrolTasklist')
 const WorkOrderDetails = () =>
     import ('@/pages/patrolTask/WorkOrderDetails')
-const QuestionList = () =>
-    import ('@/pages/patrolTask/QuestionList')
 const ProblemRecord = () =>
     import ('@/pages/patrolTask/ProblemRecord')
 const AreaPatrolDetails = () =>
@@ -45,11 +43,6 @@ let baseRoute = [{
         path: '/workOrderDetails',
         name: 'workOrderDetails',
         component: WorkOrderDetails
-    },
-    {
-        path: '/questionList',
-        name: 'questionList',
-        component: QuestionList
     },
     {
         path: '/problemRecord',

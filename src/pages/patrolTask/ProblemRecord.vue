@@ -141,15 +141,6 @@ export default {
     }
   },
 
-  // beforeRouteEnter(to, from, next) {
-  //   next(vm=>{
-  //     if (from.path == '/questionList') {
-  //       //此页面进入时请求数据
-  //     }
-	//   });
-  //   next() 
-  // },
-
   mounted() {
     console.log('何解析',this.patrolTaskListMessage.needSpaces,this.departmentCheckList);
     // 控制设备物理返回按键

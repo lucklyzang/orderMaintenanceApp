@@ -1,5 +1,17 @@
 <template>
   <div class="page-box" ref="wrapper">
+    <div class="add-message">
+      <img :src="addMessagePng" alt="">
+    </div>
+    <div class="in-positioning" v-show="positioningShow">
+      <img :src="positioningPng" alt="">
+      <span>定位中</span>
+      <span @click="positioningEvent">关闭</span>
+    </div>
+    <!-- 打卡地点 -->
+    <div class="clocking-place-box" v-if="clockingPlaceShow">
+      <ScrollSelection :columns="clockingPlaceOption" cancelText="关闭" title="请选择打卡地点" @sure="clockingPlaceSureEvent" @cancel="clockingPlaceCancelEvent" @close="clockingPlaceCloseEvent" />
+    </div>
     <van-loading size="35px" vertical color="#e6e6e6" v-show="loadingShow">{{ loadText }}</van-loading>
     <van-overlay :show="overlayShow" />
     <div class="nav">
@@ -38,9 +50,65 @@
         </div>
     </div>
     <div class="task-operation-box">
-      <div class="task-no-complete" :class="{'operationStyle': patrolTaskListMessage.state == 4 }" @click="viewProblemItemsEvent">打卡</div>
+      <div class="task-no-complete" :class="{'operationStyle': patrolTaskListMessage.state == 4 }" @click="clockInEvent">打卡</div>
       <div class="task-complete" v-show="patrolTaskListMessage.state !=4 " @click="completeTaskEvent">完成任务</div>
     </div>
+     <!-- 定位失败提示框 -->
+    <div class="location-fail-box">
+       <van-dialog v-model="locationFailShow"  show-cancel-button width="90%"
+          @confirm="manualClockingWvent" @cancel="againLocationEvent" confirm-button-text="手动打卡"
+          cancel-button-text="重新定位"
+        >
+          <div class="dialog-top">
+            <van-icon name="cross" size="24" @click="locationFailShow = false" />
+          </div>
+          <div class="dialog-center">
+           <img :src="exclamationPointPng" alt="">
+           <span>定位失败!未找到信标</span>
+          </div>
+      </van-dialog>
+    </div>
+    <!-- 手动打卡原因弹窗 -->
+    <div class="manual-clocking-reason-box">
+      <van-dialog v-model="manualclockingReasonShow" width="100%" show-cancel-button 
+        confirm-button-color="#2390fe"
+        :before-close="beforeCloseDialogEvent"
+        @confirm="manualclockingReasonSure"
+        @cancel="manualclockingReasonCancel"
+        confirm-button-text="确认"
+        cancel-button-text="返回"
+      >
+        <div class="dialog-top">
+          <div class="select-title">请选择手动打卡原因</div>
+          <van-icon name="cross" size="24" @click="manualclockingReasonClose" />
+        </div>
+        <div class="dialog-center">
+          <van-radio-group v-model="manualClockingReasonRadio">
+            <van-radio name="1">手机没有信号</van-radio>
+            <van-radio name="2">手机有信号但打卡失败</van-radio>
+            <van-radio name="3">其它</van-radio>
+          </van-radio-group>
+        </div>
+      </van-dialog>
+    </div>
+
+    <!-- 事件类型选择弹窗 -->
+    <div class="event-type-box">
+      <van-dialog v-model="eventTypeShow" width="100%"
+        confirm-button-color="#2390fe"
+      >
+        <div class="dialog-top">
+          <div class="select-title">请选择事件类型</div>
+          <van-icon name="cross" size="24" @click="eventTypeShow = false" />
+        </div>
+        <div class="dialog-center">
+          <p v-for="(item,index) in eventTypeList" :key="index" @click="eventTypeClickEvent(item)">
+            {{ item }}
+          </p>
+        </div>
+      </van-dialog>
+    </div>
+
   </div>
 </template>
 <script>
@@ -48,23 +116,64 @@ import NavBar from "@/components/NavBar";
 import { mapGetters, mapMutations } from "vuex";
 import {getTaskDetails, departmentScanCode, departmentScanCodeFinsh} from '@/api/escortManagement.js'
 import {mixinsDeviceReturn} from '@/mixins/deviceReturnFunction';
+import ScrollSelection from "@/components/ScrollSelection";
 export default {
   name: "WorkOrderDetails",
   components: {
-    NavBar
+    NavBar,
+    ScrollSelection
   },
   mixins:[mixinsDeviceReturn],
   data() {
     return {
       overlayShow: false,
+      eventTypeShow: false,
+      manualClockingReasonRadio: '1',
+      manualclockingReasonShow: false,
+      locationFailShow: false,
+      clockingPlaceShow: false,
+      currentClockingPlace: '',
+      eventTypeList: ['工程报修','拾金不昧','其它'],
+      clockingPlaceOption: [
+        {
+          id: 0,
+          text: '啊飒飒',
+          value: 1
+        },
+        {
+          id: 1,
+          text: '啊飒飒萨',
+          value: 2
+        },
+        {
+          id: 2,
+          text: '啊飒飒vcv',
+          value: 3
+        },
+        {
+          id: 3,
+          text: '啊飒飒湖广会馆2',
+          value: 4
+        },
+        {
+          id: 4,
+          text: '啊飒飒CDC的',
+          value: 5
+        }
+      ],
+      positioningShow: false,
       loadingShow: false,
       queryDataSuccess: false,
       loadText: '加载中',
-      statusBackgroundPng: require("@/common/images/home/status-background.png")
+      positioningPng: require("@/common/images/home/positioning.png"),
+      statusBackgroundPng: require("@/common/images/home/status-background.png"),
+      exclamationPointPng: require("@/common/images/home/exclamation-point.png"),
+      addMessagePng: require("@/common/images/home/add-message.png")
     }
   },
 
   mounted() {
+    this.$Alert({message:"请先完成巡更!",duration:3000,type:'fail'});
     console.log('大飒飒',this.patrolTaskListMessage);
     // 控制设备物理返回按键
     this.deviceReturn("/patrolTasklist");
@@ -94,12 +203,51 @@ export default {
       this.$router.push({path: '/patrolTasklist'})
     },
 
+    // 事件登记事件
+    onClickRight () {
+      this.eventTypeShow = true
+    },
+
+    // 事件类型点击事件
+    eventTypeClickEvent (item) {
+      if ( item == '工程报修') {
+
+      } else if (item == '拾金不昧') {
+
+      } else if (item == '其他') {
+
+      }
+    },
+
+    // 打卡地点弹框确认事件
+    clockingPlaceSureEvent (val) {
+      if (val) {
+        this.currentClockingPlace =  val
+      } else {
+        this.currentClockingPlace= '请选择'
+      };
+      this.clockingPlaceShow = false;
+      this.manualclockingReasonShow = true
+    },
+
+    // 打卡地点弹框取消事件
+    clockingPlaceCancelEvent () {
+      this.clockingPlaceShow = false;
+      this.locationFailShow = true
+    },
+
+    // 打卡地点弹框关闭事件
+    clockingPlaceCloseEvent () {
+      this.clockingPlaceShow = false
+    },
+
     // 巡查地点点击事件
     patrolSiteEvent (item) {
       // 未完成扫码校验的科室不允许点击进入
       if (this.patrolTaskListMessage.hasArray.indexOf(item.name) == -1) {
         return
       };
+
      // 任务已完成
       if (this.patrolTaskListMessage.state == 4) {
         this.codeDepartmentFinsh(item.id,'加载中')
@@ -108,9 +256,28 @@ export default {
       }
     },
 
-    // 查看问题项事件
-    viewProblemItemsEvent () {
-      this.$router.push({path: '/questionList'})
+    // 手动打卡事件
+    manualClockingWvent () {
+      this.locationFailShow = false;
+      this.clockingPlaceShow = true
+    },
+
+    // 重新定位事件
+    againLocationEvent () {
+      this.positioningShow = true;
+      this.locationFailShow = false
+    },
+
+    // 定位中关闭事件
+    positioningEvent () {
+      this.positioningShow = false;
+      this.overlayShow = false
+    },
+
+    // 打卡事件
+    clockInEvent () {
+      this.positioningShow = true;
+      this.overlayShow = true
     },
 
     // 完成任务事件
@@ -123,10 +290,6 @@ export default {
         return
       };
       this.$router.push({path: '/workOrderElectronicSignature'})
-    },
-
-    // 事件登记事件
-    onClickRight () {
     },
 
     // 获取任务详情
@@ -237,6 +400,32 @@ export default {
       })
     },
 
+    // 手动打卡原因弹框关闭前事件
+    beforeCloseDialogEvent (action, done) {
+      if (action == 'cancel') {
+        done()
+      } else {
+        done()
+      }
+    },
+
+    // 手动打卡原因弹框确认事件
+    manualclockingReasonSure () {
+
+    },
+
+    // 手动打卡原因弹框关闭事件
+    manualclockingReasonClose () {
+      this.manualclockingReasonShow = false;
+      this.clockingPlaceShow = true
+    },
+
+    // 手动打卡原因弹框返回事件
+    manualclockingReasonCancel () {
+      this.manualclockingReasonShow = false;
+      this.clockingPlaceShow = true
+    },
+
     // 扫码科室校验
     codeDepartment (depId) {
       // 任务已完成
@@ -293,6 +482,229 @@ export default {
 @import "~@/common/stylus/modifyUi.less";
 .page-box {
   height: 0;
+  position: relative;
+  .add-message {
+    position: fixed;
+    z-index: 100;
+    bottom: 160px;
+    right: 20px;
+    width: 80px;
+    height: 80px;
+    img {
+      width: 100%;
+      height: 100%
+    }
+  };
+  .in-positioning {
+    position: absolute;
+    z-index: 10000;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 50%;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%,-50%);
+    img {
+      width: 120px;
+      height: 120px
+    };
+    >span {
+      display: inline-block;
+      color: #fff;
+      &:nth-child(2) {
+        font-size: 18px;
+        margin: 20px 0
+      };
+      &:nth-child(3) {
+        font-size: 12px
+      }
+    }
+  };
+  .location-fail-box {
+    /deep/ .van-dialog {
+      .van-dialog__content {
+          padding: 20px 20px 0 20px !important;
+          box-sizing: border-box;
+          display: flex;
+          flex-direction: column;
+          .dialog-top {
+            text-align: right
+          };
+          .dialog-center {
+            text-align: center;
+            line-height: 30px;
+            padding: 20px 0;
+            box-sizing: border-box;
+            font-weight: bold;
+            color: #101010;
+            font-size: 16px;
+            span {
+              vertical-align: middle
+            };
+            img {
+              vertical-align: middle;
+              width: 24px;
+              height: 24px
+            }
+          }
+        };
+        .van-dialog__footer {
+          padding: 10px 40px 20px 40px !important;
+          box-sizing: border-box;
+          justify-content: space-between;
+          ::after {
+            content: none
+          };
+        .van-dialog__cancel {
+            height: 40px;
+            background: #3B9DF9;
+            color: #fff !important;
+            border-radius: 8px;
+            margin-right: 20px
+        };
+        .van-dialog__confirm {
+            height: 40px;
+            color: #3B9DF9;
+            border: 1px solid #3B9DF9;
+            border-radius: 8px
+        }
+        };
+        .van-hairline--top::after {
+          border-top-width: 0 !important
+        }
+    }
+  };
+  .event-type-box {
+    /deep/ .van-dialog {
+      top: auto !important;
+      left: 0 !important;
+      border-right: 1px solid #fff;
+      bottom: 0 !important;
+      border-top-left-radius: 20px !important;
+      border-top-right-radius: 20px !important;
+      border-bottom-left-radius: 0 !important;
+      border-bottom-right-radius: 0 !important;
+      transform: translate3d(0,0,0) !important;
+      .van-dialog__content {
+        padding: 0 20px 10px 20px !important;
+        box-sizing: border-box;
+        height: 50vh;
+        .dialog-top {
+          height: 60px;
+          position: relative;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          .select-title {
+            font-size: 18px;
+            color: #101010;
+            text-align: center
+          };
+          /deep/ .van-icon {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            right: 0
+          }
+        };
+        .dialog-center {
+          display: flex;
+          flex-direction: column;
+          justify-content: center;
+          align-items: center;
+          padding-top: 30px;
+          box-sizing: border-box;
+          >p {
+            width: 121px;
+            height: 43px;
+            border: 1px solid #3B9DF9;
+            border-radius: 10px;
+            font-size: 14px;
+            color: #3B9DF9;
+            text-align: center;
+            line-height: 43px;
+            margin-bottom: 30px
+          }
+        }
+      };
+      .van-dialog__footer {
+        display: none
+      };
+      .van-hairline--top::after {
+        border-top-width: 0 !important
+      }
+    }
+  }
+  .manual-clocking-reason-box {
+    /deep/ .van-dialog {
+      top: auto !important;
+      left: 0 !important;
+      border-right: 1px solid #fff;
+      bottom: 0 !important;
+      border-top-left-radius: 20px !important;
+      border-top-right-radius: 20px !important;
+      border-bottom-left-radius: 0 !important;
+      border-bottom-right-radius: 0 !important;
+      transform: translate3d(0,0,0) !important;
+      .van-dialog__content {
+        padding: 0 20px 10px 20px !important;
+        box-sizing: border-box;
+        height: 40vh;
+        .dialog-top {
+          height: 60px;
+          position: relative;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          .select-title {
+            font-size: 18px;
+            color: #101010;
+            text-align: center
+          };
+          /deep/ .van-icon {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            right: 0
+          }
+        };
+        .dialog-center {
+          display: flex;
+          justify-content: center;
+          .van-radio-group {
+            .van-radio {
+              margin-top: 40px
+            }
+          }
+        }
+      };
+      .van-dialog__footer {
+          padding: 20px !important;
+          box-sizing: border-box;
+          justify-content: space-between;
+          ::after {
+            content: none
+          };
+        .van-dialog__cancel {
+            color: #1864FF;
+            box-shadow: 0px 2px 6px 0 rgba(36, 149, 213, 1);
+            background: #fff;
+            border-radius: 30px;
+            margin-right: 20px
+        };
+        .van-dialog__confirm {
+            background: linear-gradient(to right, #6cd2f8, #2390fe);
+            box-shadow: 0px 2px 6px 0 rgba(36, 149, 213, 1);
+            color: #fff !important;
+            border-radius: 30px;
+        }
+      };
+      .van-hairline--top::after {
+        border-top-width: 0 !important
+      }
+    }
+  };
   .content-wrapper();
   /deep/ .van-overlay {
     z-index: 1000 !important
@@ -313,7 +725,12 @@ export default {
             .van-icon {
               color: #fff !important;
             }
-        }
+        };
+        .van-nav-bar__right {
+          .van-nav-bar__text {
+            color: #fff
+          }
+        };
         .van-nav-bar__title {
           color: #fff !important;
           font-size: 16px !important;
@@ -385,7 +802,6 @@ export default {
         };
         .patrol-site {
             flex: 1;
-            background: #fff;
             padding: 14px 8px;
             box-sizing: border-box;
             display: flex;
@@ -422,7 +838,6 @@ export default {
     z-index: 100;
     align-items: center;
     justify-content: center;
-    background: #fff;
     .operationStyle {
       background: linear-gradient(to right, #6cd2f8, #2390fe) !important;
       box-shadow: 0px 2px 6px 0px rgba(36, 149, 213, 1) !important;
@@ -430,23 +845,23 @@ export default {
       border: none !important
     };
     >div {
-      width: 40%;
+      width: 45%;
       height: 48px;
       font-size: 18px;
-      margin-right: 20px;
       line-height: 48px;
       background: #fff;
       text-align: center;
       border-radius: 30px;
       &:first-child {
-        color: #1684FC;
-        border: 1px solid #1684FC
+        color: #fff;
+        margin-right: 20px;
+        background: linear-gradient(to right, #6cd2f8, #2390fe);
+        box-shadow: 0px 2px 6px 0px rgba(36, 149, 213, 1)
       };
        &:last-child {
-        color: #fff;
-        margin-right: 0;
-        background: linear-gradient(to right, #6cd2f8, #2390fe);
-        box-shadow: 0px 2px 6px 0px rgba(36, 149, 213, 1);
+        color: #000000;
+        background: #E5E5E5
+        
       }
     }
   }

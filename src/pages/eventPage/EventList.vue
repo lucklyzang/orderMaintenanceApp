@@ -3,41 +3,26 @@
     <van-loading size="35px" vertical color="#e6e6e6" v-show="loadingShow">{{ loadText }}</van-loading>
     <van-overlay :show="overlayShow" />
     <div class="nav">
-        <van-nav-bar title="异常巡查项事件列表" left-text="返回" left-arrow @click-left="onClickLeft" :border="false">
-        </van-nav-bar>
+      <van-nav-bar title="事件列表" left-text="返回" left-arrow @click-left="onClickLeft" @click-right="onClickRight" right-text="事件登记" :border="false">
+      </van-nav-bar>
     </div>
     <div class="content">
         <div class="content-top-area">
-            <img :src="statusBackgroundPng" />
+          <img :src="statusBackgroundPng" />a
         </div>
         <div class="content-box">
-          <div class="current-area">
-            <van-icon name="location" color="#1684FC" size="25" />
-            <span>当前区域: 沙克撒就</span>
-          </div>
-          <div class="patrol-item-box">
-            <div class="patrol-item-list">
-              <div class="patrol-item-list-left">
-                  <span>巡查项:</span>
-                  <span>设施是否安全可用</span>
-              </div>
-              <div class="patrol-item-list-right">
-                  <van-radio-group v-model="checkResultValue" direction="horizontal">
-                      <van-radio name="1">
-                          <template #icon="props">
-                              <img class="img-icon" :src="props.checked ? checkCheckboxPng : checkboxPng" />
-                          </template>
-                      </van-radio>
-                      <van-radio name="3">
-                          <template #icon="props">
-                              <img class="img-icon" :src="props.checked ? checkCloseCirclePng : closeCirclePng" />
-                          </template>
-                      </van-radio>
-                  </van-radio-group>
-              </div>
+            <div class="action-bar">
+                <div class="action-bar-left">
+                    <van-radio-group v-model="storageRadio">
+                        <van-radio name="1" shape="square">暂存</van-radio>
+                    </van-radio-group>
+                </div>
+                <div class="action-bar-right">
+                    <span :class="{'spanStyle': !isOnlyMe}" @click="isOnlyMe = !isOnlyMe">只看我</span>
+                    <span @click="screenDialogShow = true">筛选</span>
+                </div>
             </div>
-          </div>
-          <div class="backlog-task-list-box" ref="scrollBacklogTask">
+            <div class="backlog-task-list-box" ref="scrollBacklogTask">
               <div class="backlog-task-list" v-for="(item,index) in backlogTaskList" :key="index">
                   <div class="backlog-task-top">
                       <div class="backlog-task-top-left">
@@ -67,10 +52,7 @@
           </div> 
         </div>
     </div>
-    <div class="task-operation-box">
-      <div class="new-increase-btn" @click="eventTypeShow = true">新增</div>
-      <div class="back-btn">返回</div>
-    </div>
+
     <!-- 事件类型选择弹窗 -->
     <div class="event-type-box">
       <van-dialog v-model="eventTypeShow" width="100%"
@@ -80,10 +62,6 @@
           <div class="select-title">请选择事件类型</div>
           <van-icon name="cross" size="24" @click="eventTypeShow = false" />
         </div>
-        <div class="inspection-item">
-          <span>巡查项:</span>
-          <span>设施是否安全可用</span>
-        </div>
         <div class="dialog-center">
           <p v-for="(item,index) in eventTypeList" :key="index" @click="eventTypeClickEvent(item)">
             {{ item }}
@@ -91,29 +69,76 @@
         </div>
       </van-dialog>
     </div>
+
+    <!-- 筛选弹窗 -->
+    <div class="screen-box">
+      <van-dialog v-model="screenDialogShow" width="100%" show-cancel-button 
+        confirm-button-color="#2390fe"
+        :before-close="beforeCloseDialogEvent"
+        @confirm="screenDialogSure"
+        @cancel="screenDialogCancel"
+        confirm-button-text="确认"
+        cancel-button-text="重置"
+      >
+        <div class="dialog-top">
+          <div class="select-title">全部筛选</div>
+          <van-icon name="cross" size="24" @click="closeScreenDialogEvent" />
+        </div>
+        <div class="dialog-center">
+          <div class="dialog-center-one-line">
+            <span>登记人</span>
+            <SelectSearch :isNeedSearch="false" ref="registrantOption" :itemData="registrantOption" :curData="currentRegistrant" @change="registrantOptionChange" />
+          </div>
+        </div>
+      </van-dialog>
+    </div>
+
   </div>
 </template>
 <script>
 import NavBar from "@/components/NavBar";
 import { mapGetters, mapMutations } from "vuex";
-import { mixinsDeviceReturn } from '@/mixins/deviceReturnFunction';
-import { deepClone } from "@/common/js/utils";
-import { getTaskProblemWorkerOrderDetails } from '@/api/escortManagement.js'
+import {getTaskDetails} from '@/api/escortManagement.js'
+import {mixinsDeviceReturn} from '@/mixins/deviceReturnFunction';
+import ScrollSelection from "@/components/ScrollSelection";
+import SelectSearch from "@/components/SelectSearch";
 export default {
-  name: "ProblemRecord",
+  name: "EventList",
   components: {
-    NavBar
+    NavBar,
+    SelectSearch,
+    ScrollSelection
   },
   mixins:[mixinsDeviceReturn],
   data() {
     return {
       overlayShow: false,
-      eventTypeShow: false,
+      isOnlyMe: true,
       backlogEmptyShow: false,
-      isShowBacklogTaskNoMoreData: true,
-      checkResultValue: '1',
+      screenDialogShow: false,
+      isShowBacklogTaskNoMoreData: false,
+      storageRadio: '1',
+      currentRegistrant: null,
+      registrantOption: [
+        {
+            text: '请选择',
+            value: null
+        },
+        {
+            text: '飒飒',
+            value: 1
+        },
+        {
+            text: '飒飒飒飒',
+            value: 2
+        },
+        {
+            text: '飒斐德坊',
+            value: 3
+        }
+     ],
+      eventTypeShow: false,
       eventTypeList: ['工程报修','拾金不昧','其它'],
-      loadingShow: false,
       backlogTaskList: [
         {
           state: 1,
@@ -132,78 +157,67 @@ export default {
           eventType: '拾金不昧',
           problemType: '飒飒飒飒',
           describe: '飒飒飒飒啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊'
-        },
-         {
-          state: 1,
-          eventType: '拾金不昧',
-          problemType: '飒飒飒飒',
-          describe: '飒飒飒飒啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊'
-        },
-         {
-          state: 1,
-          eventType: '拾金不昧',
-          problemType: '飒飒飒飒',
-          describe: '飒飒飒飒啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊'
-        },
-         {
-          state: 1,
-          eventType: '拾金不昧',
-          problemType: '飒飒飒飒',
-          describe: '飒飒飒飒啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊'
         }
       ],
+      loadingShow: false,
+      queryDataSuccess: false,
       loadText: '加载中',
-      existOnlineImgPath: [],
-      checkCheckboxPng: require("@/common/images/home/check-checkbox-circle.png"),
-      checkboxPng: require("@/common/images/home/checkbox-circle.png"),
-      closeCirclePng: require("@/common/images/home/close-circle.png"),
-      checkCloseCirclePng: require("@/common/images/home/check-close-circle.png"),
       statusBackgroundPng: require("@/common/images/home/status-background.png")
     }
   },
 
   mounted() {
-    console.log('何解析',this.patrolTaskListMessage);
     // 控制设备物理返回按键
-    this.deviceReturn(`${this.enterProblemRecordMessage['enterProblemRecordPageSource']}`);
-     this.$nextTick(()=> {
-        try {
-            this.initScrollChange()
-        } catch (error) {
-            this.$toast({
-                type: 'fail',
-                message: error
-            })
-        }
-    })
-   
+    this.deviceReturn("/home");
+    this.initScrollChange();
+    // 获取任务详情
+    // this.queryTaskDetails()
   },
 
   watch: {},
 
   computed: {
-    ...mapGetters(["userInfo","patrolTaskListMessage","enterProblemRecordMessage"])
+    ...mapGetters(["userInfo","patrolTaskListMessage","departmentCheckList"])
   },
 
   methods: {
-    ...mapMutations([]),
+    ...mapMutations(["changeDepartmentCheckList","changePatrolTaskListMessage"]),
 
     // 顶部导航左边点击事件
     onClickLeft () {
-      this.$router.push({path: `${this.enterProblemRecordMessage['enterProblemRecordPageSource']}`})
+      this.$router.push({path: '/home'})
     },
 
-    // 事件类型点击事件
-    eventTypeClickEvent (item) {
-      if ( item == '工程报修') {
+    // 进入事件详情事件
+    taskDetailsEvent (item) {
 
-      } else if (item == '拾金不昧') {
+    },
 
-      } else if (item == '其他') {
-
+    // 筛选弹框关闭前事件
+    beforeCloseDialogEvent (action, done) {
+      if (action == 'cancel') {
+        this.$refs['registrantOption'].clearSelectValue();
+        done(false);
+        return
+      } else {
+        done()
       }
     },
 
+    // 登记人下拉框值改变事件
+    registrantOptionChange (val) {
+        this.currentRegistrant = val
+    },
+
+    // 事件列表下拉
+    initScrollChange () {
+        let boxBackScroll = this.$refs['scrollBacklogTask'];
+        boxBackScroll.addEventListener('scroll',(e)=> {
+            if (Math.ceil(e.srcElement.scrollTop) + e.srcElement.offsetHeight >= e.srcElement.scrollHeight) {
+                console.log('事件列表滚动了',e.srcElement.scrollTop, e.srcElement.offsetHeight, e.srcElement.scrollHeight)
+            }
+        },true)
+    },
 
     // 任务状态转换
     taskStatusTransition (num) {
@@ -223,37 +237,52 @@ export default {
       }
     },
 
-    // 待办任务列表下拉
-    initScrollChange () {
-        let boxBackScroll = this.$refs['scrollBacklogTask'];
-        boxBackScroll.addEventListener('scroll',(e)=> {
-            if (Math.ceil(e.srcElement.scrollTop) + e.srcElement.offsetHeight >= e.srcElement.scrollHeight) {
-                console.log('事件列表滚动了',e.srcElement.scrollTop, e.srcElement.offsetHeight, e.srcElement.scrollHeight)
-            }
-        },true)
+    // 筛选弹框确定事件
+    screenDialogSure () {
     },
 
-    // 进入事件详情事件
-    taskDetailsEvent (item) {
+    // 筛选弹框取消事件
+    screenDialogCancel () {
 
     },
 
-    // 查询问题工单详情
-    queryTaskProblemWorkerOrderDetails (data) {
+    // 关闭筛选弹框
+    closeScreenDialogEvent () {
+      this.screenDialogShow = false
+    },
+
+
+    // 事件登记事件
+    onClickRight () {
+      this.eventTypeShow = true
+    },
+
+    // 事件类型点击事件
+    eventTypeClickEvent (item) {
+      if ( item == '工程报修') {
+
+      } else if (item == '拾金不昧') {
+
+      } else if (item == '其他') {
+
+      }
+    },
+
+    // 获取任务详情
+    queryTaskDetails () {
       this.loadingShow = true;
       this.overlayShow = true;
+      this.queryDataSuccess = false;
       this.loadText = '加载中';
-      getTaskProblemWorkerOrderDetails(data).then((res) => {
-        this.loadingShow = false;
-        this.overlayShow = false;
+      getTaskDetails(
+        this.patrolTaskListMessage.id
+      ).then((res) => {
         if (res && res.data.code == 200) {
-          this.checkItemName = res.data.data.itemName;
-          this.spaceName = res.data.data.spaceName;
-          this.createTime = res.data.data.createTime;
-          this.problemPicturesList = deepClone(res.data.data.imgPaths);
-          this.existOnlineImgPath = deepClone(res.data.data.imgPaths);
-          this.problemDescription = res.data.data['describe'];
-          this.note = res.data.data['remark']
+          console.log(res.data.data);
+          this.loadingShow = false;
+          this.overlayShow = false;
+          this.queryDataSuccess = true;
+          this.changePatrolTaskListMessage(res.data.data)
         } else {
           this.$toast({
             type: 'fail',
@@ -279,8 +308,8 @@ export default {
 @import "~@/common/stylus/modifyUi.less";
 .page-box {
   height: 0;
-  .content-wrapper();
-   .event-type-box {
+  position: relative;
+  .event-type-box {
     /deep/ .van-dialog {
       top: auto !important;
       left: 0 !important;
@@ -313,15 +342,6 @@ export default {
             right: 0
           }
         };
-        .inspection-item {
-          text-align: center;
-          padding: 10px 0;
-          box-sizing: border-box;
-          >span {
-            font-size: 14px;
-            color: #3B9DF9
-          }
-        };
         .dialog-center {
           display: flex;
           flex-direction: column;
@@ -350,6 +370,91 @@ export default {
       }
     }
   };
+  .screen-box {
+    /deep/ .van-dialog {
+      top: auto !important;
+      left: 0 !important;
+      border-right: 1px solid #fff;
+      bottom: 0 !important;
+      border-top-left-radius: 20px !important;
+      border-top-right-radius: 20px !important;
+      border-bottom-left-radius: 0 !important;
+      border-bottom-right-radius: 0 !important;
+      transform: translate3d(0,0,0) !important;
+      .van-dialog__content {
+        padding: 0 20px 10px 20px !important;
+        box-sizing: border-box;
+        height: 40vh;
+        .dialog-top {
+          height: 60px;
+          position: relative;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          .select-title {
+            font-size: 18px;
+            color: #101010;
+            text-align: center
+          };
+          /deep/ .van-icon {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            right: 0
+          }
+        };
+        .dialog-center {
+          .dialog-center-one-line {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 10px;
+            >span {
+              display: inline-block;
+              &:nth-child(1) {
+                width: 20%;
+                font-size: 14px;
+                color: #101010;
+                font-weight: bold
+              }
+            };
+            /deep/ .vue-dropdown {
+              width: 65%;
+              border-radius: 6px !important
+            }
+          }
+        }
+      };
+      .van-dialog__footer {
+          padding: 20px !important;
+          box-sizing: border-box;
+          justify-content: space-between;
+          ::after {
+            content: none
+          };
+        .van-dialog__cancel {
+            color: #1864FF;
+            box-shadow: 0px 2px 6px 0 rgba(36, 149, 213, 1);
+            background: #fff;
+            border-radius: 30px;
+            margin-right: 20px
+        };
+        .van-dialog__confirm {
+            background: linear-gradient(to right, #6cd2f8, #2390fe);
+            box-shadow: 0px 2px 6px 0 rgba(36, 149, 213, 1);
+            color: #fff !important;
+            border-radius: 30px;
+        }
+      };
+      .van-hairline--top::after {
+        border-top-width: 0 !important
+      }
+    }
+  };
+  .content-wrapper();
+  /deep/ .van-overlay {
+    z-index: 1000 !important
+  };
   .nav {
     position: fixed;
     width: 100%;
@@ -366,7 +471,12 @@ export default {
             .van-icon {
               color: #fff !important;
             }
-        }
+        };
+        .van-nav-bar__right {
+          .van-nav-bar__text {
+            color: #fff
+          }
+        };
         .van-nav-bar__title {
           color: #fff !important;
           font-size: 16px !important;
@@ -374,10 +484,7 @@ export default {
     }
   };
   /deep/ .van-loading {
-    z-index: 10000 !important
-  };
-  /deep/.van-overlay {
-    z-index: 1000 !important
+    z-index: 1000000
   };
   .content {
     flex: 1;
@@ -397,75 +504,51 @@ export default {
       }
     };
     .content-box {
+        flex: 1;
         margin-top: 50px;
         box-sizing: border-box;
         background: #F7F7F7;
+        display: flex;
+        flex-direction: column;
         position: absolute;
         top: 0;
         left: 0;
         width: 100%;
         height: 100%;
-        display: flex;
-        flex-direction: column;
         padding-bottom: 50px;
-        .current-area {
-            height: 54px;
-            line-height: 54px;
-            width: 94%;
-            margin: 0 auto;
-            font-size: 16px;
-            color: #1684FC;
-            /deep/ .van-icon {
-                vertical-align: middle
+        .action-bar{
+            padding: 10px 8px;
+            box-sizing: border-box;
+            display: flex;
+            background: #fff;
+            justify-content: space-between;
+            align-items: center;
+            .action-bar-left {
+
             };
-            >span {
-                vertical-align: middle
-            }
-        };
-         .patrol-item-box {
-            width: 100%;
-            position: relative;
-            .patrol-item-list {
-                padding: 16px 10px;
-                box-sizing: border-box;
-                background: #fff;
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-                .patrol-item-list-left {
+            .action-bar-right {
+                >span {
                     font-size: 14px;
-                    color: #101010;
-                    padding-right: 6px;
-                    flex: 1;
-                    word-break: break-all;
-                    box-sizing: border-box;
-                    >span {
-                        &:first-child {
-                            color: #8E9397;
-                            margin-right: 6px;
-                        };
-                        &:last-child {
-                            color: #494D51
-                        }
+                    display: inline-block;
+                    width: 76px;
+                    height: 26px;
+                    text-align: center;
+                    line-height: 26px;
+                    border-radius: 4px;
+                    &:nth-child(1) {
+                        color: #fff;
+                        margin-right: 6px;
+                        background: #3B9DF9
+                    };
+                    &:nth-child(2) {
+                        color: #3B9DF9;
+                        border: 1px solid #3B9DF9
                     }
                 };
-                .patrol-item-list-right {
-                    /deep/ .van-radio-group {
-                        .van-radio {
-                            .van-radio__icon {
-                                height: auto !important
-                            };
-                            img {
-                                width: 30px
-                            }
-                        };
-                        >div {
-                            margin-right: 20px;
-                            &:last-child {
-                                margin-right: 0
-                            }
-                        }
-                    }
+                .spanStyle {
+                    background: #fff !important;
+                    color: #3B9DF9 !important;
+                    border: 1px solid #3B9DF9 !important
                 }
             }
         };
@@ -566,35 +649,6 @@ export default {
           }
       }
     }    
-  };
-  .task-operation-box {
-    background: #F8F8F8;
-    height: 80px;
-    display: flex;
-    width: 100%;
-    z-index: 100;
-    margin: 0 auto;
-    align-items: center;
-    justify-content: center;
-    >div {
-        width: 40%;
-        height: 48px;
-        font-size: 18px;
-        line-height: 48px;
-        background: #fff;
-        text-align: center;
-        border-radius: 30px;
-        &:first-child {
-            color: #fff;
-            margin-right: 20px;
-            background: linear-gradient(to right, #6cd2f8, #2390fe);
-            box-shadow: 0px 2px 6px 0 rgba(36, 149, 213, 1)
-        };
-        &:last-child {
-            color: #1684FC;
-            border: 1px solid #1684FC
-        }
-    }
   }
 }
 </style>

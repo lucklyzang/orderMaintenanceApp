@@ -98,7 +98,11 @@
 
             // 巡查任务点击事件
             patrolTaskEvent (item, index) {
-                this.$router.push({path: '/patrolTasklist'})
+                if (item.name == '巡更任务') {
+                    this.$router.push({path: '/patrolTasklist'})
+                } else if (item.name == '事件登记') {
+                    this.$router.push({path: '/eventList'})
+                }
             }
         }
     }

@@ -3,7 +3,7 @@
     <van-loading size="35px" vertical color="#e6e6e6" v-show="loadingShow">{{ loadText }}</van-loading>
     <van-overlay :show="overlayShow" />
     <div class="nav">
-        <van-nav-bar title="巡查任务" left-text="返回" left-arrow @click-left="onClickLeft" :border="false">
+        <van-nav-bar title="巡查项详情" left-text="返回" left-arrow @click-left="onClickLeft" :border="false">
         </van-nav-bar>
     </div>
     <div class="content">
@@ -13,7 +13,7 @@
         <div class="content-box">
             <div class="current-area">
                 <van-icon name="location" color="#1684FC" />
-                <span>当前区域: {{ patrolTaskListMessage.needSpaces.filter((item)=> { return item.id == departmentCheckList['depId'] })[0]['name'] }}</span>
+                <!-- <span>当前区域: {{ patrolTaskListMessage.needSpaces.filter((item)=> { return item.id == departmentCheckList['depId'] })[0]['name'] }}</span> -->
             </div>
             <div class="patrol-item-box">
                 <div class="patrol-item-list" v-for="(item, index) in checkItemMessage.checkItemList" :key="index">
@@ -43,6 +43,43 @@
     <div class="task-operation-box" v-show="departmentCheckList.checkItemList.length > 0 && patrolTaskListMessage.state != 4">
       <div class="task-complete" v-preventReClick="[sureEvent]">确 认</div>
     </div>
+    <!-- 事件类型选择弹窗 -->
+    <div class="event-type-box">
+      <van-dialog v-model="eventTypeShow" width="100%"
+        confirm-button-color="#2390fe"
+      >
+        <div class="dialog-top">
+          <div class="select-title">请选择事件类型</div>
+          <van-icon name="cross" size="24" @click="eventTypeShow = false" />
+        </div>
+        <div class="inspection-item">
+          <span>巡查项:</span>
+          <span>设施是否安全可用</span>
+        </div>
+        <div class="dialog-center">
+          <p v-for="(item,index) in eventTypeList" :key="index" @click="eventTypeClickEvent(item)">
+            {{ item }}
+          </p>
+        </div>
+      </van-dialog>
+    </div>
+    <!-- 退出提示框   -->
+    <div class="quit-info-box">
+       <van-dialog v-model="quitInfoShow"  show-cancel-button width="85%"
+          @confirm="quitSure" @cancel="quitCancel" confirm-button-text="是"
+          cancel-button-text="否"
+        >
+          <div class="delete-icon">
+            <van-icon name="cross" size="24" @click="quitInfoShow = false" />
+          </div>
+          <div class="dialog-title">
+            该区域还未巡更完毕,是否要退出?
+          </div>
+          <div class="dialog-center">
+            退出后您还可以再次进入该地点继续进行巡更，本次巡查登记的事件和勾选的巡查项将被保留，但未将巡查项全部勾选之前您将无法完成该巡查任务 
+          </div>
+      </van-dialog>
+    </div>
   </div>
 </template>
 <script>
@@ -60,8 +97,11 @@ export default {
   data() {
     return {
       overlayShow: false,
+      eventTypeShow: false,
+      quitInfoShow: false,
       radioValue: 1,
       loadingShow: false,
+      eventTypeList: ['工程报修','拾金不昧','其它'],
       loadText: '加载中',
       checkItemMessage: "",
       statusBackgroundPng: require("@/common/images/home/status-background.png"),
@@ -114,6 +154,16 @@ export default {
     // 顶部导航左边点击事件
     onClickLeft () {
       this.$router.push({path: '/workOrderDetails'})
+    },
+
+    // 确定退出
+    quitSure () {
+
+    },
+
+    // 取消退出
+    quitCancel () {
+
     },
 
     // 通过事件
@@ -259,6 +309,127 @@ export default {
 .page-box {
   height: 0;
   .content-wrapper();
+    .event-type-box {
+    /deep/ .van-dialog {
+      top: auto !important;
+      left: 0 !important;
+      border-right: 1px solid #fff;
+      bottom: 0 !important;
+      border-top-left-radius: 20px !important;
+      border-top-right-radius: 20px !important;
+      border-bottom-left-radius: 0 !important;
+      border-bottom-right-radius: 0 !important;
+      transform: translate3d(0,0,0) !important;
+      .van-dialog__content {
+        padding: 0 20px 10px 20px !important;
+        box-sizing: border-box;
+        height: 50vh;
+        .dialog-top {
+          height: 60px;
+          position: relative;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          .select-title {
+            font-size: 18px;
+            color: #101010;
+            text-align: center
+          };
+          /deep/ .van-icon {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            right: 0
+          }
+        };
+        .inspection-item {
+          text-align: center;
+          padding: 10px 0;
+          box-sizing: border-box;
+          >span {
+            font-size: 14px;
+            color: #3B9DF9
+          }
+        };
+        .dialog-center {
+          display: flex;
+          flex-direction: column;
+          justify-content: center;
+          align-items: center;
+          padding-top: 30px;
+          box-sizing: border-box;
+          >p {
+            width: 121px;
+            height: 43px;
+            border: 1px solid #3B9DF9;
+            border-radius: 10px;
+            font-size: 14px;
+            color: #3B9DF9;
+            text-align: center;
+            line-height: 43px;
+            margin-bottom: 30px
+          }
+        }
+      };
+      .van-dialog__footer {
+        display: none
+      };
+      .van-hairline--top::after {
+        border-top-width: 0 !important
+      }
+    }
+  };
+  .quit-info-box {
+    /deep/ .van-dialog {
+      .van-dialog__content {
+          padding: 20px 16px 0 16px !important;
+          box-sizing: border-box;
+          display: flex;
+          flex-direction: column;
+          .delete-icon {
+            text-align: right
+          };
+          .dialog-title {
+            padding: 10px 0;
+            box-sizing: border-box;
+            text-align: center;
+            color: #101010;
+            font-size: 16px;
+          };
+          .dialog-center {
+            line-height: 20px;
+            padding: 20px 0;
+            box-sizing: border-box;
+            color: #101010;
+            font-size: 12px
+          }
+        };
+        .van-dialog__footer {
+          padding: 10px 40px 20px 40px !important;
+          box-sizing: border-box;
+          justify-content: space-between;
+          ::after {
+            content: none
+          };
+        .van-dialog__cancel {
+          height: 40px;
+          background: #3B9DF9;
+          color: #fff !important;
+          border-radius: 8px;
+          margin-right: 20px
+        };
+        .van-dialog__confirm {
+           height: 40px;
+            color: #3B9DF9;
+            border: 1px solid #3B9DF9;
+            border-radius: 8px
+        }
+        };
+        .van-hairline--top::after {
+          border-top-width: 0 !important
+        }
+    }
+  };
   /deep/ .van-overlay {
     z-index: 1000 !important
   };

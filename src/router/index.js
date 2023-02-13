@@ -20,6 +20,12 @@ const WorkOrderElectronicSignature = () =>
     import ('@/pages/patrolTask/WorkOrderElectronicSignature')
 const EventList = () =>
     import ('@/pages/eventPage/EventList')
+const RepairsRegister = () =>
+    import ('@/pages/eventPage/RepairsRegister')
+const OtherRegister = () =>
+    import ('@/pages/eventPage/OtherRegister')
+const ClaimRegister = () =>
+    import ('@/pages/eventPage/ClaimRegister')
 Vue.use(Router)
 let baseRoute = [{
         path: '/',
@@ -68,6 +74,24 @@ let baseRoute = [{
         path: '/eventList',
         name: 'eventList',
         component: EventList
+
+    },
+    {
+        path: '/repairsRegister',
+        name: 'repairsRegister',
+        component: RepairsRegister
+
+    },
+    {
+        path: '/otherRegister',
+        name: 'otherRegister',
+        component: OtherRegister
+
+    },
+    {
+        path: '/claimRegister',
+        name: 'claimRegister',
+        component: ClaimRegister
 
     }
 ];

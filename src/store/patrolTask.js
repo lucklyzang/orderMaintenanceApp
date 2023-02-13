@@ -1,7 +1,7 @@
 import { setStore, getStore } from '@/common/js/utils'
-import { getDefaultEscortManagementState } from '@/common/js/resetStore'
+import { getDefaultPatrolTaskState } from '@/common/js/resetStore'
 export default {
-    state: getDefaultEscortManagementState(),
+    state: getDefaultPatrolTaskState(),
 
     getters: {
         enterProblemRecordMessage: (state) => {
@@ -73,15 +73,15 @@ export default {
             state.taskOrderType = payLoad
         },
 
-        //重置陪护管理状态
-        resetEscortManagementState(state) {
-            Object.assign(state, getDefaultEscortManagementState())
+        //重置巡更任务状态
+        resetPatrolTaskState(state) {
+            Object.assign(state, getDefaultPatrolTaskState())
         }
     },
 
     actions: {
-        resetEscortManagementStore({ commit }) {
-            commit('resetEscortManagementState')
+        resetPatrolTaskStore({ commit }) {
+            commit('resetPatrolTaskState')
         }
     }
 }

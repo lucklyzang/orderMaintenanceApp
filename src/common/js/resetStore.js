@@ -13,8 +13,9 @@ export function getDefaultLoginState() {
         hospitalMessage: {} //医院信息
     }
 };
-// 陪护管理信息store的初始值
-export function getDefaultEscortManagementState() {
+
+// 巡更模块store的初始值
+export function getDefaultPatrolTaskState() {
     return {
         taskType: {}, //任务类型
         taskOrderType: {}, //任务工单类型
@@ -26,5 +27,13 @@ export function getDefaultEscortManagementState() {
         patrolTaskListMessage: {}, //巡查任务列表信息
         currentElectronicSignature: null, // 工单完成时的签名信息
         originalSignature: null //// 工单完成时原始签名信息
+    }
+};
+
+// 事件登记模块store的初始值
+export function getDefaultEventRegisterState() {
+    return {
+        temporaryStorageRepairsRegisterMessage: {}, // 报修登记信息
+        eventRegisterType: '' // 事件登记类型
     }
 };

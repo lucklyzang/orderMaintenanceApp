@@ -24,6 +24,10 @@
 				</li>
 			</ul>
 			<div class="tip-nodata" v-show="searchValue.length && !datalist.length">暂无数据!</div>
+			<div class="operation-btn">
+				<span @click="isShow = false">取消</span>
+				<span @click="sureEvent">确定</span>
+			</div>
 		</div>
 	</div>
 </template>
@@ -37,11 +41,17 @@
 			current: '',
 			currentFullValue: null,
 			datalist:[],
+			selectedDataList: [],
 			isShow:false
 		}
   },
   props:{
-		curData:String | Number | null,	// 当前选中数据
+	  	// 是否多选
+		multiple: {
+			type: Boolean,
+			default: false
+		},
+		curData: String | Number | null,	// 当前选中数据
 		itemData:Array,	// 所有选项数据
 		isNeedSearch:{	// 是否需要搜索
 			type: Boolean,
@@ -60,8 +70,11 @@
   watch: {
     curData: {
         handler: function(newVal, oldVal) {
-           this.current = this.datalist.length > 0 ? this.datalist.filter((item) => { return item.value == newVal})[0]['text'] : '';
-		   this.currentFullValue = this.datalist.length > 0 ? this.datalist.filter((item) => { return item.value == newVal})[0] : null
+		   //单选
+		   if (!this.multiple) {
+		     this.current = this.datalist.length > 0 ? this.datalist.filter((item) => { return item.value == newVal})[0]['text'] : '';
+		   	 this.currentFullValue = this.datalist.length > 0 ? this.datalist.filter((item) => { return item.value == newVal})[0] : null
+		   }
         },
         deep: true,
 		immediate: true
@@ -78,8 +91,11 @@
   created(){
 	  console.log('值',this.curData,this.itemData);
 		this.datalist = this.itemData;
-        this.current = this.datalist.filter((item) => { return item.value == this.curData})[0]['text'];
-		this.currentFullValue = this.datalist.filter((item) => { return item.value == this.curData})[0];
+		//单选
+		if (!this.multiple) {
+			this.current = this.datalist.filter((item) => { return item.value == this.curData})[0]['text'];
+			this.currentFullValue = this.datalist.filter((item) => { return item.value == this.curData})[0]
+		};
 		//点击组件以外的地方，收起
 		document.addEventListener('click', (e) => {
 			if (!this.$el.contains(e.target)){
@@ -104,11 +120,24 @@
 		},
         
 		clickItem(item){
-			console.log('带年纪后',item);
-			this.current = this.datalist.filter((innerItem) => { return innerItem.value == item.value})[0]['text'];
-			this.currentFullValue = this.datalist.filter((innerItem) => { return innerItem.value == item.value})[0];
-			this.isShow = false;
-			this.$emit('change',item)
+			console.log(item);
+			// 单选
+			if (!this.multiple) {
+				this.current = this.datalist.filter((innerItem) => { return innerItem.value == item.value})[0]['text'];
+				this.currentFullValue = this.datalist.filter((innerItem) => { return innerItem.value == item.value})[0];
+				this.isShow = false;
+				this.$emit('change',item)
+			} else {
+				if (item.value == null) { return};
+				if (this.selectedDataList.filter((innerItem) => { return innerItem['value'] == item['value']}).length > 0) {return};
+				this.selectedDataList.push(item)
+			}
+		},
+
+		// 确定事件
+		sureEvent () {
+			this.$emit('change',this.selectedDataList);
+			console.log('多选',this.selectedDataList)
 		},
 
 		//供父组件调用的清除选择框值的方法
@@ -217,6 +246,34 @@
 		width: 100%;
 		&.on{
 			display: block
+		};
+		.operation-btn {
+		  height: 60px;
+          display: flex;
+          width: 90%;
+          margin: 0 auto;
+          align-items: center;
+          justify-content: center;
+          >span {
+              width: 40%;
+              display: inline-block;
+              height: 35px;
+              font-size: 14px;
+              line-height: 35px;
+              background: #fff;
+              text-align: center;
+              border-radius: 6px;
+              &:nth-child(1) {
+                  color: #ccc;
+                  margin-right: 40px;
+				  box-sizing: border-box;
+				  border: 1px solid #ccc
+              };
+              &:last-child {
+                  color: #fff;
+				  background: #2390fe
+              }
+          }
 		}
 	}
 	.cur-name{

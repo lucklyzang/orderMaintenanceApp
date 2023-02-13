@@ -70,6 +70,11 @@
       </van-dialog>
     </div>
 
+    <!-- 日期查询范围 -->
+    <div class="date-range">
+      <van-calendar v-model="dateQueryRangeShow" color="#3B9DF9" type="range" @confirm="onDateRangeConfirm" :min-date="minDate" :max-date="maxDate"/>
+    </div>
+
     <!-- 筛选弹窗 -->
     <div class="screen-box">
       <van-dialog v-model="screenDialogShow" width="100%" show-cancel-button 
@@ -85,9 +90,24 @@
           <van-icon name="cross" size="24" @click="closeScreenDialogEvent" />
         </div>
         <div class="dialog-center">
+          <div class="dialog-center-one-line" @click="dateQueryRangeShow = true">
+            <span>日期查询</span>
+            <div class="date-range-box">
+              {{ currentDateRange }}
+              <img :src="dateIconPng" alt="">
+            </div>
+          </div>
           <div class="dialog-center-one-line">
             <span>登记人</span>
-            <SelectSearch :isNeedSearch="false" ref="registrantOption" :itemData="registrantOption" :curData="currentRegistrant" @change="registrantOptionChange" />
+            <SelectSearch :isNeedSearch="false" :multiple="true" ref="registrantOption" :itemData="registrantOption" :curData="currentRegistrant" @change="registrantOptionChange" />
+          </div>
+          <div class="dialog-center-one-line">
+            <span>事件类型</span>
+            <SelectSearch ref="eventTypeOption" :itemData="eventTypeOption" :curData="currentEventType" @change="eventTypeOptionChange" />
+          </div>
+          <div class="dialog-center-one-line">
+            <span>登记类型</span>
+            <SelectSearch ref="registerTypeOption" :itemData="registerTypeOption" :curData="registerType" @change="registerTypeChange" />
           </div>
         </div>
       </van-dialog>
@@ -113,11 +133,54 @@ export default {
   data() {
     return {
       overlayShow: false,
+      dateQueryRangeShow: false,
       isOnlyMe: true,
       backlogEmptyShow: false,
       screenDialogShow: false,
       isShowBacklogTaskNoMoreData: false,
       storageRadio: '1',
+      currentDateRange: '',
+      minDate: new Date(2010, 0, 1),
+      maxDate: new Date(2050, 0, 31),
+      registerType: null,
+      registerTypeOption: [
+        {
+            text: '请选择',
+            value: null
+        },
+        {
+            text: '巡更任务详情页右上角',
+            value: 1
+        },
+        {
+            text: '异常巡查项登记',
+            value: 2
+        },
+        {
+            text: '事件列表',
+            value: 3
+        }
+      ],
+      currentEventType: null,
+      eventTypeOption: [
+        {
+            text: '请选择',
+            value: null
+        },
+        {
+            text: '工程报修',
+            value: 1
+        },
+        {
+            text: '拾金不昧',
+            value: 2
+        },
+        {
+            text: '其他',
+            value: 3
+        }
+      ],
+
       currentRegistrant: null,
       registrantOption: [
         {
@@ -138,7 +201,7 @@ export default {
         }
      ],
       eventTypeShow: false,
-      eventTypeList: ['工程报修','拾金不昧','其它'],
+      eventTypeList: ['工程报修','拾金不昧','其他'],
       backlogTaskList: [
         {
           state: 1,
@@ -162,7 +225,8 @@ export default {
       loadingShow: false,
       queryDataSuccess: false,
       loadText: '加载中',
-      statusBackgroundPng: require("@/common/images/home/status-background.png")
+      statusBackgroundPng: require("@/common/images/home/status-background.png"),
+      dateIconPng: require("@/common/images/home/date-icon.png")
     }
   },
 
@@ -197,6 +261,7 @@ export default {
     beforeCloseDialogEvent (action, done) {
       if (action == 'cancel') {
         this.$refs['registrantOption'].clearSelectValue();
+        this.$refs['eventTypeOption'].clearSelectValue()
         done(false);
         return
       } else {
@@ -206,17 +271,38 @@ export default {
 
     // 登记人下拉框值改变事件
     registrantOptionChange (val) {
-        this.currentRegistrant = val
+      this.currentRegistrant = val
+    },
+
+    // 事件类型下拉框值改变事件
+    eventTypeOptionChange (val) {
+      this.currentEventType = val
+    },
+
+    // 登记类型下拉框值改变事件
+    registerTypeChange (val) {
+      this.registerType = val
+    },
+
+    formatDate(date) {
+      return `${date.getFullYear()}/${date.getMonth() + 1}/${date.getDate()}`;
+    },
+
+    // 日期类型范围选择确定
+    onDateRangeConfirm(date) {
+      const [start, end] = date;
+      this.dateQueryRangeShow = false;
+      this.currentDateRange = `${this.formatDate(start)} - ${this.formatDate(end)}`;
     },
 
     // 事件列表下拉
     initScrollChange () {
-        let boxBackScroll = this.$refs['scrollBacklogTask'];
-        boxBackScroll.addEventListener('scroll',(e)=> {
-            if (Math.ceil(e.srcElement.scrollTop) + e.srcElement.offsetHeight >= e.srcElement.scrollHeight) {
-                console.log('事件列表滚动了',e.srcElement.scrollTop, e.srcElement.offsetHeight, e.srcElement.scrollHeight)
-            }
-        },true)
+      let boxBackScroll = this.$refs['scrollBacklogTask'];
+      boxBackScroll.addEventListener('scroll',(e)=> {
+          if (Math.ceil(e.srcElement.scrollTop) + e.srcElement.offsetHeight >= e.srcElement.scrollHeight) {
+              console.log('事件列表滚动了',e.srcElement.scrollTop, e.srcElement.offsetHeight, e.srcElement.scrollHeight)
+          }
+      },true)
     },
 
     // 任务状态转换
@@ -260,11 +346,11 @@ export default {
     // 事件类型点击事件
     eventTypeClickEvent (item) {
       if ( item == '工程报修') {
-
+        this.$router.push({path: '/repairsRegister'})
       } else if (item == '拾金不昧') {
-
+        this.$router.push({path: '/claimRegister'})
       } else if (item == '其他') {
-
+        this.$router.push({path: '/otherRegister'})
       }
     },
 
@@ -421,7 +507,29 @@ export default {
             /deep/ .vue-dropdown {
               width: 65%;
               border-radius: 6px !important
-            }
+            };
+            .date-range-box {
+              display: flex;
+              justify-content: space-between;
+              font-size: 14px;
+              line-height: 32px;
+              padding: 0 4px;
+              box-sizing: border-box;
+              color: #101010;
+              height: 32px;
+              width: 65%;
+              border-radius: 6px !important;
+              border: 1px solid #BBBBBB;
+              position: relative;
+              img {
+                position: absolute;
+                width: 15px;
+                height: 15px;
+                top: 50%;
+                transform: translateY(-50%);
+                right: 4px
+              }
+            };
           }
         }
       };

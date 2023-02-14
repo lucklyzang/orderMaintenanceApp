@@ -64,7 +64,7 @@
                         imgUrl: require("@/common/images/home/workforce-management.png")
                     },
                     {
-                        name: '留言薄',
+                        name: '留言簿',
                         imgUrl: require("@/common/images/home/guest-book.png")
                     }
                 ],
@@ -102,6 +102,8 @@
                     this.$router.push({path: '/patrolTasklist'})
                 } else if (item.name == '事件登记') {
                     this.$router.push({path: '/eventList'})
+                } else if (item.name == '留言簿') {
+                    this.$router.push({path: '/guestBook'})
                 }
             }
         }

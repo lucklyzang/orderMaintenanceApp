@@ -3,7 +3,7 @@
     <van-loading size="35px" vertical color="#e6e6e6" v-show="loadingShow">{{ loadText }}</van-loading>
     <van-overlay :show="overlayShow" />
     <div class="nav">
-      <van-nav-bar title="事件列表" left-text="返回" left-arrow @click-left="onClickLeft" @click-right="onClickRight" right-text="事件登记" :border="false">
+      <van-nav-bar title="事件列表" left-text="返回" left-arrow @click-left="onClickLeft" @click-right="onClickRight" right-text="事件记录" :border="false">
       </van-nav-bar>
     </div>
     <div class="content">
@@ -99,7 +99,7 @@
           </div>
           <div class="dialog-center-one-line">
             <span>登记人</span>
-            <SelectSearch :isNeedSearch="false" :multiple="true" ref="registrantOption" :itemData="registrantOption" :curData="currentRegistrant" @change="registrantOptionChange" />
+            <SelectSearch :isNeedSearch="true" :multiple="true" ref="registrantOption" :itemData="registrantOption" :curData="currentRegistrant" @change="registrantOptionChange" />
           </div>
           <div class="dialog-center-one-line">
             <span>事件类型</span>
@@ -261,7 +261,8 @@ export default {
     beforeCloseDialogEvent (action, done) {
       if (action == 'cancel') {
         this.$refs['registrantOption'].clearSelectValue();
-        this.$refs['eventTypeOption'].clearSelectValue()
+        this.$refs['eventTypeOption'].clearSelectValue();
+        this.$refs['registerTypeOption'].clearSelectValue();
         done(false);
         return
       } else {

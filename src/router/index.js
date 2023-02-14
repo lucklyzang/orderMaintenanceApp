@@ -26,6 +26,8 @@ const OtherRegister = () =>
     import ('@/pages/eventPage/OtherRegister')
 const ClaimRegister = () =>
     import ('@/pages/eventPage/ClaimRegister')
+const GuestBook = () =>
+    import ('@/pages/guestBookPage/GuestBook')
 Vue.use(Router)
 let baseRoute = [{
         path: '/',
@@ -92,6 +94,12 @@ let baseRoute = [{
         path: '/claimRegister',
         name: 'claimRegister',
         component: ClaimRegister
+
+    },
+    {
+        path: '/guestBook',
+        name: 'guestBook',
+        component: GuestBook
 
     }
 ];

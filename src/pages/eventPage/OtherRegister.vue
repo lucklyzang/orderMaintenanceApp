@@ -310,7 +310,7 @@ export default {
       this.showFindTime = false
     },
 
-     // 图片放大事件
+    // 图片放大事件
     enlareEvent (item) {
       this.currentImgUrl = item;
       this.imgBoxShow = true

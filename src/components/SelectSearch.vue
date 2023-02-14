@@ -10,8 +10,8 @@
                 <van-icon name="search" size="20" />
 			</div>
 			<ul class="list-module">
-				<li v-for ="(item,index) in datalist" @click="clickItem(item)" :key="index" 
-				:class="{'liStyle': (item.value == currentFullValue['value']) && currentFullValue['value'],
+				<li v-for ="(item,index) in datalist" @click="clickItem(item,index)" :key="index" 
+				:class="{'liStyle': !multiple ? (item.value == currentFullValue['value']) && currentFullValue['value'] : item['selected'],
 					'liSelectItemStyle': item.text.indexOf('请选择')!=-1
 					}
 				">
@@ -24,10 +24,10 @@
 				</li>
 			</ul>
 			<div class="tip-nodata" v-show="searchValue.length && !datalist.length">暂无数据!</div>
-			<div class="operation-btn">
+			<!-- <div class="operation-btn" v-if="multiple">
 				<span @click="isShow = false">取消</span>
 				<span @click="sureEvent">确定</span>
-			</div>
+			</div> -->
 		</div>
 	</div>
 </template>
@@ -41,7 +41,7 @@
 			current: '',
 			currentFullValue: null,
 			datalist:[],
-			selectedDataList: [],
+			selectedItem: [],
 			isShow:false
 		}
   },
@@ -70,10 +70,28 @@
   watch: {
     curData: {
         handler: function(newVal, oldVal) {
+			console.log('监听',newVal);
 		   //单选
 		   if (!this.multiple) {
-		     this.current = this.datalist.length > 0 ? this.datalist.filter((item) => { return item.value == newVal})[0]['text'] : '';
-		   	 this.currentFullValue = this.datalist.length > 0 ? this.datalist.filter((item) => { return item.value == newVal})[0] : null
+			 if (newVal == null) {
+				this.current = this.datalist.length > 0 ? this.datalist.filter((item) => { return item.value == newVal})[0]['text'] : '';
+		   	 	this.currentFullValue = this.datalist.length > 0 ? this.datalist.filter((item) => { return item.value == newVal})[0] : null
+			 } else {
+				this.current = this.datalist.length > 0 ? this.datalist.filter((item) => { return item.value == newVal['value']})[0]['text'] : '';
+		   	 	this.currentFullValue = this.datalist.length > 0 ? this.datalist.filter((item) => { return item.value == newVal['value']})[0] : null
+			 }
+		   } else {
+			    if (newVal == null) {
+					this.current = this.datalist.length > 0 ? this.datalist.filter((item) => { return item.value == newVal})[0]['text'] : '';
+				} else {
+					let temporaryArray = [];
+					for (let it of this.datalist) {
+						if (it['selected']) {
+							temporaryArray.push(it['text'])
+						}
+					};
+					this.current = newVal.length > 0 ? temporaryArray.join(',') : '请选择'
+				}
 		   }
         },
         deep: true,
@@ -85,21 +103,31 @@
         },
         deep: true,
 		immediate: true
+    },
+	selectedItem: {
+        handler: function(newVal, oldVal) {
+           if (this.multiple) {
+			   if (this.selectedItem.length == 0) {
+				   this.current = '请选择'
+			   }
+		   }
+        },
+        deep: true,
+		immediate: true
     }
   },
   
   created(){
-	  console.log('值',this.curData,this.itemData);
 		this.datalist = this.itemData;
-		//单选
-		if (!this.multiple) {
-			this.current = this.datalist.filter((item) => { return item.value == this.curData})[0]['text'];
-			this.currentFullValue = this.datalist.filter((item) => { return item.value == this.curData})[0]
-		};
+		this.current = this.datalist.filter((item) => { return item.value == this.curData})[0]['text'];
+		this.currentFullValue = this.datalist.filter((item) => { return item.value == this.curData})[0];
 		//点击组件以外的地方，收起
 		document.addEventListener('click', (e) => {
 			if (!this.$el.contains(e.target)){
-				this.isShow = false
+				this.isShow = false;
+				if (this.multiple) {
+					this.$emit('change',this.selectedItem)
+				}
 			}
 		}, false)
   },
@@ -109,7 +137,11 @@
             if (this.isShow) {
                 this.searchValue = '';
                 this.datalist = this.itemData
-            }
+            } else {
+				if (this.multiple) {
+				 this.$emit('change',this.selectedItem)
+				}
+			}
         },
 
 		search(e){
@@ -119,8 +151,7 @@
 			})
 		},
         
-		clickItem(item){
-			console.log(item);
+		clickItem(item,index){
 			// 单选
 			if (!this.multiple) {
 				this.current = this.datalist.filter((innerItem) => { return innerItem.value == item.value})[0]['text'];
@@ -128,16 +159,22 @@
 				this.isShow = false;
 				this.$emit('change',item)
 			} else {
-				if (item.value == null) { return};
-				if (this.selectedDataList.filter((innerItem) => { return innerItem['value'] == item['value']}).length > 0) {return};
-				this.selectedDataList.push(item)
+				if (item['value'] == null) { return };
+				this.datalist[index]['selected'] = !this.datalist[index]['selected'];
+				this.selectedItem = this.datalist.filter((innerItem) => { return innerItem['selected'] == true });
+				let temporaryArray = [];
+				for (let it of this.selectedItem) {
+					temporaryArray.push(it['text'])
+				};
+				this.current = temporaryArray.join(',')
 			}
 		},
 
 		// 确定事件
 		sureEvent () {
-			this.$emit('change',this.selectedDataList);
-			console.log('多选',this.selectedDataList)
+			this.$emit('change',this.selectedItem);
+			this.isShow = false;
+			console.log('多选',)
 		},
 
 		//供父组件调用的清除选择框值的方法

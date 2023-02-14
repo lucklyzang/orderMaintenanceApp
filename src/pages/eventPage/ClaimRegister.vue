@@ -1,6 +1,6 @@
 <template>
   <div class="page-box" ref="wrapper">
-    <!-- 发现时间 -->
+    <!-- 拾得时间 -->
     <div class="find-time-box">
       <van-popup v-model="showFindTime" position="bottom">
         <van-datetime-picker
@@ -17,6 +17,72 @@
             <div class="button-box">
               <span @click="showFindTime = false">取消</span>
               <span @click="onConDayFirm">确认</span>
+            </div>
+          </template>
+        </van-datetime-picker>
+      </van-popup>
+    </div>
+    <!-- 交接时间 -->
+    <div class="find-time-box">
+      <van-popup v-model="showHandoverTime" position="bottom">
+        <van-datetime-picker
+          v-model="handoverTime"
+          type="datetime"
+          :min-date="minDate"
+          :max-date="maxDate"
+        >
+          <template #default>
+            <h3>交接时间</h3>
+            <van-icon name="cross" size="25" @click="showHandoverTime = false" />
+          </template>
+          <template #columns-bottom>
+            <div class="button-box">
+              <span @click="showHandoverTime = false">取消</span>
+              <span @click="handoverFirm">确认</span>
+            </div>
+          </template>
+        </van-datetime-picker>
+      </van-popup>
+    </div>
+    <!-- 联系时间 -->
+    <div class="find-time-box">
+      <van-popup v-model="showRelationTime" position="bottom">
+        <van-datetime-picker
+          v-model="relationTime"
+          type="datetime"
+          :min-date="minDate"
+          :max-date="maxDate"
+        >
+          <template #default>
+            <h3>联系时间</h3>
+            <van-icon name="cross" size="25" @click="showRelationTime = false" />
+          </template>
+          <template #columns-bottom>
+            <div class="button-box">
+              <span @click="showRelationTime = false">取消</span>
+              <span @click="relationFirm">确认</span>
+            </div>
+          </template>
+        </van-datetime-picker>
+      </van-popup>
+    </div>
+    <!-- 领取时间 -->
+    <div class="find-time-box">
+      <van-popup v-model="showGetTime" position="bottom">
+        <van-datetime-picker
+          v-model="getTime"
+          type="datetime"
+          :min-date="minDate"
+          :max-date="maxDate"
+        >
+          <template #default>
+            <h3>领取时间</h3>
+            <van-icon name="cross" size="25" @click="showGetTime = false" />
+          </template>
+          <template #columns-bottom>
+            <div class="button-box">
+              <span @click="showGetTime = false">取消</span>
+              <span @click="getTimeFirm">确认</span>
             </div>
           </template>
         </van-datetime-picker>
@@ -61,7 +127,7 @@
     </div>
     <div class="nav">
        <van-nav-bar
-        title="事件记录"
+        title="事件登记"
         left-text="返回"
         :left-arrow="true"
         :placeholder="true"
@@ -78,7 +144,13 @@
 			<img :src="statusBackgroundPng" />
 		</div>
       <div class="content-box">
-        <div class="message-box">
+        <div class="step-box">
+          <div v-for="(item,index) in stepData" :key="index">
+            <span>{{ item.stepName }}</span>
+            <img :src="stepStaticPng" alt="" v-show="index != 3">
+          </div>
+        </div>
+        <div class="message-box" v-if="currentStepIndex == 0">
          <div class="select-box event-type">
             <div class="select-box-left">
               <span>*</span>
@@ -154,7 +226,7 @@
                 rows="3"
                 autosize
                 type="textarea"
-                placeholder="请输入备注"
+                placeholder="请输入内容"
               />
             </div>
           </div>
@@ -177,6 +249,192 @@
                         <van-icon name="plus" size="30" color="#101010" />
                     </div>
                 </div>
+          </div>
+        </div>
+        <div class="message-box" v-if="currentStepIndex == 1">
+          <div class="select-box end-select-box">
+            <div class="select-box-left">
+              <span>*</span>
+              <span>交接时间</span>
+            </div>
+            <div class="select-box-right" @click="showHandoverTime = true">
+              <span>{{ getNowFormatDate(handoverTime) }}</span>
+              <van-icon name="arrow" color="#989999" size="20" />
+            </div>
+          </div>
+          <div class="details-site problem-overview">
+            <div class="transport-type-left">
+              <span>*</span>
+              <span>交接地点</span>
+            </div>
+            <div class="transport-type-right">
+              <van-field
+                v-model="connectSite"
+                rows="1"
+                autosize
+                type="textarea"
+                placeholder="请输入"
+              />
+            </div>
+          </div>
+          <div class="signature-box">
+            <div class="signature-left">
+              <span>*</span>
+              <span>交接人签字</span>
+            </div>
+            <div class="signature-right">
+              <span>请签字</span>
+            </div>
+          </div>
+          <div class="signature-box">
+            <div class="signature-left">
+              <span>*</span>
+              <span>保管人签字</span>
+            </div>
+            <div class="signature-right">
+              <span>请签字</span>
+            </div>
+          </div>
+        </div>
+        <div class="message-box" v-if="currentStepIndex == 2">
+          <div class="select-box end-select-box">
+            <div class="select-box-left">
+              <span>*</span>
+              <span>联系时间</span>
+            </div>
+            <div class="select-box-right" @click="showRelationTime = true">
+              <span>{{ getNowFormatDate(relationTime) }}</span>
+              <van-icon name="arrow" color="#989999" size="20" />
+            </div>
+          </div>
+          <div class="details-site problem-overview">
+            <div class="transport-type-left">
+              <span>*</span>
+              <span>联系部门</span>
+            </div>
+            <div class="transport-type-right">
+              <van-field
+                v-model="contactDepartment"
+                rows="1"
+                autosize
+                type="textarea"
+                placeholder="请输入"
+              />
+            </div>
+          </div>
+          <div class="details-site problem-overview">
+            <div class="transport-type-left">
+              <span>*</span>
+              <span>联系人</span>
+            </div>
+            <div class="transport-type-right">
+              <van-field
+                v-model="linkman"
+                rows="1"
+                autosize
+                type="textarea"
+                placeholder="请输入"
+              />
+            </div>
+          </div>
+          <div class="transport-type">
+            <div class="transport-type-left">
+              <span>*</span>
+              <span>联系情况</span>
+            </div>
+            <div class="transport-type-right">
+              <van-field
+                v-model="contactInformation"
+                rows="3"
+                autosize
+                type="textarea"
+                placeholder="可联系失主,告知联系电话"
+              />
+            </div>
+          </div>
+        </div>
+        <div class="message-box" v-if="currentStepIndex == 3">
+          <div class="select-box end-select-box">
+            <div class="select-box-left">
+              <span>*</span>
+              <span>领取时间</span>
+            </div>
+            <div class="select-box-right" @click="showGetTime = true">
+              <span>{{ getNowFormatDate(getTime) }}</span>
+              <van-icon name="arrow" color="#989999" size="20" />
+            </div>
+          </div>
+          <div class="details-site problem-overview">
+            <div class="transport-type-left">
+              <span>*</span>
+              <span>领取地点</span>
+            </div>
+            <div class="transport-type-right">
+              <van-field
+                v-model="getSite"
+                rows="1"
+                autosize
+                type="textarea"
+                placeholder="请输入"
+              />
+            </div>
+          </div>
+          <div class="linkman-message-box" v-for="(item,index) in getMessage" :key="index">
+            <div class="details-site problem-overview">
+              <div class="transport-type-left">
+                <span>*</span>
+                <span>联系人</span>
+              </div>
+              <div class="transport-type-right">
+                <van-field
+                  v-model="item.finalLinkman"
+                  rows="1"
+                  autosize
+                  type="textarea"
+                  placeholder="请输入"
+                />
+              </div>
+            </div>
+            <div class="details-site problem-overview">
+              <div class="transport-type-left">
+                <span>*</span>
+                <span>领取人身份证号</span>
+              </div>
+              <div class="transport-type-right">
+                <van-field
+                  v-model="item.getPersonIdNumber"
+                  rows="1"
+                  autosize
+                  type="textarea"
+                  placeholder="请输入"
+                />
+              </div>
+            </div>
+            <div class="transport-type get-content-describe">
+              <div class="transport-type-left">
+                <span>领取内容描述</span>
+              </div>
+              <div class="transport-type-right">
+                <van-field
+                  v-model="item.getContentDescribe"
+                  rows="3"
+                  autosize
+                  type="textarea"
+                  placeholder="可联系失主,告知联系电话"
+                />
+              </div>
+            </div>
+            <div class="signature-box">
+              <div class="signature-left">
+                <span>*</span>
+                <span>领取人签字</span>
+              </div>
+              <div class="signature-right">
+                <span>请签字</span>
+              </div>
+            </div>
+            <img :src="addIconPng" alt="" @click="addLinkmanMessage" v-if="index == 0">
+            <img :src="subtractIconPng" alt="" @click="subtractLinkmanMessage(index)" v-if="index != 0">
           </div>
         </div>
         <div class="btn-box">
@@ -206,6 +464,7 @@ export default {
   mixins:[mixinsDeviceReturn],
   data() {
     return {
+      currentStepIndex: 3,
       materialShow: false,
       loadingShow: false,
       eventType: '拾金不昧',
@@ -213,6 +472,7 @@ export default {
       problemPicturesList: [],
       minDate: new Date(2010, 0, 1),
       maxDate: new Date(2050, 10, 1),
+      showFindTime: false,
       currentFindTime: new Date(),
       currentImgUrl: '',
       photoBox: false,
@@ -227,6 +487,31 @@ export default {
       taskDescribe: '',
       transportNumberValue: '',
 
+      showHandoverTime: false,
+      handoverTime: new Date(),
+      connectSite: '',
+      connectSignature: '',
+      keeperSignature: '',
+
+      showRelationTime: false,
+      relationTime: new Date(),
+      contactDepartment: '',
+      linkman: '',
+      contactInformation: '',
+
+      showGetTime: false,
+      getTime: new Date(),
+      getSite: '',
+      getMessage: [
+        {
+          finalLinkman: '',
+          getPersonIdNumber: '',
+          getContentDescribe: '',
+          getPersonSignature: ''
+        }
+      ],
+
+
       goalDepartmentOption: [],
       showGoalDepartment: false,
       currentGoalDepartment: '请选择',
@@ -240,7 +525,25 @@ export default {
       showStructure: false,
       currentStructure: '请选择',
       overlayShow: false,
-      statusBackgroundPng: require("@/common/images/home/status-background.png")
+      stepData: [
+        {
+          stepName: '登记'
+        },
+        {
+          stepName: '交接'
+        },
+        {
+          stepName: '联系'
+        },
+        {
+          stepName: '领取'
+        }
+      ],
+      statusBackgroundPng: require("@/common/images/home/status-background.png"),
+      stepStaticPng: require("@/common/images/home/step-static.png"),
+      stepActivePng: require("@/common/images/home/step-active.png"),
+      addIconPng: require("@/common/images/home/add-icon.png"),
+      subtractIconPng: require("@/common/images/home/subtract-icon.png")
     }
   },
 
@@ -289,12 +592,42 @@ export default {
       this.$router.push({ path: "/eventList"})
     },
 
-    // 任务开始事件弹框确认事件
-     onConDayFirm() {
+    // 拾的时间弹框确认事件
+    onConDayFirm() {
       this.showFindTime = false
     },
 
-     // 图片放大事件
+    // 交接时间弹框确认事件
+    handoverFirm() {
+      this.showHandoverTime = false
+    },
+
+    // 联系时间弹框确定事件
+    relationFirm () {
+      this.showRelationTime = false
+    },
+
+    // 领取时间弹框确定事件
+    getTimeFirm () {
+      this.showGetTime = false
+    },
+
+    // 领取步骤添加联系人
+    addLinkmanMessage () {
+      this.getMessage.push({
+        finalLinkman: '',
+        getPersonIdNumber: '',
+        getContentDescribe: '',
+        getPersonSignature: ''
+      })
+    },
+
+    // 领取步骤删除联系人
+    subtractLinkmanMessage (index) {
+      this.getMessage.splice(index,1)
+    },
+
+    // 图片放大事件
     enlareEvent (item) {
       this.currentImgUrl = item;
       this.imgBoxShow = true
@@ -1225,6 +1558,50 @@ export default {
         height: 0;
         background: #f7f7f7;
         z-index: 10;
+        .step-box {
+          width: 100%;
+          height: 46px;
+          background: #fff;
+          box-shadow: 0px 1px 3px 0px rgba(47, 132, 211, 0.49);
+          margin-bottom: 6px;
+          display: flex;
+          align-items: center;
+          > div {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            &:last-child {
+              width: 90px !important;
+              flex: 0 !important
+            };
+            span {
+              display: inline-block;
+              font-size: 14px;
+              margin-right: 14px;
+              width: 48px;
+              text-align: center;
+              height: 46px;
+              line-height: 46px;
+              color: #8E9397
+            };
+            .currentSpanStyle {
+              color: #289E8E;
+              font-size: 16px;
+              font-weight: bold;
+              .bottom-border-1px(#3B9DF9,6px)
+            };
+            .spanStyle {
+              color: #289E8E;
+              font-size: 14px;
+              border-bottom: none
+            }
+            img {
+              width: 24px;
+              height: 24px
+            }
+          }
+        };
         .message-box {
           flex: 1;
           width: 100%;
@@ -1285,6 +1662,80 @@ export default {
               }
             }
           };
+          .signature-box {
+            width: 100%;
+            padding: 8px 6px;
+            box-sizing: border-box;
+            background: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 14px;
+            margin-top: 6px;
+            .signature-left {
+              padding-right: 10px;
+              box-sizing: border-box;
+              >span {
+                &:nth-child(1) {
+                  color: red
+                };
+                &:nth-child(2) {
+                  color: #9E9E9A;
+                  padding-right: 6px;
+                  box-sizing: border-box
+                }
+              }
+            };
+            .signature-right {
+              display: flex;
+              width: 110px;
+              height: 41px;
+              background: #F9F9F9;
+              align-items: center;
+              justify-content: center;
+              span {
+                font-size: 14px;
+                color: #BBBBBB
+              };
+              img {
+                width: 63px;
+                height: 30px
+              }
+            }
+          };
+          .linkman-message-box {
+            padding: 4px 40px 4px 0;
+            box-sizing: border-box;
+            margin-top: 6px;
+            position: relative;
+            background: #fff;
+            >img {
+              width: 24px;
+              position: absolute;
+              height: 24px;
+              right: 8px;
+              top: 50%;
+              transform: translateY(-50%)
+            };
+            .details-site {
+              .transport-type-left {
+                width: auto !important
+              }
+            };
+            .get-content-describe{
+              .transport-type-left {
+                >span {
+                  color: #9E9E9A !important;
+                  padding-left: 10px;
+                  box-sizing: border-box
+                }
+              };
+              .transport-type-right {
+                padding-left: 10px;
+                box-sizing: border-box
+              }
+            }
+          };
           .end-select-box {
               .select-box-right {
                 padding-right: 0 !important
@@ -1295,7 +1746,7 @@ export default {
           };
           .details-site {
             width: 100%;
-            padding: 10px 6px;
+            padding: 8px 6px;
             box-sizing: border-box;
             background: #fff;
             display: flex;
@@ -1303,7 +1754,8 @@ export default {
             font-size: 14px;
             margin-top: 6px;
             .transport-type-left {
-              padding-right: 10px;
+              width: 25%;
+              padding-right: 5px;
               box-sizing: border-box;
               >span {
                 &:nth-child(1) {
@@ -1339,7 +1791,7 @@ export default {
             margin-top: 6px;
             .transport-type-left {
               width: 100%;
-              margin-bottom: 8px;
+              margin-bottom: 12px;
               >span {
                 &:nth-child(1) {
                   color: red

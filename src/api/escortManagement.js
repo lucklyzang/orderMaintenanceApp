@@ -2,7 +2,7 @@ import request from '@/utils/request'
 // 获取所有任务列表
 export function getAllTaskList(data) {
 	return request({
-	    url: 'nblink/patrol/checkTask/app/all',
+	    url: 'patrol/checkTask/app/page',
 	    method: 'get',
         params: data
 	})
@@ -11,24 +11,24 @@ export function getAllTaskList(data) {
 // 获取任务详情
 export function getTaskDetails(taskId) {
 	return request({
-	    url: `nblink/patrol/checkTask/app/one/${taskId}`,
+	    url: `patrol/checkTask/app/detail/one/${taskId}`,
 	    method: 'get'
 	})
 }
 
-// 扫描科室二维码
-export function departmentScanCode(data) {
+// 打卡科室(包括蓝牙和手动打卡)
+export function clockingsSection(data) {
 	return request({
-	    url: 'nblink/patrol/checkTask/app/scan',
+	    url: 'patrol/checkTask/app/punch',
 	    method: 'put',
         data
 	})
 }
 
-// 已完成任务点击科室扫描二维码
-export function departmentScanCodeFinsh(data) {
+// 已完成打卡的科室点击
+export function departmentClockFinsh(data) {
 	return request({
-	    url: 'nblink/patrol/checkTask/app/for/finish',
+	    url: 'patrol/checkTask/app/hasSpace/itemsDetail',
 	    method: 'get',
         params: data
 	})
@@ -37,16 +37,16 @@ export function departmentScanCodeFinsh(data) {
 // 检查项通过
 export function checkItemPass(data) {
 	return request({
-	    url: 'nblink/patrol/checkResult/check/OK',
+	    url: 'patrol/checkResult/check/2Yes',
 	    method: 'put',
         data
 	})
 }
 
-// 检查项通过
+// 检查项不通过
 export function checkItemNoPass(data) {
 	return request({
-	    url: 'nblink/patrol/checkResult/check/NO',
+	    url: 'patrol/checkResult/check/2No',
 	    method: 'put',
         data
 	})
@@ -100,7 +100,7 @@ export function getTaskProblemWorkerOrderDetails(data) {
 // 任务完成
 export function taskComplete(data) {
 	return request({
-	    url: 'nblink/patrol/checkTask/app/confirm',
+	    url: 'patrol/checkTask/app/confirm',
 	    method: 'put',
         data
 	})

@@ -13,16 +13,16 @@
         <div class="content-box">
           <div class="current-area">
             <van-icon name="location" color="#1684FC" size="25" />
-            <span>当前区域: 沙克撒就</span>
+            <span>当前区域: {{ patrolTaskListMessage.needSpaces.filter((item)=> { return item.id == departmentCheckList['depId'] })[0]['name'] }}</span>
           </div>
           <div class="patrol-item-box">
             <div class="patrol-item-list">
               <div class="patrol-item-list-left">
                   <span>巡查项:</span>
-                  <span>设施是否安全可用</span>
+                  <span>{{ enterProblemRecordMessage['issueInfo']['name'] }}</span>
               </div>
               <div class="patrol-item-list-right">
-                  <van-radio-group v-model="checkResultValue" direction="horizontal">
+                  <van-radio-group v-model="checkResultValue" direction="horizontal" disabled>
                       <van-radio name="1">
                           <template #icon="props">
                               <img class="img-icon" :src="props.checked ? checkCheckboxPng : checkboxPng" />
@@ -82,7 +82,7 @@
         </div>
         <div class="inspection-item">
           <span>巡查项:</span>
-          <span>设施是否安全可用</span>
+          <span>{{ enterProblemRecordMessage['issueInfo']['name'] }}</span>
         </div>
         <div class="dialog-center">
           <p v-for="(item,index) in eventTypeList" :key="index" @click="eventTypeClickEvent(item)">
@@ -182,7 +182,7 @@ export default {
   watch: {},
 
   computed: {
-    ...mapGetters(["userInfo","patrolTaskListMessage","enterProblemRecordMessage"])
+    ...mapGetters(["userInfo","patrolTaskListMessage","departmentCheckList","enterProblemRecordMessage"])
   },
 
   methods: {

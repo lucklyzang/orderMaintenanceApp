@@ -1,6 +1,6 @@
 <template>
   <div class="page-box" ref="wrapper">
-    <div class="add-message">
+    <div class="add-message" @click="addMessageEvent">
       <img :src="addMessagePng" alt="">
     </div>
     <div class="in-positioning" v-show="positioningShow">
@@ -37,12 +37,12 @@
             </div>
             <div class="location task-create-time">
                 <span>预计开始时间</span>
-                <span>{{ patrolTaskListMessage.createTime }}</span>
+                <span>{{ patrolTaskListMessage.planStartTimeForApp }}</span>
             </div>
             <div class="patrol-site">
                 <div>巡更地点</div>
                 <div class="patrol-site-list-box" v-if="queryDataSuccess">
-                    <div class="patrol-site-list" :class="{'patrolSiteListStyle': patrolTaskListMessage.hasArray.indexOf(item.name) > -1 }" v-for="(item,index) in patrolTaskListMessage.needSpaces" :key="index" @click="patrolSiteEvent(item)">
+                    <div class="patrol-site-list" :class="{'patrolSiteListStyle': patrolTaskListMessage.allCheckItemOkDepArr.indexOf(item.id) != -1 }" v-for="(item,index) in patrolTaskListMessage.needSpaces" :key="index" @click="patrolSiteEvent(item)">
                       {{ item.name }}
                     </div>
                 </div>
@@ -84,9 +84,7 @@
         </div>
         <div class="dialog-center">
           <van-radio-group v-model="manualClockingReasonRadio">
-            <van-radio name="1">手机没有信号</van-radio>
-            <van-radio name="2">手机有信号但打卡失败</van-radio>
-            <van-radio name="3">其它</van-radio>
+            <van-radio :name="item.value" v-for="(item,index) in manualClockingReasonRadioList" :key="index">{{ item.text }}</van-radio>
           </van-radio-group>
         </div>
       </van-dialog>
@@ -114,7 +112,7 @@
 <script>
 import NavBar from "@/components/NavBar";
 import { mapGetters, mapMutations } from "vuex";
-import {getTaskDetails, departmentScanCode, departmentScanCodeFinsh} from '@/api/escortManagement.js'
+import {getTaskDetails, clockingsSection, departmentClockFinsh} from '@/api/escortManagement.js'
 import {mixinsDeviceReturn} from '@/mixins/deviceReturnFunction';
 import ScrollSelection from "@/components/ScrollSelection";
 export default {
@@ -129,38 +127,26 @@ export default {
       overlayShow: false,
       eventTypeShow: false,
       manualClockingReasonRadio: '1',
+      manualClockingReasonRadioList:[
+        {
+          value: '1',
+          text: '手机没有信号'
+        },
+        {
+          value: '2',
+          text: '手机有信号但打卡失败'
+        },
+        {
+          value: '3',
+          text: '其它'
+        }
+      ],
       manualclockingReasonShow: false,
       locationFailShow: false,
       clockingPlaceShow: false,
       currentClockingPlace: '',
       eventTypeList: ['工程报修','拾金不昧','其它'],
-      clockingPlaceOption: [
-        {
-          id: 0,
-          text: '啊飒飒',
-          value: 1
-        },
-        {
-          id: 1,
-          text: '啊飒飒萨',
-          value: 2
-        },
-        {
-          id: 2,
-          text: '啊飒飒vcv',
-          value: 3
-        },
-        {
-          id: 3,
-          text: '啊飒飒湖广会馆2',
-          value: 4
-        },
-        {
-          id: 4,
-          text: '啊飒飒CDC的',
-          value: 5
-        }
-      ],
+      clockingPlaceOption: [],
       positioningShow: false,
       loadingShow: false,
       queryDataSuccess: false,
@@ -173,20 +159,11 @@ export default {
   },
 
   mounted() {
-    this.$Alert({message:"请先完成巡更!",duration:3000,type:'fail'});
     console.log('大飒飒',this.patrolTaskListMessage);
     // 控制设备物理返回按键
     this.deviceReturn("/patrolTasklist");
     // 获取任务详情
-    this.queryTaskDetails();
-    // 二维码回调方法绑定到window下面,提供给外部调用
-    let me = this;
-    window['scanQRcodeCallback'] = (code) => {
-      me.scanQRcodeCallback(code);
-    };
-    window['scanQRcodeCallbackCanceled'] = () => {
-      me.scanQRcodeCallbackCanceled();
-    }
+    this.queryTaskDetails()
   },
 
   watch: {},
@@ -219,6 +196,11 @@ export default {
       }
     },
 
+    // 发布留言事件
+    addMessageEvent () {
+      this.$router.push({path: '/postMessage'})
+    },
+
     // 打卡地点弹框确认事件
     clockingPlaceSureEvent (val) {
       if (val) {
@@ -243,17 +225,18 @@ export default {
 
     // 巡查地点点击事件
     patrolSiteEvent (item) {
-      // 未完成扫码校验的科室不允许点击进入
-      if (this.patrolTaskListMessage.hasArray.indexOf(item.name) == -1) {
-        return
-      };
-
-     // 任务已完成
+      // 该任务已完成
       if (this.patrolTaskListMessage.state == 4) {
-        this.codeDepartmentFinsh(item.id,'加载中')
+        this.departmentFinshClock(item.id,'加载中')
       } else {
-        this.codeDepartmentNoFinsh(item.id,'加载中')
-      }
+        // 该科室对应巡查项未全部勾选完毕
+        if (this.patrolTaskListMessage.allCheckItemOkDepArr.indexOf(item.id) == -1) {
+          this.$Alert({message:"请先完成巡更!",duration:3000,type:'fail'})
+        } else {
+          // 该科室对应巡查项全部勾选完毕
+          this.departmentFinshClock(item.id,'加载中')
+        }
+      }   
     },
 
     // 手动打卡事件
@@ -282,14 +265,14 @@ export default {
 
     // 完成任务事件
     completeTaskEvent () {
-      if (this.patrolTaskListMessage['needArray'].length > 0) {
+      if (this.patrolTaskListMessage['needSpaces'].length != this.patrolTaskListMessage['allCheckItemOkDepArr'].length) {
         this.$toast({
           type: 'fail',
           message: '请完成所有巡查区域!'
         });
         return
       };
-      this.$router.push({path: '/workOrderElectronicSignature'})
+      this.$router.push({path: '/electronicSignaturePage'})
     },
 
     // 获取任务详情
@@ -306,7 +289,16 @@ export default {
           this.loadingShow = false;
           this.overlayShow = false;
           this.queryDataSuccess = true;
-          this.changePatrolTaskListMessage(res.data.data)
+          this.changePatrolTaskListMessage(res.data.data);
+          // 选择打卡地点弹框的数据
+          this.clockingPlaceOption = [];
+          for (let i = 0,len = this.patrolTaskListMessage['needSpaces'].length; i < len; i++) {
+            this.clockingPlaceOption.push({
+              id: i,
+              text: this.patrolTaskListMessage['needSpaces'][i]['name'],
+              value: this.patrolTaskListMessage['needSpaces'][i]['id']
+            })
+          }
         } else {
           this.$toast({
             type: 'fail',
@@ -324,15 +316,19 @@ export default {
       })
     },
 
-    // 任务未完成扫码
-    codeDepartmentNoFinsh (depId,text) {
+    // 打卡(手动和蓝牙)
+    codeDepartmentNoFinsh (depId,text,depName,punchCardType,punchCardReason='') {
       this.loadingShow = true;
       this.overlayShow = true;
       this.loadText = text;
-      departmentScanCode({
+      clockingsSection({
         taskId: this.patrolTaskListMessage.id, //当前任务id
         depId, // 当前扫描科室id
-        workerId: this.userInfo.id // 当前登陆员工id
+        workerId: this.userInfo.id, // 当前登陆员工id
+        proId: this.userInfo.proIds[0], // 所属项目
+        system: 4, // 所属系统
+        punchCardReason, //如果是蓝牙连接，可以传空串
+        punchCardType //打卡类型(1:蓝牙 2:手动)
       }).then((res) => {
         if (res && res.data.code == 200) {
           this.loadingShow = false;
@@ -362,15 +358,17 @@ export default {
       })
     },
 
-    // 任务完成扫码
-    codeDepartmentFinsh (depId,text) {
+    // 已打卡成功的科室获取寻常项详情
+    departmentFinshClock (depId,text) {
       this.loadingShow = true;
       this.overlayShow = true;
       this.loadText = text;
-      departmentScanCodeFinsh({
+      departmentClockFinsh({
         taskId: this.patrolTaskListMessage.id, //当前任务id
         depId, // 当前扫描科室id
-        workerId: this.userInfo.id // 当前登陆员工id
+        workerId: this.userInfo.id, // 当前登陆员工id
+        proId: this.userInfo.proIds[0], // 所属项目
+        system: 4 // 所属系统
       }).then((res) => {
         if (res && res.data.code == 200) {
           this.loadingShow = false;
@@ -411,7 +409,12 @@ export default {
 
     // 手动打卡原因弹框确认事件
     manualclockingReasonSure () {
+      this.codeDepartmentNoFinsh (this.currentClockingPlace['value'],'加载中',this.currentClockingPlace['text'],2,this.manualClockingReasonRadioList.filter((item) => { return item.value == this.manualClockingReasonRadio})[0]['name'])
+    },
 
+    // 蓝牙连接回调
+    bluetoothConnectionCallback () {
+      this.codeDepartmentNoFinsh (this.currentClockingPlace['value'],'加载中',this.currentClockingPlace['text'],1)
     },
 
     // 手动打卡原因弹框关闭事件
@@ -424,36 +427,6 @@ export default {
     manualclockingReasonCancel () {
       this.manualclockingReasonShow = false;
       this.clockingPlaceShow = true
-    },
-
-    // 扫码科室校验
-    codeDepartment (depId) {
-      // 任务已完成
-      if (this.patrolTaskListMessage.state == 4) {
-        this.codeDepartmentFinsh(depId,'校验中')
-      } else {
-        this.codeDepartmentNoFinsh(depId,'校验中')
-      }
-    },
-
-    // 摄像头取消扫码后的回调
-    scanQRcodeCallbackCanceled () {
-    },
-
-    // 摄像头扫码后的回调
-    scanQRcodeCallback(code) {
-      if (code) {
-        let codeData = code.split('|');
-        if (codeData.length > 0) {
-          this.codeDepartment(codeData[0])
-        }
-      } else {
-        this.$dialog.alert({
-          message: '当前没有扫描到任何信息,请重新扫描'
-        }).then(() => {
-          this.scanQRCodeEvent()
-        });
-      }
     },
 
     // 任务集类型转换

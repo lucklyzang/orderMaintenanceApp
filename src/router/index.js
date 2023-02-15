@@ -8,6 +8,8 @@ const Login = () =>
     import ('@/pages/Login')
 const MyInfo = () =>
     import ('@/pages/MyInfo')
+const ElectronicSignaturePage = () =>
+    import ('@/pages/ElectronicSignaturePage')
 const PatrolTasklist = () =>
     import ('@/pages/patrolTask/PatrolTasklist')
 const WorkOrderDetails = () =>
@@ -16,8 +18,6 @@ const ProblemRecord = () =>
     import ('@/pages/patrolTask/ProblemRecord')
 const AreaPatrolDetails = () =>
     import ('@/pages/patrolTask/AreaPatrolDetails')
-const WorkOrderElectronicSignature = () =>
-    import ('@/pages/patrolTask/WorkOrderElectronicSignature')
 const EventList = () =>
     import ('@/pages/eventPage/EventList')
 const RepairsRegister = () =>
@@ -28,6 +28,8 @@ const ClaimRegister = () =>
     import ('@/pages/eventPage/ClaimRegister')
 const GuestBook = () =>
     import ('@/pages/guestBookPage/GuestBook')
+const PostMessage = () =>
+    import ('@/pages/guestBookPage/postMessage')
 Vue.use(Router)
 let baseRoute = [{
         path: '/',
@@ -38,6 +40,11 @@ let baseRoute = [{
         path: '/home',
         name: 'home',
         component: Home
+    },
+    {
+        path: '/electronicSignaturePage',
+        name: 'electronicSignaturePage',
+        component: ElectronicSignaturePage
     },
     {
         path: '/myInfo',
@@ -68,11 +75,6 @@ let baseRoute = [{
         }
     },
     {
-        path: '/workOrderElectronicSignature',
-        name: 'workOrderElectronicSignature',
-        component: WorkOrderElectronicSignature
-    },
-    {
         path: '/eventList',
         name: 'eventList',
         component: EventList
@@ -100,6 +102,12 @@ let baseRoute = [{
         path: '/guestBook',
         name: 'guestBook',
         component: GuestBook
+
+    },
+    {
+        path: '/postMessage',
+        name: 'postMessage',
+        component: PostMessage
 
     }
 ];

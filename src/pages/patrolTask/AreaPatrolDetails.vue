@@ -158,7 +158,7 @@ export default {
 
     // 确定退出
     quitSure () {
-
+      this.$router.push({path: '/workOrderDetails'})
     },
 
     // 取消退出
@@ -175,7 +175,7 @@ export default {
       this.loadingShow = true;
       this.overlayShow = true;
       this.loadText = '提交中';
-      checkItemPass({resultId:item.resultId}).then((res) => {
+      checkItemPass({resultId:item.resultId,workerName: this.userInfo.name}).then((res) => {
         if (res && res.data.code == 200) {
           this.loadingShow = false;
           this.overlayShow = false;
@@ -207,65 +207,76 @@ export default {
 
     // 不通过事件
     noPassEvent (event,item,index) {
-      // 已完成的任务且该检查项最终结果选为×,点击后直接进入检查项详情
-      if (this.patrolTaskListMessage.state == 4 && this.departmentCheckList['checkItemList'][index]['checkResult'] == 3) {
-        //保存进入问题记录页的相关信息
-        let temporaryInfo = this.enterProblemRecordMessage;
-        temporaryInfo['isAllowOperation'] = true;
-        temporaryInfo['enterProblemRecordPageSource'] = '/areaPatrolDetails';
-        temporaryInfo['issueInfo'] = item;
-        temporaryInfo['index'] = index; 
-        this.changeEnterProblemRecordMessage(temporaryInfo);
-        this.$router.push({path: '/problemRecord'})
-        return
-      };
-      if (this.patrolTaskListMessage.state == 4 && this.departmentCheckList['checkItemList'][index]['checkResult'] == 1) {
-        return
-      };
-      this.loadingShow = true;
-      this.overlayShow = true;
-      this.loadText = '提交中';
-      checkItemNoPass({resultId:item.resultId}).then((res) => {
-        if (res && res.data.code == 200) {
-          this.loadingShow = false;
-          this.overlayShow = false;
-          this.$toast({
-            type: 'success',
-            message: '反馈成功'
-          });
+      // 已完成的任务
+      if (this.patrolTaskListMessage.state == 4) {
+        // 该检查项最终结果选为×,点击后直接进入异常检查项事件列表页
+        if (this.departmentCheckList['checkItemList'][index]['checkResult'] == 3) {
           //保存进入问题记录页的相关信息
           let temporaryInfo = this.enterProblemRecordMessage;
           temporaryInfo['isAllowOperation'] = true;
           temporaryInfo['enterProblemRecordPageSource'] = '/areaPatrolDetails';
           temporaryInfo['issueInfo'] = item;
-          temporaryInfo['id'] = res.data.data ? res.data.data.id : null;
           temporaryInfo['index'] = index; 
           this.changeEnterProblemRecordMessage(temporaryInfo);
           this.$router.push({path: '/problemRecord'})
         } else {
+          // 该检查项最终结果选为√,点击后不做处理
+          return
+        }
+      } else {
+        // 未完成的任务
+        this.loadingShow = true;
+        this.overlayShow = true;
+        this.loadText = '提交中';
+        checkItemNoPass({resultId:item.resultId,workerName: this.userInfo.name}).then((res) => {
+          if (res && res.data.code == 200) {
+            this.loadingShow = false;
+            this.overlayShow = false;
+            this.$toast({
+              type: 'success',
+              message: '反馈成功'
+            });
+            //保存进入问题记录页的相关信息
+            let temporaryInfo = this.enterProblemRecordMessage;
+            temporaryInfo['isAllowOperation'] = true;
+            temporaryInfo['enterProblemRecordPageSource'] = '/areaPatrolDetails';
+            temporaryInfo['issueInfo'] = item;
+            temporaryInfo['id'] = res.data.data ? res.data.data.id : null;
+            temporaryInfo['index'] = index; 
+            this.changeEnterProblemRecordMessage(temporaryInfo);
+            // 第一次点击X，直接选择事件类型进行登记
+            if (item['checkResult'] == 0 || item['checkResult'] == 1) {
+              this.eventTypeShow = true
+            } else {
+              // 第二次及以上再点击X，进入异常巡查项事件列表页
+              this.$router.push({path: '/problemRecord'})
+            };
+            // 更改该检查项选中状态
+            let tempraryMessage = deepClone(this.departmentCheckList);
+            tempraryMessage['checkItemList'][index]['checkResult'] = '3';
+            this.changeDepartmentCheckList(tempraryMessage)
+          } else {
+            this.$toast({
+              type: 'fail',
+              message: res.data.msg
+            })
+          }
+        })
+        .catch((err) => {
+          this.loadingShow = false;
+          this.overlayShow = false;
           this.$toast({
             type: 'fail',
-            message: res.data.msg
+            message: err
           })
-        }
-      })
-      .catch((err) => {
-        this.loadingShow = false;
-        this.overlayShow = false;
-        this.$toast({
-          type: 'fail',
-          message: err
         })
-      })
+      }
     },
 
     // 确认事件
     sureEvent () {
       if (this.departmentCheckList.checkItemList.some((item) => { return item.checkResult == 0})) {
-        this.$toast({
-          type: 'fail',
-          message: '请完成所有检查项'
-        })
+      this.quitInfoShow = true;
         return
       };
       this.loadingShow = true;

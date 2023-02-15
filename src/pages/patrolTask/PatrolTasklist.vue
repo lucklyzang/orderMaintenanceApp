@@ -3,7 +3,8 @@
     <van-loading size="35px" vertical color="#e6e6e6" v-show="loadingShow">加载中...</van-loading>
     <van-overlay :show="overlayShow" z-index="100000" />
     <div class="nav">
-        <NavBar path="/home" title="巡更任务" />
+        <van-nav-bar title="巡更任务" left-text="返回" left-arrow @click-left="onClickLeft" @click-right="onClickRight" right-text="留言簿" :border="false">
+        </van-nav-bar>
     </div>
     <div class="content">
         <div class="content-top-area">
@@ -14,7 +15,7 @@
                 <van-tab title="待办任务" name="backlogTask">
                     <van-empty description="暂无数据" v-show="backlogEmptyShow" />
                     <div class="backlog-task-list-box" ref="scrollBacklogTask" v-show="!backlogEmptyShow">
-                        <div class="backlog-task-list" v-for="(item,index) in backlogTaskList" :key="index">
+                        <div class="backlog-task-list" v-for="(item,index) in fullBacklogTaskList" :key="index">
                             <div class="backlog-task-top">
                                 <div class="backlog-task-top-left">
                                     <span>任务编号</span>
@@ -35,11 +36,11 @@
                                 </div>
                                 <div class="task-create-time">
                                     <span>预计开始时间:</span>
-                                    <span>{{ item.createTime }}</span>
+                                    <span>{{ item.planStartTimeForApp }}</span>
                                 </div>
                                 <div class="complete-patrol-area">
                                     <span>已完成巡查区域:</span>
-                                    <span>{{ `${item.finishSpacesCount}/${item.finishSpacesCount + item.noFinishSpacesCount}` }}</span>
+                                    <span>{{ `${item.finishSpacesCount}/${item.allSpacesCount}` }}</span>
                                 </div>
                                 <div class="right-arrow-box" @click="taskDetailsEvent(item)">
                                     <van-icon name="arrow" color="#1684FC" size="24" />
@@ -52,7 +53,7 @@
                 <van-tab title="历史任务" name="completetedTask">
                     <van-empty description="暂无数据" v-show="completedEmptyShow" />
                     <div class="backlog-task-list-box" ref="scrollCompletetedTask" v-show="!completedEmptyShow">
-                        <div class="backlog-task-list" v-for="(item,index) in completedTaskList" :key="index">
+                        <div class="backlog-task-list" v-for="(item,index) in fullCompletedTaskList" :key="index">
                             <div class="backlog-task-top">
                                 <div class="backlog-task-top-left">
                                     <span>任务编号</span>
@@ -73,11 +74,11 @@
                                 </div>
                                 <div class="task-create-time">
                                     <span>预计开始时间:</span>
-                                    <span>{{ item.createTime }}</span>
+                                    <span>{{ item.planStartTimeForApp }}</span>
                                 </div>
                                 <div class="complete-patrol-area">
                                     <span>已完成巡查区域:</span>
-                                    <span>{{ `${item.finishSpacesCount}/${item.finishSpacesCount + item.noFinishSpacesCount}` }}</span>
+                                    <span>{{ `${item.finishSpacesCount}/${item.allSpacesCount}` }}</span>
                                 </div>
                                 <div class="right-arrow-box" @click="taskDetailsEvent(item)">
                                     <van-icon name="arrow" color="#1684FC" size="24" />
@@ -109,10 +110,15 @@ export default {
       overlayShow: false,
       backlogEmptyShow: false,
       completedEmptyShow: false,
+      totalCount: '',
+      currentPage: 1,
+      pageSize: 10,
       isShowBacklogTaskNoMoreData: false,
       isShowCompletetedTaskNoMoreData: false,
       activeName: 'backlogTask',
       statusBackgroundPng: require("@/common/images/home/status-background.png"),
+      fullBacklogTaskList: [],
+      fullCompletedTaskList: [],
       backlogTaskList: [],
       completedTaskList: []
     }
@@ -136,12 +142,12 @@ export default {
   beforeRouteEnter(to, from, next) {
     next(vm=>{
       if (from.path == '/home') {
-        vm.queryTaskList(1)
+        vm.queryTaskList(1,vm.currentPage,vm.pageSize)
       } else {
         if (vm.taskType.taskTypeName) {
             vm.activeName = vm.taskType.taskTypeName
         };
-        vm.queryTaskList(vm.taskType.taskTypeName ? vm.taskType.taskTypeName == 'backlogTask' ? 1 : 4 : 1)
+        vm.queryTaskList(vm.taskType.taskTypeName ? vm.taskType.taskTypeName == 'backlogTask' ? 1 : 2 : 1,vm.currentPage,vm.pageSize)
       }
 	});
     next() 
@@ -155,6 +161,14 @@ export default {
 
   methods: {
     ...mapMutations(["changePatrolTaskListMessage","changeTaskType"]),
+
+    onClickLeft () {
+        this.$router.push({path: '/home'})
+    },
+
+    onClickRight () {
+        this.$router.push({path: '/postMessage'})
+    },
 
     // 任务状态转换
     taskStatusTransition (num) {
@@ -199,6 +213,13 @@ export default {
             let boxBackScroll = this.$refs['scrollBacklogTask'];
             boxBackScroll.addEventListener('scroll',(e)=> {
                 if (Math.ceil(e.srcElement.scrollTop) + e.srcElement.offsetHeight >= e.srcElement.scrollHeight) {
+                    let totalPage = Math.ceil(this.totalCount/this.pageSize);
+                    if (this.currentPage >= totalPage) {
+                        this.isShowBacklogTaskNoMoreData = true
+                    } else {
+                        this.currentPage = this.currentPage + 1;
+                        this.queryTaskList(1,this.currentPage,this.pageSize);
+                    };
                     console.log('待办滚动了',e.srcElement.scrollTop, e.srcElement.offsetHeight, e.srcElement.scrollHeight)
                 }
             },true)
@@ -209,6 +230,13 @@ export default {
             let boxCompleteteScroll = this.$refs['scrollCompletetedTask'];
             boxCompleteteScroll.addEventListener('scroll',(e)=> {
                 if (Math.ceil(e.srcElement.scrollTop) + e.srcElement.offsetHeight >= e.srcElement.scrollHeight) {
+                    let totalPage = Math.ceil(this.totalCount/this.pageSize);
+                    if (this.currentPage >= totalPage) {
+                        this.isShowCompletetedTaskNoMoreData = true
+                    } else {
+                        this.currentPage = this.currentPage + 1;
+                        this.queryTaskList(2,this.currentPage,this.pageSize);
+                    }
                     console.log('完成滚动了',e.srcElement.scrollTop, e.srcElement.offsetHeight, e.srcElement.scrollHeight)
                 }
             },true)
@@ -216,34 +244,37 @@ export default {
     },
 
     // 获取任务列表
-    queryTaskList (value) {
-        console.log(value);
+    queryTaskList (taskType,page,pageSize) {
         this.loadingShow = true;
         this.overlayShow = true;
         this.backlogEmptyShow = false;
         this.completedEmptyShow = false;
-		getAllTaskList({proId : this.userInfo.proIds[0], workerId: this.userInfo.id})
+		getAllTaskList({proId : this.userInfo.proIds[0], workerId: this.userInfo.id,taskType,system:4,page,pageSize})
         .then((res) => {
             this.loadingShow = false;
             this.overlayShow = false;
-        if (res && res.data.code == 200) {
-            if (value == 1) {
-                this.backlogTaskList = res.data.data.filter((item) => { return item.state == value || item.state == 2 || item.state == 3 });
-                if (this.backlogTaskList.length == 0) {
-                    this.backlogEmptyShow = true
+            if (res && res.data.code == 200) {
+                if (taskType == 1) {
+                    this.backlogTaskList = res.data.data.list;
+                    this.totalCount = res.data.data.total;
+                    this.fullBacklogTaskList = this.fullBacklogTaskList.concat(this.backlogTaskList);
+                    if (this.fullBacklogTaskList.length == 0) {
+                        this.backlogEmptyShow = true
+                    }
+                } else if (taskType == 2) {
+                    this.completedTaskList = res.data.data.list;
+                    this.totalCount = res.data.data.total;
+                    this.fullCompletedTaskList = this.fullCompletedTaskList.concat(this.completedTaskList);
+                    if (this.fullCompletedTaskList.length == 0) {
+                        this.completedEmptyShow = true
+                    }
                 }
-            } else if (value == 4) {
-                this.completedTaskList = res.data.data.filter((item) => { return item.state == value});
-                if (this.completedTaskList.length == 0) {
-                    this.completedEmptyShow = true
-                }
+            } else {
+            this.$toast({
+                type: 'fail',
+                message: res.data.msg
+            })
             }
-        } else {
-          this.$toast({
-            type: 'fail',
-            message: res.data.msg
-          })
-        }
       })
       .catch((err) => {
         this.loadingShow = false;
@@ -257,14 +288,17 @@ export default {
 
     // tab切换值变化事件
     vanTabsChangeEvent (value) {
-        console.log(this.activeName);
+        this.currentPage = 1;
+        this.pageSize = 10;
+        this.fullBacklogTaskList = [];
+        this.fullCompletedTaskList = [];
         let temporaryText;
         if (value == 'backlogTask') {
             temporaryText = 1;
         } else if (value == 'completetedTask') {
-             temporaryText = 4
+            temporaryText = 2
         };
-        this.queryTaskList(temporaryText);
+        this.queryTaskList(temporaryText,this.currentPage,this.pageSize);
         this.$nextTick(()=> {
             this.initScrollChange()
         })
@@ -294,19 +328,24 @@ export default {
     z-index: 10;
     left: 0;
     /deep/ .van-nav-bar {
+        background: transparent !important;
         .van-nav-bar__left {
-        .van-nav-bar__text {
-            color: #fff !important;
-            margin-left: 8px !important;
-        }
-        }
-        .van-icon {
-        color: #fff !important;
-        font-size: 22px !important;
-        }
+            .van-nav-bar__text {
+              color: #fff !important;
+              margin-left: 8px !important;
+            };
+            .van-icon {
+              color: #fff !important;
+            }
+        };
+        .van-nav-bar__right {
+          .van-nav-bar__text {
+            color: #fff
+          }
+        };
         .van-nav-bar__title {
-        color: #fff !important;
-        font-size: 16px !important;
+          color: #fff !important;
+          font-size: 16px !important;
         }
     }
   };

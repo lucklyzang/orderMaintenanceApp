@@ -93,7 +93,7 @@
                             type="textarea"
                             placeholder="评论"
                         />
-                        </div>
+                      </div>
                     </div>
                   </div>
               </div>
@@ -190,7 +190,7 @@ export default {
 
     // 发布留言事件
     postMessageEvent () {
-
+      this.$router.push({path: '/postMessage'})
     },
 
     // 图片放大事件

@@ -3,16 +3,44 @@
     <van-loading size="35px" vertical color="#e6e6e6" v-show="loadingShow">{{ loadText }}</van-loading>
     <van-overlay :show="overlayShow" />
     <div class="nav">
-      <NavBar path="/workOrderDetails" title="工单完成签名" :leftArrow="false" :leftText="null" />
+      <!-- <NavBar path="/workOrderDetails" title="工单完成签名" :leftArrow="false" :leftText="null" /> -->
     </div>
     <div class="content">
+      <div class="content-left">
         <ElectronicSignature ref="mychild"></ElectronicSignature>
+        <div class="btn-area">
+          <div class="cancel-btn" @click="cancel">
+            <span>取</span>
+            <span>消</span>
+          </div>
+          <div class="overwrite-btn" @click="rewrite">
+            <span>重</span>
+            <span>写</span>
+          </div>
+          <div class="sure-btn" @click="sure">
+            <span>确</span>
+            <span>认</span>
+          </div>
+        </div> 
+      </div>
+      <div class="content-right">
+        <span>巡</span>
+        <span>更</span>
+        <span>任</span>
+        <span>务</span>
+        <span>完</span>
+        <span>成</span>
+        <span>签</span>
+        <span>名</span>
+      </div>
+
+      <div class="content-right">
+        <span>确</span>
+        <span>认</span>
+        <span>签</span>
+        <span>名</span>
+      </div>
     </div>
-    <div class="btn-area">
-        <div class="cancel-btn" @click="cancel">取消</div>
-        <div class="overwrite-btn" @click="rewrite">重写</div>
-        <div class="sure-btn" @click="sure">确认</div>
-    </div> 
   </div>
 </template>
 <script>
@@ -25,7 +53,7 @@ import { base64ImgtoFile } from '@/common/js/utils'
 import {mixinsDeviceReturn} from '@/mixins/deviceReturnFunction';
 import axios from 'axios'
 export default {
-  name: "WorkOrderElectronicSignature",
+  name: "ElectronicSignaturePage",
   components: {
     NavBar,
     ElectronicSignature
@@ -259,6 +287,7 @@ export default {
   };
   .nav {
     width: 100%;
+    height: 46px;
     /deep/ .van-nav-bar {
         .van-nav-bar__left {
         .van-nav-bar__text {
@@ -279,13 +308,17 @@ export default {
     }
   };
   .content {
-    width: 96%;
+    width: 92%;
     margin: 0 auto;
     flex: 1;
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
     height: 0;
-    .signature {
+    .content-left {
+      display: flex;
+      flex: 1;
+      flex-direction: column;
+      .signature {
         flex: 1;
         display: flex;
         flex-direction: column;
@@ -294,38 +327,57 @@ export default {
             width: 100% !important;
             flex: 1
         }
-    }
-  };
-  .btn-area {
-    width: 96%;
-    margin: 0 auto;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    height: 50px;
-    >div {
-        font-size: 14px;
-        border-radius: 4px;
-        margin-right: 20px;
-        flex: 1;
-        height: 35px;
-        text-align: center;
-        line-height: 35px;
-    }
-    .cancel-btn {
-        background: #1684FC;
-        color: #fff
+      };
+      .btn-area {
+        width: 100%;
+        margin: 0 auto;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        height: 150px;
+        >div {
+          font-size: 14px;
+          border-radius: 4px;
+          margin-right: 20px;
+          width: 39px;
+          height: 95px;
+          display: flex;
+          flex-direction: column;
+          justify-content: center;
+          align-items: center;
+          >span {
+            transform: rotate(90deg);
+            margin-bottom: 2px
+          }
+        }
+        .cancel-btn {
+            background: #1684FC;
+            color: #fff
 
+        };
+        .overwrite-btn {
+            border: 1px solid #1684FC;
+            color: #1684FC
+        };
+        .sure-btn {
+            background: #E86F50;
+            color: #fff;
+            margin-right: 0
+        }
+      }
     };
-    .overwrite-btn {
-        border: 1px solid #1684FC;
-        color: #1684FC
-    };
-    .sure-btn {
-        background: #E86F50;
-        color: #fff;
-        margin-right: 0
-    }
+    .content-right {
+      width: 50px;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      font-size: 20px;
+      color: #101010;
+      >span {
+        transform: rotate(90deg)
+      }
+    }  
   }
 }
 </style>

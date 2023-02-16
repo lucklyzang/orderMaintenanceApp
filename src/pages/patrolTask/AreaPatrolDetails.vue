@@ -3,7 +3,7 @@
     <van-loading size="35px" vertical color="#e6e6e6" v-show="loadingShow">{{ loadText }}</van-loading>
     <van-overlay :show="overlayShow" />
     <div class="nav">
-        <van-nav-bar title="巡查项详情" left-text="返回" left-arrow @click-left="onClickLeft" :border="false">
+        <van-nav-bar title="巡更项详情" left-text="返回" left-arrow @click-left="onClickLeft" :border="false">
         </van-nav-bar>
     </div>
     <div class="content">
@@ -13,7 +13,7 @@
         <div class="content-box">
             <div class="current-area">
                 <van-icon name="location" color="#1684FC" />
-                <!-- <span>当前区域: {{ patrolTaskListMessage.needSpaces.filter((item)=> { return item.id == departmentCheckList['depId'] })[0]['name'] }}</span> -->
+                <span>当前区域: {{ patrolTaskListMessage.needSpaces.filter((item)=> { return item.id == departmentCheckList['depId'] })[0]['name'] }}</span>
             </div>
             <div class="patrol-item-box">
                 <div class="patrol-item-list" v-for="(item, index) in checkItemMessage.checkItemList" :key="index">
@@ -175,6 +175,14 @@ export default {
       this.loadingShow = true;
       this.overlayShow = true;
       this.loadText = '提交中';
+      // 该巡查项下面有登记事件该巡查项无法再由X改为√。如果把登记的事件全部删除了，那就可以由X改为√。
+      if (item['isHaveEventRegister'] == 1) {
+        this.$toast({
+          type: 'fail',
+          message: '该巡查项下面有登记事件,把该巡查项下登记的事件全部删除后,方能通过'
+        });
+        return
+      };
       checkItemPass({resultId:item.resultId,workerName: this.userInfo.name}).then((res) => {
         if (res && res.data.code == 200) {
           this.loadingShow = false;
@@ -245,7 +253,7 @@ export default {
             temporaryInfo['index'] = index; 
             this.changeEnterProblemRecordMessage(temporaryInfo);
             // 第一次点击X，直接选择事件类型进行登记
-            if (item['checkResult'] == 0 || item['checkResult'] == 1) {
+            if (this.departmentCheckList['checkItemList'][index]['checkResult'] == 0 || this.departmentCheckList['checkItemList'][index]['checkResult'] == 1) {
               this.eventTypeShow = true
             } else {
               // 第二次及以上再点击X，进入异常巡查项事件列表页

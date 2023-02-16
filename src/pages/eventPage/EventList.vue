@@ -18,12 +18,12 @@
                     </van-radio-group>
                 </div>
                 <div class="action-bar-right">
-                    <span :class="{'spanStyle': !isOnlyMe}" @click="isOnlyMe = !isOnlyMe">只看我</span>
+                    <span :class="{'spanStyle': !isOnlyMe}" @click="onlyMeEvent">只看我</span>
                     <span @click="screenDialogShow = true">筛选</span>
                 </div>
             </div>
             <div class="backlog-task-list-box" ref="scrollBacklogTask">
-              <div class="backlog-task-list" v-for="(item,index) in backlogTaskList" :key="index">
+              <div class="backlog-task-list" v-for="(item,index) in fullBacklogTaskList" :key="index">
                   <div class="backlog-task-top">
                       <div class="backlog-task-top-left">
                           <span>事件类型:</span>
@@ -35,12 +35,20 @@
                   </div>
                   <div class="backlog-task-content">
                       <div class="taskset-name">
-                          <span>拾得地点:</span>
-                          <span>{{ item.problemType }}</span>
+                          <span>记录人:</span>
+                          <span>{{ item.createName }}</span>
                       </div>
-                      <div class="taskset-create-time-type">
-                          <span>拾得内容:</span>
-                          <span>{{ item.describe }}</span>
+                      <div class="taskset-name">
+                          <span>记录时间:</span>
+                          <span>{{ item.createTime }}</span>
+                      </div>
+                      <div class="taskset-name">
+                          <span>区域:</span>
+                          <span>{{ `${item.structureName ? item.structureName : ''}-${item.depName ? item.depName : ''}-${item.roomName ? item.roomName : ''}` }}</span>
+                      </div>
+                      <div class="taskset-name">
+                          <span>记录类型:</span>
+                          <span>{{ item.registerType }}</span>
                       </div>
                   </div>
                   <div class="right-arrow-box" @click="taskDetailsEvent(item)">
@@ -118,7 +126,7 @@
 <script>
 import NavBar from "@/components/NavBar";
 import { mapGetters, mapMutations } from "vuex";
-import {getTaskDetails} from '@/api/escortManagement.js'
+import { getEventList } from '@/api/escortManagement.js'
 import {mixinsDeviceReturn} from '@/mixins/deviceReturnFunction';
 import ScrollSelection from "@/components/ScrollSelection";
 import SelectSearch from "@/components/SelectSearch";
@@ -143,6 +151,9 @@ export default {
       minDate: new Date(2010, 0, 1),
       maxDate: new Date(2050, 0, 31),
       registerType: null,
+      totalCount: '',
+      currentPage: 1,
+      pageSize: 10,
       registerTypeOption: [
         {
             text: '请选择',
@@ -202,28 +213,9 @@ export default {
      ],
       eventTypeShow: false,
       eventTypeList: ['工程报修','拾金不昧','其他'],
-      backlogTaskList: [
-        {
-          state: 1,
-          eventType: '拾金不昧',
-          problemType: '飒飒飒飒',
-          describe: '飒飒飒飒啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊'
-        },
-         {
-          state: 1,
-          eventType: '拾金不昧',
-          problemType: '飒飒飒飒',
-          describe: '飒飒飒飒啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊'
-        },
-         {
-          state: 1,
-          eventType: '拾金不昧',
-          problemType: '飒飒飒飒',
-          describe: '飒飒飒飒啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊'
-        }
-      ],
+      fullBacklogTaskList: [],
+      backlogTaskList: [],
       loadingShow: false,
-      queryDataSuccess: false,
       loadText: '加载中',
       statusBackgroundPng: require("@/common/images/home/status-background.png"),
       dateIconPng: require("@/common/images/home/date-icon.png")
@@ -234,8 +226,8 @@ export default {
     // 控制设备物理返回按键
     this.deviceReturn("/home");
     this.initScrollChange();
-    // 获取任务详情
-    // this.queryTaskDetails()
+    // 获取事件列表
+    this.queryEventList(this.currentPage,this.pageSize)
   },
 
   watch: {},
@@ -251,6 +243,14 @@ export default {
     onClickLeft () {
       this.$router.push({path: '/home'})
     },
+
+    // 是否只看我事件
+   onlyMeEvent () {
+    this.isOnlyMe = !this.isOnlyMe;
+    if (this.isOnlyMe) {
+      this.fullBacklogTaskList = this.fullBacklogTaskList.filter((item) => { return item['createName'] == this['userInfo']['name']})
+    }
+   },
 
     // 进入事件详情事件
     taskDetailsEvent (item) {
@@ -301,7 +301,14 @@ export default {
       let boxBackScroll = this.$refs['scrollBacklogTask'];
       boxBackScroll.addEventListener('scroll',(e)=> {
           if (Math.ceil(e.srcElement.scrollTop) + e.srcElement.offsetHeight >= e.srcElement.scrollHeight) {
-              console.log('事件列表滚动了',e.srcElement.scrollTop, e.srcElement.offsetHeight, e.srcElement.scrollHeight)
+            let totalPage = Math.ceil(this.totalCount/this.pageSize);
+            if (this.currentPage >= totalPage) {
+                this.isShowBacklogTaskNoMoreData = true
+            } else {
+                this.currentPage = this.currentPage + 1;
+                this.queryEventList(this.currentPage,this.pageSize)
+            };
+            console.log('事件列表滚动了',e.srcElement.scrollTop, e.srcElement.offsetHeight, e.srcElement.scrollHeight)
           }
       },true)
     },
@@ -355,27 +362,28 @@ export default {
       }
     },
 
-    // 获取任务详情
-    queryTaskDetails () {
+    // 获取事件列表
+    queryEventList (page,pageSize) {
       this.loadingShow = true;
       this.overlayShow = true;
-      this.queryDataSuccess = false;
       this.loadText = '加载中';
-      getTaskDetails(
-        this.patrolTaskListMessage.id
-      ).then((res) => {
-        if (res && res.data.code == 200) {
-          console.log(res.data.data);
-          this.loadingShow = false;
-          this.overlayShow = false;
-          this.queryDataSuccess = true;
-          this.changePatrolTaskListMessage(res.data.data)
-        } else {
-          this.$toast({
-            type: 'fail',
-            message: res.data.msg
-          })
-        }
+      getEventList({proId:this.userInfo.proIds[0], system: 6, workerId: this.userInfo.id, system:4,page, limit:pageSize})
+        .then((res) => {
+            this.loadingShow = false;
+            this.overlayShow = false;
+            if (res && res.data.code == 200) {
+                  this.backlogTaskList = res.data.data.list;
+                  this.totalCount = res.data.data.total;
+                  this.fullBacklogTaskList = this.fullBacklogTaskList.concat(this.backlogTaskList);
+                  if (this.fullBacklogTaskList.length == 0) {
+                    this.backlogEmptyShow = true
+                  }
+            } else {
+            this.$toast({
+                type: 'fail',
+                message: res.data.msg
+            })
+            }
       })
       .catch((err) => {
         this.loadingShow = false;

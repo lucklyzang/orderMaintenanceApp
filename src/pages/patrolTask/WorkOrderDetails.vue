@@ -42,7 +42,7 @@
             <div class="patrol-site">
                 <div>巡更地点</div>
                 <div class="patrol-site-list-box" v-if="queryDataSuccess">
-                    <div class="patrol-site-list" :class="{'patrolSiteListStyle': patrolTaskListMessage.allCheckItemOkDepArr.indexOf(item.id) != -1 }" v-for="(item,index) in patrolTaskListMessage.needSpaces" :key="index" @click="patrolSiteEvent(item)">
+                    <div class="patrol-site-list" :class="{'patrolSiteListStyle': patrolTaskListMessage.allCheckItemOkDepArr.indexOf(Number(item.id)) != -1 }" v-for="(item,index) in patrolTaskListMessage.needSpaces" :key="index" @click="patrolSiteEvent(item)">
                       {{ item.name }}
                     </div>
                 </div>
@@ -230,7 +230,7 @@ export default {
         this.departmentFinshClock(item.id,'加载中')
       } else {
         // 该科室对应巡查项未全部勾选完毕
-        if (this.patrolTaskListMessage.allCheckItemOkDepArr.indexOf(item.id) == -1) {
+        if (this.patrolTaskListMessage.allCheckItemOkDepArr.indexOf(Number(item.id)) == -1) {
           this.$Alert({message:"请先完成巡更!",duration:3000,type:'fail'})
         } else {
           // 该科室对应巡查项全部勾选完毕
@@ -257,19 +257,21 @@ export default {
       this.overlayShow = false
     },
 
-    // 打卡事件
+    // 蓝牙打卡事件
     clockInEvent () {
-      this.positioningShow = true;
-      this.overlayShow = true
+      if (this.patrolTaskListMessage.state == 4) {
+        return
+      };
+      // this.positioningShow = true;
+      // this.overlayShow = true
+      // 手动打卡测试
+      this.manualClockingWvent()
     },
 
     // 完成任务事件
     completeTaskEvent () {
       if (this.patrolTaskListMessage['needSpaces'].length != this.patrolTaskListMessage['allCheckItemOkDepArr'].length) {
-        this.$toast({
-          type: 'fail',
-          message: '请完成所有巡查区域!'
-        });
+        this.$Alert({message:"请完成所有巡查项!",duration:3000,type:'fail'})
         return
       };
       this.$router.push({path: '/electronicSignaturePage'})
@@ -324,6 +326,7 @@ export default {
       clockingsSection({
         taskId: this.patrolTaskListMessage.id, //当前任务id
         depId, // 当前扫描科室id
+        depName,// 当前扫描科室名称
         workerId: this.userInfo.id, // 当前登陆员工id
         proId: this.userInfo.proIds[0], // 所属项目
         system: 4, // 所属系统
@@ -409,12 +412,12 @@ export default {
 
     // 手动打卡原因弹框确认事件
     manualclockingReasonSure () {
-      this.codeDepartmentNoFinsh (this.currentClockingPlace['value'],'加载中',this.currentClockingPlace['text'],2,this.manualClockingReasonRadioList.filter((item) => { return item.value == this.manualClockingReasonRadio})[0]['name'])
+      this.codeDepartmentNoFinsh (this.patrolTaskListMessage.needSpaces.filter((item) => { return item['name'] == this.currentClockingPlace})[0]['id'],'加载中',this.currentClockingPlace,2,this.manualClockingReasonRadioList.filter((item) => { return item.value == this.manualClockingReasonRadio})[0]['text'])
     },
 
     // 蓝牙连接回调
     bluetoothConnectionCallback () {
-      this.codeDepartmentNoFinsh (this.currentClockingPlace['value'],'加载中',this.currentClockingPlace['text'],1)
+      this.codeDepartmentNoFinsh (this.patrolTaskListMessage.needSpacesthis.filter((item) => { return item['name'] == this.currentClockingPlace})[0]['id'],'加载中',this.currentClockingPlace,1)
     },
 
     // 手动打卡原因弹框关闭事件

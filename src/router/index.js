@@ -30,6 +30,18 @@ const GuestBook = () =>
     import ('@/pages/guestBookPage/GuestBook')
 const PostMessage = () =>
     import ('@/pages/guestBookPage/postMessage')
+const HistoryClaimRegister = () =>
+    import ('@/pages/eventPage/HistoryClaimRegister')
+const MoreHistoryClaimRegister = () =>
+    import ('@/pages/eventPage/MoreHistoryClaimRegister')
+const HistoryRepairsRegister = () =>
+    import ('@/pages/eventPage/HistoryRepairsRegister')
+const MoreHistoryRepairsRegister = () =>
+    import ('@/pages/eventPage/MoreHistoryRepairsRegister')
+const HistoryOtherRegister = () =>
+    import ('@/pages/eventPage/HistoryOtherRegister')
+const MoreHistoryOtherRegister = () =>
+    import ('@/pages/eventPage/MoreHistoryOtherRegister')
 Vue.use(Router)
 let baseRoute = [{
         path: '/',
@@ -99,6 +111,12 @@ let baseRoute = [{
 
     },
     {
+        path: '/historyClaimRegister',
+        name: 'historyClaimRegister',
+        component: HistoryClaimRegister
+
+    },
+    {
         path: '/guestBook',
         name: 'guestBook',
         component: GuestBook
@@ -108,6 +126,36 @@ let baseRoute = [{
         path: '/postMessage',
         name: 'postMessage',
         component: PostMessage
+
+    },
+    {
+        path: '/moreHistoryClaimRegister',
+        name: 'moreHistoryClaimRegister',
+        component: MoreHistoryClaimRegister
+
+    },
+    {
+        path: '/historyRepairsRegister',
+        name: 'historyRepairsRegister',
+        component: HistoryRepairsRegister
+
+    },
+    {
+        path: '/moreHistoryRepairsRegister',
+        name: 'moreHistoryRepairsRegister',
+        component: MoreHistoryRepairsRegister
+
+    },
+    {
+        path: '/historyOtherRegister',
+        name: 'historyOtherRegister',
+        component: HistoryOtherRegister
+
+    },
+    {
+        path: '/moreHistoryOtherRegister',
+        name: 'moreHistoryOtherRegister',
+        component: MoreHistoryOtherRegister
 
     }
 ];

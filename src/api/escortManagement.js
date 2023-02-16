@@ -1,8 +1,11 @@
 import request from '@/utils/request'
-// 获取所有任务列表
+
+// 巡更任务
+
+// 获取巡更任务列表
 export function getAllTaskList(data) {
 	return request({
-	    url: 'patrol/checkTask/app/page',
+	    url: 'nblink/patrol/checkTask/app/page',
 	    method: 'get',
         params: data
 	})
@@ -11,7 +14,7 @@ export function getAllTaskList(data) {
 // 获取任务详情
 export function getTaskDetails(taskId) {
 	return request({
-	    url: `patrol/checkTask/app/detail/one/${taskId}`,
+	    url: `nblink/patrol/checkTask/app/detail/one/${taskId}`,
 	    method: 'get'
 	})
 }
@@ -19,7 +22,7 @@ export function getTaskDetails(taskId) {
 // 打卡科室(包括蓝牙和手动打卡)
 export function clockingsSection(data) {
 	return request({
-	    url: 'patrol/checkTask/app/punch',
+	    url: 'nblink/patrol/checkTask/app/punch',
 	    method: 'put',
         data
 	})
@@ -28,7 +31,7 @@ export function clockingsSection(data) {
 // 已完成打卡的科室点击
 export function departmentClockFinsh(data) {
 	return request({
-	    url: 'patrol/checkTask/app/hasSpace/itemsDetail',
+	    url: 'nblink/patrol/checkTask/app/hasSpace/itemsDetail',
 	    method: 'get',
         params: data
 	})
@@ -37,7 +40,7 @@ export function departmentClockFinsh(data) {
 // 检查项通过
 export function checkItemPass(data) {
 	return request({
-	    url: 'patrol/checkResult/check/2Yes',
+	    url: 'nblink/patrol/checkResult/check/2Yes',
 	    method: 'put',
         data
 	})
@@ -46,7 +49,7 @@ export function checkItemPass(data) {
 // 检查项不通过
 export function checkItemNoPass(data) {
 	return request({
-	    url: 'patrol/checkResult/check/2No',
+	    url: 'nblink/patrol/checkResult/check/2No',
 	    method: 'put',
         data
 	})
@@ -100,8 +103,19 @@ export function getTaskProblemWorkerOrderDetails(data) {
 // 任务完成
 export function taskComplete(data) {
 	return request({
-	    url: 'patrol/checkTask/app/confirm',
+	    url: 'nblink/patrol/checkTask/app/confirm',
 	    method: 'put',
         data
+	})
+}
+
+// 事件登记
+
+// 获取事件列表
+export function getEventList(data) {
+	return request({
+	    url: 'nblink/patrol/eventregister/listForApp',
+	    method: 'get',
+        params: data
 	})
 }

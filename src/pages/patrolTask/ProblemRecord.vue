@@ -163,7 +163,6 @@ export default {
   },
 
   mounted() {
-    console.log('何解析',this.patrolTaskListMessage);
     // 控制设备物理返回按键
     this.deviceReturn(`${this.enterProblemRecordMessage['enterProblemRecordPageSource']}`);
      this.$nextTick(()=> {
@@ -175,8 +174,9 @@ export default {
                 message: error
             })
         }
-    })
-   
+    });
+    // 回显勾选的检查项状态
+    this.checkResultValue = this.departmentCheckList['checkItemList'][this.enterProblemRecordMessage['index']]['checkResult']
   },
 
   watch: {},

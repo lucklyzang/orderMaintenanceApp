@@ -117,6 +117,7 @@
 <script>
 import { mapGetters, mapMutations } from "vuex";
 import {mixinsDeviceReturn} from '@/mixins/deviceReturnFunction'
+import { eventDelete } from '@/api/escortManagement.js'
 import _ from 'lodash'
 import ScrollSelection from "@/components/ScrollSelection";
 import BottomSelect from "@/components/BottomSelect";
@@ -241,7 +242,36 @@ export default {
     },
 
     //删除事件
-    delelteEvent () {}
+    delelteEvent (id) {
+      this.loadingText = '删除中...';
+      this.loadingShow = true;
+      this.overlayShow = true;
+      eventDelete(id).then((res) => {
+        if (res && res.data.code == 200) {
+          this.$toast(`${res.data.msg}`);
+          this.$router.push({path:'/eventList'});
+        } else {
+          this.$dialog.alert({
+            message: `${res.data.msg}`,
+            closeOnPopstate: true
+          }).then(() => {
+          });
+        };
+        this.loadingText = '';
+        this.loadingShow = false;
+        this.overlayShow = false
+      })
+      .catch((err) => {
+        this.$dialog.alert({
+          message: `${err.message}`,
+          closeOnPopstate: true
+        }).then(() => {
+        });
+        this.loadingText = '';
+        this.loadingShow = false;
+        this.overlayShow = false
+      })
+    }
   }
 };
 </script>

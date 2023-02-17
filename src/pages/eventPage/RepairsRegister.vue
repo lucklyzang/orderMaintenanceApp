@@ -53,11 +53,11 @@
     </div>
     <!-- 目的科室 -->
     <div class="transport-rice-box" v-if="showGoalDepartment">
-      <ScrollSelection :columns="goalDepartmentOption" title="目的科室" @sure="goalDepartmentSureEvent" @cancel="goalDepartmentCancelEvent" @close="goalDepartmentCloseEvent" :isShowSearch="true" />
+      <ScrollSelection :columns="goalDepartmentOption" title="目的科室" @sure="goalDepartmentSureEvent" @cancel="goalDepartmentCancelEvent" @close="goalDepartmentCloseEvent" />
     </div>
     <!-- 目的房间 -->
     <div class="transport-rice-box" v-if="showGoalSpaces">
-      <BottomSelect :columns="goalSpacesOption" title="目的房间" @sure="goalSpacesSureEvent" @cancel="goalSpacesCancelEvent" @close="goalSpacesCloseEvent" />
+      <ScrollSelection :columns="goalSpacesOption" title="目的房间" @sure="goalSpacesSureEvent" @cancel="goalSpacesCancelEvent" @close="goalSpacesCloseEvent" />
     </div>
     <div class="nav">
        <van-nav-bar
@@ -82,9 +82,18 @@
          <div class="select-box event-type">
             <div class="select-box-left">
               <span>*</span>
+              <span>检查项</span>
+            </div>
+            <div class="select-box-right">
+              <span>{{ patrolItem }}</span>
+            </div>
+          </div>
+         <div class="select-box event-type">
+            <div class="select-box-left">
+              <span>*</span>
               <span>事件类型</span>
             </div>
-            <div class="select-box-right" @click="showStructure = true">
+            <div class="select-box-right event-type-right">
               <span>{{ eventType }}</span>
             </div>
           </div>
@@ -114,7 +123,7 @@
               <span>房间</span>
             </div>
             <div class="select-box-right" @click="goalSpacesClickEvent">
-              <span>{{ disposeTaskPresent(currentGoalSpaces) }}</span>
+              <span>{{ currentGoalSpaces }}</span>
               <van-icon name="arrow" color="#989999" size="20" />
             </div>
           </div>
@@ -127,6 +136,8 @@
               <van-field
                 v-model="detailsSite"
                 rows="1"
+                maxlength="100"
+                show-word-limit
                 autosize
                 type="textarea"
                 placeholder="请输入"
@@ -171,10 +182,12 @@
             <div class="transport-type-right">
               <van-field
                 v-model="problemOverview"
-                rows="1"
+                rows="2"
+                maxlength="200"
                 autosize
                 type="textarea"
-                placeholder="请输入问题描述"
+                show-word-limit
+                placeholder="请输入对应的问题描述"
               />
             </div>
           </div>
@@ -207,7 +220,7 @@
 import { mapGetters, mapMutations } from "vuex";
 import {mixinsDeviceReturn} from '@/mixins/deviceReturnFunction'
 import {userSignOut} from '@/api/login.js'
-import { createRepairsTask, getTransporter, querySpace, queryDepartment, queryRepairsTaskTool, queryStructure, getRepairsTaskType} from '@/api/escortManagement.js'
+import { createRepairsTask, querySpace, queryDepartment, queryStructure} from '@/api/escortManagement.js'
 import { setStore,removeAllLocalStorage,compress,deepClone, base64ImgtoFile } from '@/common/js/utils'
 import _ from 'lodash'
 import ScrollSelection from "@/components/ScrollSelection";
@@ -230,6 +243,7 @@ export default {
       maxDate: new Date(2050, 10, 1),
       currentFindTime: new Date(),
       currentImgUrl: '',
+      patrolItem: '',
       photoBox: false,
       imgBoxShow: false,
       imgIndex: '',
@@ -249,7 +263,7 @@ export default {
 
       goalSpacesOption: [],
       showGoalSpaces: false,
-      currentGoalSpaces: [],
+      currentGoalSpaces: '请选择',
 
 
       structureOption: [],
@@ -282,7 +296,7 @@ export default {
   },
 
   computed: {
-    ...mapGetters(["userInfo","transportantTaskMessage","temporaryStorageRepairsRegisterMessage"]),
+    ...mapGetters(["userInfo","transportantTaskMessage","temporaryStorageRepairsRegisterMessage","enterEventRegisterPageMessage"]),
     proId () {
       return this.userInfo.extendData.proId
     },
@@ -318,8 +332,41 @@ export default {
 
     // 拍照点击
     issueClickEvent () {
+      if (this.problemPicturesList.length >= 5) {
+        if (this.currentGoalSpaces == '请选择') {
+          this.$toast('至多只能上传5张图片!');
+          return
+        }
+      };
       this.photoBox = true;
       this.overlayShow = true
+    },
+
+    // 事件类型转换
+    eventTypeTransform (text) {
+      switch(text) {
+        case '工程报修' :
+          return 1
+          break;
+        case '拾金不昧' :
+          return 2
+          break;
+        case '其他' :
+          return 3
+          break;
+      }
+    },
+
+    // 登记类型转换
+    registerTypeTransform (text) {
+      switch(text) {
+        case '巡查' :
+          return 1
+          break;
+        case '其他' :
+          return 2
+          break
+      }
     },
 
     // 确定删除提示框确定事件
@@ -550,7 +597,7 @@ export default {
       this.loadingShow = true;
       this.overlayShow = true;
       this.goalDepartmentOption = [];
-      queryDepartment(this.proId,structureId)
+      queryDepartment({proId:this.proId,struId:structureId})
       .then((res) => {
         this.loadingText = '';
         this.loadingShow = false;
@@ -559,7 +606,7 @@ export default {
           if (res.data.data.length > 0) {
             for (let i = 0, len = res.data.data.length; i < len; i++) {
               this.goalDepartmentOption.push({
-                text: res.data.data[i].departmentName,
+                text: res.data.data[i].name,
                 value: res.data.data[i].id,
                 id: i
               })
@@ -586,13 +633,13 @@ export default {
       })
     },
 
-    // 根据科室查询空间间信息
+    // 根据科室查询房间信息
     getSpacesByDepartmentId (depId,flag) {
       this.loadingText = '查询中...';
       this.loadingShow = true;
       this.overlayShow = true;
       this.goalSpacesOption = [];
-      querySpace(this.proId,depId)
+      querySpace({hospitalId:this.proId,struId:this.structureOption.filter((item) => { return item['text'] == this.currentStructure})[0]['value'],depId:depId})
       .then((res) => {
         this.loadingText = '';
         this.loadingShow = false;
@@ -601,10 +648,9 @@ export default {
           if (res.data.data.length > 0) {
             for (let i = 0, len = res.data.data.length; i < len; i++) {
               this.goalSpacesOption.push({
-                text: res.data.data[i].spaceName,
+                text: res.data.data[i].name,
                 value: res.data.data[i].id,
-                id: i,
-                selected: false
+                id: i
               })
             }
           };
@@ -622,71 +668,30 @@ export default {
       })
     },
 
-    // 并行查询任务类型、目的建筑、维修员、物料信息、维修工具
+    // 并行查询目的建筑
     parallelFunction (type) {
         this.loadingText = '加载中...';
         this.loadingShow = true;
         this.overlayShow = true;
-        Promise.all([this.getTaskType(), this.getStructure(), this.queryTransporter(),this.getRepairsTaskTool()])
+        Promise.all([this.getStructure()])
         .then((res) => {
           this.loadingText = '';
           this.loadingShow = false;
           this.overlayShow = false;
           if (res && res.length > 0) {
             this.structureOption = [];
-            this.participantOption = [];
-            this.taskTypeOption = [];
-            this.transporterOption = [];
-            this.useToolOption = [];
-            let [item1,item2,item3,item4,item5] = res;
+            let [item1] = res;
             if (item1) {
-              // 任务类型
-              for (let i = 0, len = item1.length; i < len; i++) {
-                this.taskTypeOption.push({
-                  text: item1[i].typeName,
-                  value: item1[i].id,
-                  id: i
-                })
-              }
-            };
-            if (item2) {
               // 目的建筑
-              for (let i = 0, len = item2.length; i < len; i++) {
+              for (let i = 0, len = item1.length; i < len; i++) {
                 this.structureOption.push({
-                  text: item2[i].structName,
-                  value: item2[i].id,
+                  text: item1[i].name,
+                  value: item1[i].id,
                   id: i
                 })
               };
               if (this.currentStructure != '请选择') {
                 this.getDepartmentByStructureId(this.structureOption.filter((item) => { return item['text'] == this.currentStructure})[0]['value'],false,true)
-              }
-            };
-            if (item3) {
-              // 运送员
-              for (let i = 0, len = item3.length; i < len; i++) {
-                this.transporterOption.push({
-                  text: item3[i].workerName,
-                  value: item3[i]['id'],
-                  id: i
-                });
-                this.participantOption.push({
-                  text: item3[i].workerName,
-                  value: item3[i]['id'],
-                  selected: false,
-                  id: i
-                })
-              }
-            };
-            // 维修工具
-            if (item4) {
-              for (let i = 0, len = item4.length; i < len; i++) {
-                this.useToolOption.push({
-                  text: item4[i].toolName,
-                  value: item4[i].id,
-                  id: i,
-                  selected: false
-                })
               }
             }
           }
@@ -702,19 +707,6 @@ export default {
         })
       },
 
-      // 查询维修工具
-      getRepairsTaskTool () {
-        return new Promise((resolve,reject) => {
-          queryRepairsTaskTool(this.proId).then((res) => {
-            if (res && res.data.code == 200) {
-              resolve(res.data.data)
-            }
-          })
-          .catch((err) => {
-            reject(err.message)
-          })
-        })
-      },
 
       // 查询目的建筑
       getStructure () {
@@ -730,42 +722,12 @@ export default {
         })
       },
 
-    // 查询维修员
-    queryTransporter () {
-      return new Promise((resolve,reject) => {
-        getTransporter(this.proId, this.workerId)
-        .then((res) => {
-          if (res && res.data.code == 200) {
-            resolve(res.data.data)
-          }
-        })
-        .catch((err) => {
-          reject(err.message)
-        })
-      })
-    },
-
-    // 查询任务类型
-    getTaskType () {
-      return new Promise((resolve,reject) => {
-        getRepairsTaskType(this.proId, this.workerId)
-        .then((res) => {
-          if (res && res.data.code == 200) {
-            resolve(res.data.data)
-          }
-        })
-        .catch((err) => {
-          reject(err.message)
-        })
-      })
-    },
-
     // 目的建筑下拉选择框确认事件
     structureSureEvent (val) {
       if (val) {
         this.currentStructure =  val;
         this.currentGoalDepartment = '请选择';
-        this.currentGoalSpaces = [];
+        this.currentGoalSpaces = '请选择';
         this.goalSpacesOption = [];
         this.getDepartmentByStructureId(this.structureOption.filter((item) => { return item['text'] == this.currentStructure})[0]['value'],false,false)
       } else {
@@ -788,7 +750,7 @@ export default {
     goalDepartmentSureEvent (val) {
       if (val) {
         this.currentGoalDepartment =  val;
-        this.currentGoalSpaces = [];
+        this.currentGoalSpaces = '请选择';
         this.getSpacesByDepartmentId(this.goalDepartmentOption.filter((item) => { return item['text'] == this.currentGoalDepartment})[0]['value'],false)
       } else {
         this.currentGoalDepartment = '请选择'
@@ -834,7 +796,7 @@ export default {
       if (val.length > 0) {
         this.currentGoalSpaces =  val;
       } else {
-        this.currentGoalSpaces = []
+        this.currentGoalSpaces = '请选择'
       };
       this.showGoalSpaces = false
     },
@@ -895,50 +857,84 @@ export default {
 
     // 报修事件
     async repairsEvent () {
-        // 上传图片到阿里云服务器
-        let temporaryProblemPicturesList = this.problemPicturesList.filter((item) => { return item.indexOf('https://') == -1});
-        this.loadText ='提交中';
-        this.overlayShow = true;
-        this.loadingShow = true;
-        for (let imgI of temporaryProblemPicturesList) {
-            if (Object.keys(this.timeMessage).length > 0) {
-            // 判断签名信息是否过期
-            if (new Date().getTime()/1000 - this.timeMessage['expire']  >= -30) {
-                await this.getSign();
-                await this.uploadImageToOss(imgI)
-            } else {
-                await this.uploadImageToOss(imgI)
-            }
-            } else {
-            await this.getSign();
-            await this.uploadImageToOss(imgI)
-            }
-        };
-        // 创建报修任务
-        let temporaryMessage = {
-            taskDesc: this.problemOverview, // 问题描述
-            destinationId: '', // 目的地id
-            depId: '', // 出发地id
-            select: '',
-            taskRemark: this.taskDescribe, //任务描述
-            proId: this.proId,
-            proName: this.proName,
-            createId: this.workerId,
-            createName: this.userName,
-            createType: 0, // 创建类型 0-调度员 2-医务人员 3-巡检人员
-            spaces: [], //空间信息
-            depName: `${this.currentStructure == '请选择' ? '' : this.currentStructure}/${this.currentGoalDepartment == '请选择' ? '' : this.currentGoalDepartment}/${this.currentGoalSpaces.length > 0 ? this.disposeTaskPresent(this.currentGoalSpaces) : ''}`, //出发地名称
-        };
-        // 拼接空间信息
-        if (this.currentUseTool.length > 0) {
-            for (let item of this.currentGoalSpaces) {
-            temporaryMessage['spaces'].push({
-                id: item.value,
-                name: item.text
-            })
-            }
-        };
-        this.postGenerateRepairsTask(temporaryMessage)
+      if (!this.eventType) {
+        this.$toast('事件类型不能为空');
+        return
+      };
+      if (this.currentStructure == '请选择') {
+        this.$toast('建筑不能为空');
+        return
+      };
+      if (this.currentGoalDepartment == '请选择') {
+        this.$toast('区域不能为空');
+        return
+      };
+      if (this.currentGoalSpaces == '请选择') {
+        this.$toast('房间不能为空');
+        return
+      };
+      if (!this.detailsSite) {
+        this.$toast('详细地点不能为空');
+        return
+      };
+      if (!this.currentFindTime) {
+        this.$toast('发现时间不能为空');
+        return
+      };
+      if (this.problemPicturesList.length == 0) {
+        this.$toast('现场拍照图片不能为空');
+        return
+      };
+      if (!this.problemOverview) {
+        this.$toast('问题描述不能为空');
+        return
+      };
+      if (!this.taskDescribe) {
+        this.$toast('备注不能为空');
+        return
+      };
+      // 上传图片到阿里云服务器
+      let temporaryProblemPicturesList = this.problemPicturesList.filter((item) => { return item.indexOf('https://') == -1});
+      this.loadText ='提交中';
+      this.overlayShow = true;
+      this.loadingShow = true;
+      for (let imgI of temporaryProblemPicturesList) {
+          if (Object.keys(this.timeMessage).length > 0) {
+          // 判断签名信息是否过期
+          if (new Date().getTime()/1000 - this.timeMessage['expire']  >= -30) {
+              await this.getSign();
+              await this.uploadImageToOss(imgI)
+          } else {
+              await this.uploadImageToOss(imgI)
+          }
+          } else {
+          await this.getSign();
+          await this.uploadImageToOss(imgI)
+          }
+      };
+      // 创建报修任务
+      let temporaryMessage = {
+        eventType: this.eventTypeTransform(this.enterEventRegisterPageMessage['eventType']),
+        registerType: this.registerTypeTransform(this.enterEventRegisterPageMessage['registerType']),
+        checkResultId: this.enterEventRegisterPageMessage['resultId'],
+        findTime: this.getNowFormatDate(this.currentFindTime),
+        structureId: this.structureOption.filter((item) => { return item['text'] == this.currentStructure})[0]['value'],
+        structureName: this.currentStructure,
+        depId: this.goalDepartmentOption.filter((item) => { return item['text'] == this.currentGoalDepartment})[0]['value'],
+        depName: this.currentGoalDepartment,
+        roomId: this.goalSpacesOption.filter((item) => { return item['text'] == this.currentGoalSpaces})[0]['value'],
+        roomName: this.currentGoalSpaces,
+        address: this.detailsSite,
+        description: this.problemOverview,
+        remark: this.taskDescribe,
+        images: this.imgOnlinePathArr,
+        system: 6,
+        proId: this.proId,
+        createName: this.userName,
+        createTime: this.getNowFormatDate(new Date()),
+        createId: this.workerId
+      };
+      this.postGenerateRepairsTask(temporaryMessage)
     },
 
     // 生成报修任务
@@ -1261,6 +1257,11 @@ export default {
                   padding-right: 6px;
                   box-sizing: border-box
                 }
+              }
+            };
+            .event-type-right {
+              span {
+                color: #3B9DF9 !important
               }
             }
           };

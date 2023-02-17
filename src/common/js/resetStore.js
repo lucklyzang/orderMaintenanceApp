@@ -33,7 +33,7 @@ export function getDefaultPatrolTaskState() {
 // 事件登记模块store的初始值
 export function getDefaultEventRegisterState() {
     return {
-        temporaryStorageRepairsRegisterMessage: {}, // 报修登记信息
-        eventRegisterType: '' // 事件登记类型
+        temporaryStorageRepairsRegisterMessage: {}, //保存事件登记(工程报修)信息
+        enterEventRegisterPageMessage: '' // 进入事件登记页的信息
     }
 };

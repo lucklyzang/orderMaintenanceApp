@@ -10,22 +10,22 @@ export default {
         },
 
         eventRegisterType: (state) => {
-            return state.eventRegisterType
+            return state.enterEventRegisterPageMessage
         } 
     },
 
     mutations: {
-        // 保存报修登记信息
+        // 保存事件登记(工程报修)信息
         changeTemporaryStorageRepairsRegisterMessage(state, playLoad) {
             if (playLoad && playLoad != 'null') {
                 state.temporaryStorageRepairsRegisterMessage = playLoad
             }
         },
 
-        // 保存事件登记类型信息
-        changeEventRegisterType(state, playLoad) {
+        // 保存进入事件登记页的信息
+        changeEnterEventRegisterPageMessage(state, playLoad) {
             if (playLoad && playLoad != 'null') {
-                state.eventRegisterType = playLoad
+                state.enterEventRegisterPageMessage = playLoad
             }
         },
 

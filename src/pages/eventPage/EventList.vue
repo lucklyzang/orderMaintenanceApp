@@ -56,7 +56,7 @@
                   </div>
               </div>
               <van-empty description="暂无数据" v-show="backlogEmptyShow" />
-              <div class="no-more-data" v-show="isShowBacklogTaskNoMoreData">没有更多数据了</div>
+              <div class="no-more-data" v-show="isShowBacklogTaskNoMoreData">没有更多数据了!</div>
           </div> 
         </div>
     </div>
@@ -151,6 +151,8 @@ export default {
       minDate: new Date(2010, 0, 1),
       maxDate: new Date(2050, 0, 31),
       registerType: null,
+      eventTime: 0,
+      timeOne: null,
       totalCount: '',
       currentPage: 1,
       pageSize: 10,
@@ -225,19 +227,27 @@ export default {
   mounted() {
     // 控制设备物理返回按键
     this.deviceReturn("/home");
-    this.initScrollChange();
+    this.$nextTick(()=> {
+      this.initScrollChange()
+    });
     // 获取事件列表
     this.queryEventList(this.currentPage,this.pageSize)
+  },
+
+  beforeDestroy () {
+    if (this.timeOne) {
+      clearTimeout(this.timeOne)
+    }
   },
 
   watch: {},
 
   computed: {
-    ...mapGetters(["userInfo","patrolTaskListMessage","departmentCheckList"])
+    ...mapGetters(["userInfo","patrolTaskListMessage","departmentCheckList","enterEventRegisterPageMessage"])
   },
 
   methods: {
-    ...mapMutations(["changeDepartmentCheckList","changePatrolTaskListMessage"]),
+    ...mapMutations(["changeDepartmentCheckList","changePatrolTaskListMessage","changeEnterEventRegisterPageMessage"]),
 
     // 顶部导航左边点击事件
     onClickLeft () {
@@ -296,21 +306,30 @@ export default {
       this.currentDateRange = `${this.formatDate(start)} - ${this.formatDate(end)}`;
     },
 
-    // 事件列表下拉
+    // 事件列表注册滚动事件
     initScrollChange () {
       let boxBackScroll = this.$refs['scrollBacklogTask'];
-      boxBackScroll.addEventListener('scroll',(e)=> {
-          if (Math.ceil(e.srcElement.scrollTop) + e.srcElement.offsetHeight >= e.srcElement.scrollHeight) {
-            let totalPage = Math.ceil(this.totalCount/this.pageSize);
-            if (this.currentPage >= totalPage) {
-                this.isShowBacklogTaskNoMoreData = true
-            } else {
-                this.currentPage = this.currentPage + 1;
-                this.queryEventList(this.currentPage,this.pageSize)
-            };
-            console.log('事件列表滚动了',e.srcElement.scrollTop, e.srcElement.offsetHeight, e.srcElement.scrollHeight)
-          }
-      },true)
+      boxBackScroll.addEventListener('scroll',this.eventListLoadMore,true)
+    },
+
+    // 事件列表加载事件
+    eventListLoadMore () {
+      let boxBackScroll = this.$refs['scrollBacklogTask'];
+      if (Math.ceil(boxBackScroll.scrollTop) + boxBackScroll.offsetHeight >= boxBackScroll.scrollHeight) {
+        if (this.eventTime) {return};
+        this.eventTime = 1;
+        this.timeTwo = setTimeout(() => {
+          let totalPage = Math.ceil(this.totalCount/this.pageSize);
+          if (this.currentPage >= totalPage) {
+            this.isShowBacklogTaskNoMoreData = true
+          } else {
+            this.currentPage = this.currentPage + 1;
+            this.queryEventList(this.currentPage,this.pageSize)
+          };
+          this.eventTime = 0;
+          console.log('事件列表滚动了',boxBackScroll.scrollTop, boxBackScroll.offsetHeight, boxBackScroll.scrollHeight)
+        },300)
+      }
     },
 
     // 任务状态转换
@@ -353,13 +372,23 @@ export default {
 
     // 事件类型点击事件
     eventTypeClickEvent (item) {
+      // 保存进入事件登记页的相关信息
+      let temporaryEnterEventRegisterPageMessage = this.enterEventRegisterPageMessage;
       if ( item == '工程报修') {
+        temporaryEnterEventRegisterPageMessage['eventType'] = '工程报修';
         this.$router.push({path: '/repairsRegister'})
       } else if (item == '拾金不昧') {
+        temporaryEnterEventRegisterPageMessage['eventType'] = '拾金不昧';
         this.$router.push({path: '/claimRegister'})
       } else if (item == '其他') {
+        temporaryEnterEventRegisterPageMessage['eventType'] = '其他';
         this.$router.push({path: '/otherRegister'})
-      }
+      };
+      temporaryEnterEventRegisterPageMessage['registerType'] = '其他';
+      temporaryEnterEventRegisterPageMessage['resultId'] = '';
+        temporaryEnterEventRegisterPageMessage['depId'] = '';
+      temporaryEnterEventRegisterPageMessage['depName'] = '';
+      this.changeEnterEventRegisterPageMessage(temporaryEnterEventRegisterPageMessage)
     },
 
     // 获取事件列表
@@ -367,7 +396,7 @@ export default {
       this.loadingShow = true;
       this.overlayShow = true;
       this.loadText = '加载中';
-      getEventList({proId:this.userInfo.proIds[0], system: 6, workerId: this.userInfo.id, system:4,page, limit:pageSize})
+      getEventList({proId:this.userInfo.proIds[0], system: 6, workerId: this.userInfo.id,page, limit:pageSize})
         .then((res) => {
             this.loadingShow = false;
             this.overlayShow = false;

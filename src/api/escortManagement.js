@@ -119,3 +119,46 @@ export function getEventList(data) {
         params: data
 	})
 }
+
+// 登记事件
+export function eventregister(data) {
+	return request({
+	    url: 'nblink/patrol/eventregister',
+	    method: 'post',
+        data
+	})
+}
+
+// 事件删除
+export function eventDelete(id) {
+	return request({
+	    url: `nblink/patrol/eventregister/${id}`,
+	    method: 'delete'
+	})
+}
+
+// 查询建筑信息
+export function queryStructure(proId) {
+	return request({
+	  url: `nblink/hospital/structures/${proId}`,
+	  method: 'get'
+	})
+  };
+  
+  // 查询科室信息
+  export function queryDepartment(data) {
+	return request({
+	  url: 'nblink/hospital/departments',
+	  method: 'get',
+	  params: data
+	})
+  };
+  
+  // 查询空间信息
+  export function querySpace(data) {
+	return request({
+	  url: 'nblink/hospital/spaces',
+	  method: 'get',
+	  params: data
+	})
+  };

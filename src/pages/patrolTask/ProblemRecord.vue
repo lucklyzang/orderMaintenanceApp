@@ -111,6 +111,8 @@ export default {
       eventTypeShow: false,
       backlogEmptyShow: false,
       isShowBacklogTaskNoMoreData: true,
+      questionListTimer: 0,
+      timeOne: null,
       checkResultValue: '1',
       eventTypeList: ['工程报修','拾金不昧','其它'],
       loadingShow: false,
@@ -165,7 +167,7 @@ export default {
   mounted() {
     // 控制设备物理返回按键
     this.deviceReturn(`${this.enterProblemRecordMessage['enterProblemRecordPageSource']}`);
-     this.$nextTick(()=> {
+    this.$nextTick(()=> {
         try {
             this.initScrollChange()
         } catch (error) {
@@ -179,14 +181,20 @@ export default {
     this.checkResultValue = this.departmentCheckList['checkItemList'][this.enterProblemRecordMessage['index']]['checkResult']
   },
 
+   beforeDestroy () {
+    if (this.timeOne) {
+      clearTimeout(this.timeOne)
+    }
+  },
+
   watch: {},
 
   computed: {
-    ...mapGetters(["userInfo","patrolTaskListMessage","departmentCheckList","enterProblemRecordMessage"])
+    ...mapGetters(["userInfo","patrolTaskListMessage","departmentCheckList","enterProblemRecordMessage","enterEventRegisterPageMessage"])
   },
 
   methods: {
-    ...mapMutations([]),
+    ...mapMutations(["changeEnterEventRegisterPageMessage"]),
 
     // 顶部导航左边点击事件
     onClickLeft () {
@@ -195,13 +203,23 @@ export default {
 
     // 事件类型点击事件
     eventTypeClickEvent (item) {
+      // 保存进入事件登记页的相关信息
+      let temporaryEnterEventRegisterPageMessage = this.enterEventRegisterPageMessage;
       if ( item == '工程报修') {
-
+        temporaryEnterEventRegisterPageMessage['eventType'] = '工程报修';
+        this.$router.push({path: '/repairsRegister'})
       } else if (item == '拾金不昧') {
-
+        temporaryEnterEventRegisterPageMessage['eventType'] = '拾金不昧';
+        this.$router.push({path: '/claimRegister'})
       } else if (item == '其他') {
-
-      }
+        temporaryEnterEventRegisterPageMessage['eventType'] = '其他';
+        this.$router.push({path: '/otherRegister'})
+      };
+      temporaryEnterEventRegisterPageMessage['registerType'] = '巡查';
+      temporaryEnterEventRegisterPageMessage['resultId'] = this.enterProblemRecordMessage['issueInfo']['resultId'];
+      temporaryEnterEventRegisterPageMessage['depId'] = this.departmentCheckList['depId'];
+      temporaryEnterEventRegisterPageMessage['depName'] = this.patrolTaskListMessage.needSpaces.filter((item)=> { return item.id == this.departmentCheckList['depId'] })[0]['name'];
+      this.changeEnterEventRegisterPageMessage(temporaryEnterEventRegisterPageMessage)
     },
 
 
@@ -223,14 +241,23 @@ export default {
       }
     },
 
-    // 待办任务列表下拉
+    // 异常巡查项列表绑定滚动事件
     initScrollChange () {
         let boxBackScroll = this.$refs['scrollBacklogTask'];
-        boxBackScroll.addEventListener('scroll',(e)=> {
-            if (Math.ceil(e.srcElement.scrollTop) + e.srcElement.offsetHeight >= e.srcElement.scrollHeight) {
-                console.log('事件列表滚动了',e.srcElement.scrollTop, e.srcElement.offsetHeight, e.srcElement.scrollHeight)
-            }
-        },true)
+        boxBackScroll.addEventListener('scroll',this.questionListLoad,true)
+    },
+
+    // 异常巡查项列表加载方法
+    questionListLoad () {
+      let boxBackScroll = this.$refs['scrollBacklogTask'];
+      if (Math.ceil(boxBackScroll.scrollTop) + boxBackScroll.offsetHeight >= boxBackScroll.scrollHeight) {
+        if (this.questionListTimer) {return};
+        this.questionListTimer = 1;
+        this.timeOne = setTimeout(()=> {
+        this.questionListTimer = 0;
+        console.log('事件列表滚动了',boxBackScroll.scrollTop, boxBackScroll.offsetHeight, boxBackScroll.scrollHeight)
+        },300)
+      }  
     },
 
     // 进入事件详情事件
@@ -424,6 +451,7 @@ export default {
         };
          .patrol-item-box {
             width: 100%;
+            height: 64px;
             position: relative;
             .patrol-item-list {
                 padding: 16px 10px;

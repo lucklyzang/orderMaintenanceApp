@@ -207,7 +207,7 @@
 import { mapGetters, mapMutations } from "vuex";
 import {mixinsDeviceReturn} from '@/mixins/deviceReturnFunction'
 import {userSignOut} from '@/api/login.js'
-import { createRepairsTask, getTransporter, querySpace, queryDepartment, queryRepairsTaskTool, queryStructure, getRepairsTaskType} from '@/api/escortManagement.js'
+import { eventregister, getTransporter, querySpace, queryDepartment, queryRepairsTaskTool, queryStructure, getRepairsTaskType} from '@/api/escortManagement.js'
 import { setStore,removeAllLocalStorage,compress,deepClone, base64ImgtoFile } from '@/common/js/utils'
 import _ from 'lodash'
 import ScrollSelection from "@/components/ScrollSelection";
@@ -938,15 +938,15 @@ export default {
             })
             }
         };
-        this.postGenerateRepairsTask(temporaryMessage)
+        this.postGenerateRepairsEvent(temporaryMessage)
     },
 
-    // 生成报修任务
-    postGenerateRepairsTask (data) {
+    // 生成报修事件
+    postGenerateRepairsEvent (data) {
       this.loadingText = '创建中...';
       this.loadingShow = true;
       this.overlayShow = true;
-      createRepairsTask(data).then((res) => {
+      eventregister(data).then((res) => {
         if (res && res.data.code == 200) {
           this.$toast(`${res.data.msg}`);
           this.commonIsTemporaryStorageMethods();

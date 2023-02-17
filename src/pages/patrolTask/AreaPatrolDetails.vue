@@ -54,7 +54,7 @@
         </div>
         <div class="inspection-item">
           <span>巡查项:</span>
-          <span>设施是否安全可用</span>
+          <span>{{enterProblemRecordMessage['issueInfo']['name']}}</span>
         </div>
         <div class="dialog-center">
           <p v-for="(item,index) in eventTypeList" :key="index" @click="eventTypeClickEvent(item)">
@@ -100,8 +100,9 @@ export default {
       eventTypeShow: false,
       quitInfoShow: false,
       radioValue: 1,
+      resultId: '',
       loadingShow: false,
-      eventTypeList: ['工程报修','拾金不昧','其它'],
+      eventTypeList: ['工程报修','拾金不昧','其他'],
       loadText: '加载中',
       checkItemMessage: "",
       statusBackgroundPng: require("@/common/images/home/status-background.png"),
@@ -145,14 +146,18 @@ export default {
   watch: {},
 
   computed: {
-    ...mapGetters(["userInfo","enterProblemRecordMessage","departmentCheckList","patrolTaskListMessage"]),
+    ...mapGetters(["userInfo","enterProblemRecordMessage","departmentCheckList","patrolTaskListMessage","enterEventRegisterPageMessage"]),
   },
 
   methods: {
-    ...mapMutations(["changeEnterProblemRecordMessage","changeDepartmentCheckList"]),
+    ...mapMutations(["changeEnterProblemRecordMessage","changeDepartmentCheckList","changeEnterEventRegisterPageMessage"]),
 
     // 顶部导航左边点击事件
     onClickLeft () {
+      if (this.departmentCheckList.checkItemList.some((item) => { return item.checkResult == 0})) {
+      this.quitInfoShow = true;
+        return
+      };
       this.$router.push({path: '/workOrderDetails'})
     },
 
@@ -164,6 +169,27 @@ export default {
     // 取消退出
     quitCancel () {
 
+    },
+
+    // 事件类型点击事件
+    eventTypeClickEvent (item) {
+      // 保存进入事件登记页的相关信息
+      let temporaryEnterEventRegisterPageMessage = this.enterEventRegisterPageMessage;
+      if ( item == '工程报修') {
+        temporaryEnterEventRegisterPageMessage['eventType'] = '工程报修';
+        this.$router.push({path: '/repairsRegister'})
+      } else if (item == '拾金不昧') {
+        temporaryEnterEventRegisterPageMessage['eventType'] = '拾金不昧';
+        this.$router.push({path: '/claimRegister'})
+      } else if (item == '其他') {
+        temporaryEnterEventRegisterPageMessage['eventType'] = '其他';
+        this.$router.push({path: '/otherRegister'})
+      };
+      temporaryEnterEventRegisterPageMessage['registerType'] = '巡查';
+      temporaryEnterEventRegisterPageMessage['resultId'] = this.resultId;
+      temporaryEnterEventRegisterPageMessage['depId'] = this.departmentCheckList['depId'];
+      temporaryEnterEventRegisterPageMessage['depName'] = this.patrolTaskListMessage.needSpaces.filter((item)=> { return item.id == this.departmentCheckList['depId'] })[0]['name'];
+      this.changeEnterEventRegisterPageMessage(temporaryEnterEventRegisterPageMessage)
     },
 
     // 通过事件
@@ -244,6 +270,7 @@ export default {
               type: 'success',
               message: '反馈成功'
             });
+            this.resultId = item['resultId'];
             //保存进入问题记录页的相关信息
             let temporaryInfo = this.enterProblemRecordMessage;
             temporaryInfo['isAllowOperation'] = true;

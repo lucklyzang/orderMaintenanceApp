@@ -378,9 +378,7 @@
 <script>
 import { mapGetters, mapMutations } from "vuex";
 import {mixinsDeviceReturn} from '@/mixins/deviceReturnFunction'
-import {userSignOut} from '@/api/login.js'
-import { createRepairsTask, getTransporter, querySpace, queryDepartment, queryRepairsTaskTool, queryStructure, getRepairsTaskType} from '@/api/escortManagement.js'
-import { setStore,removeAllLocalStorage,compress,base64ImgtoFile } from '@/common/js/utils'
+import { eventDelete } from '@/api/escortManagement.js'
 import _ from 'lodash'
 import ScrollSelection from "@/components/ScrollSelection";
 import BottomSelect from "@/components/BottomSelect";
@@ -587,11 +585,11 @@ export default {
     },
 
     // 删除事件
-    delelteEvent (data) {
-      this.loadingText = '创建中...';
+    delelteEvent (id) {
+      this.loadingText = '删除中...';
       this.loadingShow = true;
       this.overlayShow = true;
-      createRepairsTask(data).then((res) => {
+      eventDelete(id).then((res) => {
         if (res && res.data.code == 200) {
           this.$toast(`${res.data.msg}`);
           this.$router.push({path:'/eventList'});

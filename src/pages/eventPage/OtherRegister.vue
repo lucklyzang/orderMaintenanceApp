@@ -79,12 +79,21 @@
 		</div>
       <div class="content-box">
         <div class="message-box">
+         <div class="select-box event-type" v-if="enterEventRegisterPageMessage['patrolItemName'] != ''">
+            <div class="select-box-left">
+              <span>*</span>
+              <span>巡查项</span>
+            </div>
+            <div class="select-box-right event-type-right">
+              <span>{{ enterEventRegisterPageMessage['patrolItemName'] }}</span>
+            </div>
+        </div>
          <div class="select-box event-type">
             <div class="select-box-left">
               <span>*</span>
               <span>事件类型</span>
             </div>
-            <div class="select-box-right" @click="showStructure = true">
+            <div class="select-box-right">
               <span>{{ eventType }}</span>
             </div>
           </div>
@@ -93,7 +102,7 @@
               <span>*</span>
               <span>建筑</span>
             </div>
-            <div class="select-box-right" @click="showStructure = true">
+            <div class="select-box-right" @click="enterEventRegisterPageMessage['patrolItemName'] != '' ? showStructure = false : showStructure = true">
               <span>{{ currentStructure }}</span>
               <van-icon name="arrow" color="#989999" size="20" />
             </div>
@@ -207,7 +216,7 @@
 import { mapGetters, mapMutations } from "vuex";
 import {mixinsDeviceReturn} from '@/mixins/deviceReturnFunction'
 import {userSignOut} from '@/api/login.js'
-import { eventregister, getTransporter, querySpace, queryDepartment, queryRepairsTaskTool, queryStructure, getRepairsTaskType} from '@/api/escortManagement.js'
+import { eventregister, querySpace, queryDepartment, queryStructure} from '@/api/escortManagement.js'
 import { setStore,removeAllLocalStorage,compress,deepClone, base64ImgtoFile } from '@/common/js/utils'
 import _ from 'lodash'
 import ScrollSelection from "@/components/ScrollSelection";
@@ -282,23 +291,20 @@ export default {
   },
 
   computed: {
-    ...mapGetters(["userInfo","transportantTaskMessage","temporaryStorageRepairsRegisterMessage"]),
+    ...mapGetters(["userInfo","transportantTaskMessage","departmentCheckList","enterProblemRecordMessage","temporaryStorageRepairsRegisterMessage","enterEventRegisterPageMessage"]),
     proId () {
-      return this.userInfo.extendData.proId
+      return this.userInfo.proIds[0]
     },
     userName () {
-      return this.userInfo.userName
-    },
-    proName () {
-      return this.userInfo.extendData.proName
+      return this.userInfo.name
     },
     workerId () {
-      return this.userInfo.extendData.userId
+      return this.userInfo.id
     }
   },
 
   methods: {
-    ...mapMutations(["changeCatchComponent","changeOverDueWay","changetransportTypeMessage","changeTemporaryStorageRepairsRegisterMessage"]),
+    ...mapMutations(["changeCatchComponent","changeOverDueWay","changeDepartmentCheckList","changetransportTypeMessage","changeTemporaryStorageRepairsRegisterMessage"]),
 
     onClickLeft() {
       this.commonIsTemporaryStorageMethods();
@@ -622,71 +628,30 @@ export default {
       })
     },
 
-    // 并行查询任务类型、目的建筑、维修员、物料信息、维修工具
+    // 并行查询目的建筑
     parallelFunction (type) {
         this.loadingText = '加载中...';
         this.loadingShow = true;
         this.overlayShow = true;
-        Promise.all([this.getTaskType(), this.getStructure(), this.queryTransporter(),this.getRepairsTaskTool()])
+        Promise.all([this.getStructure()])
         .then((res) => {
           this.loadingText = '';
           this.loadingShow = false;
           this.overlayShow = false;
           if (res && res.length > 0) {
             this.structureOption = [];
-            this.participantOption = [];
-            this.taskTypeOption = [];
-            this.transporterOption = [];
-            this.useToolOption = [];
-            let [item1,item2,item3,item4,item5] = res;
+            let [item1] = res;
             if (item1) {
-              // 任务类型
-              for (let i = 0, len = item1.length; i < len; i++) {
-                this.taskTypeOption.push({
-                  text: item1[i].typeName,
-                  value: item1[i].id,
-                  id: i
-                })
-              }
-            };
-            if (item2) {
               // 目的建筑
-              for (let i = 0, len = item2.length; i < len; i++) {
+              for (let i = 0, len = item1.length; i < len; i++) {
                 this.structureOption.push({
-                  text: item2[i].structName,
-                  value: item2[i].id,
+                  text: item1[i].name,
+                  value: item1[i].id,
                   id: i
                 })
               };
               if (this.currentStructure != '请选择') {
                 this.getDepartmentByStructureId(this.structureOption.filter((item) => { return item['text'] == this.currentStructure})[0]['value'],false,true)
-              }
-            };
-            if (item3) {
-              // 运送员
-              for (let i = 0, len = item3.length; i < len; i++) {
-                this.transporterOption.push({
-                  text: item3[i].workerName,
-                  value: item3[i]['id'],
-                  id: i
-                });
-                this.participantOption.push({
-                  text: item3[i].workerName,
-                  value: item3[i]['id'],
-                  selected: false,
-                  id: i
-                })
-              }
-            };
-            // 维修工具
-            if (item4) {
-              for (let i = 0, len = item4.length; i < len; i++) {
-                this.useToolOption.push({
-                  text: item4[i].toolName,
-                  value: item4[i].id,
-                  id: i,
-                  selected: false
-                })
               }
             }
           }
@@ -702,19 +667,6 @@ export default {
         })
       },
 
-      // 查询维修工具
-      getRepairsTaskTool () {
-        return new Promise((resolve,reject) => {
-          queryRepairsTaskTool(this.proId).then((res) => {
-            if (res && res.data.code == 200) {
-              resolve(res.data.data)
-            }
-          })
-          .catch((err) => {
-            reject(err.message)
-          })
-        })
-      },
 
       // 查询目的建筑
       getStructure () {
@@ -729,36 +681,6 @@ export default {
           })
         })
       },
-
-    // 查询维修员
-    queryTransporter () {
-      return new Promise((resolve,reject) => {
-        getTransporter(this.proId, this.workerId)
-        .then((res) => {
-          if (res && res.data.code == 200) {
-            resolve(res.data.data)
-          }
-        })
-        .catch((err) => {
-          reject(err.message)
-        })
-      })
-    },
-
-    // 查询任务类型
-    getTaskType () {
-      return new Promise((resolve,reject) => {
-        getRepairsTaskType(this.proId, this.workerId)
-        .then((res) => {
-          if (res && res.data.code == 200) {
-            resolve(res.data.data)
-          }
-        })
-        .catch((err) => {
-          reject(err.message)
-        })
-      })
-    },
 
     // 目的建筑下拉选择框确认事件
     structureSureEvent (val) {
@@ -798,6 +720,7 @@ export default {
 
     // 目的科室列点击事件
     goalDepartmentClickEvent () {
+      if (this.enterEventRegisterPageMessage['patrolItemName'] != '') {return};
       if (this.currentStructure == '请选择') {
         this.$toast('请选择建筑')
       } else {
@@ -822,6 +745,7 @@ export default {
     
     // 目的房间列点击事件
     goalSpacesClickEvent () {
+      if (this.enterEventRegisterPageMessage['patrolItemName'] != '') {return};
       if (this.currentGoalDepartment == '请选择') {
         this.$toast('请选择科室')
       } else {
@@ -949,6 +873,12 @@ export default {
       eventregister(data).then((res) => {
         if (res && res.data.code == 200) {
           this.$toast(`${res.data.msg}`);
+          // 更改该检查项下是否有登记的事件
+          if (this.enterEventRegisterPageMessage['patrolItemName']) {
+            let tempraryMessage = this.departmentCheckList;
+            tempraryMessage['checkItemList'][this.enterProblemRecordMessage[index]]['isHaveEventRegister'] = 1;
+            this.changeDepartmentCheckList(tempraryMessage)
+          };  
           this.commonIsTemporaryStorageMethods();
           this.$router.push({path:'/eventList'});
         } else {
@@ -1296,6 +1226,9 @@ export default {
               padding-right: 20px;
               box-sizing: border-box;
               width: 0;
+              .spanStyle {
+                color: #bfbfbf !important
+              };
               >span {
                 color: #101010;
                 text-align: right;
@@ -1306,7 +1239,10 @@ export default {
           };
           .end-select-box {
               .select-box-right {
-                padding-right: 0 !important
+                padding-right: 0 !important;
+                .spanStyle {
+                  color: #bfbfbf !important
+                };
               }
           };
           .problem-overview {

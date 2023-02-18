@@ -9,7 +9,11 @@ export default {
             return state.temporaryStorageRepairsRegisterMessage
         },
 
-        eventRegisterType: (state) => {
+        moreEventMessage: (state) => {
+            return state.moreEventMessage
+        },
+
+        enterEventRegisterPageMessage: (state) => {
             return state.enterEventRegisterPageMessage
         } 
     },
@@ -28,6 +32,14 @@ export default {
                 state.enterEventRegisterPageMessage = playLoad
             }
         },
+
+        // 保存事件更多信息
+        changeMoreEventMessage(state, playLoad) {
+            if (playLoad && playLoad != 'null') {
+                state.moreEventMessage = playLoad
+            }
+        },
+
 
         //重置事件登记模块状态
         resetRegisterState(state) {

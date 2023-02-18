@@ -13,9 +13,7 @@
         <div class="content-box">
             <div class="action-bar">
                 <div class="action-bar-left">
-                    <van-radio-group v-model="storageRadio">
-                        <van-radio name="1" shape="square">暂存</van-radio>
-                    </van-radio-group>
+                  <van-checkbox v-model="storageRadio" shape="square" @change="checkboxChangeEvent">暂存</van-checkbox>
                 </div>
                 <div class="action-bar-right">
                     <span :class="{'spanStyle': !isOnlyMe}" @click="onlyMeEvent">只看我</span>
@@ -27,7 +25,7 @@
                   <div class="backlog-task-top">
                       <div class="backlog-task-top-left">
                           <span>事件类型:</span>
-                          <span>{{ item.eventType }}</span>
+                          <span>{{ eventTypeTransform(item.eventType) }}</span>
                       </div>
                       <div class="backlog-task-top-right">
                           <span :class="{'spanNoStartStyle': item.state == 1,'spanCompletedStyle': item.state == 4}">{{ taskStatusTransition(item.state) }}</span>
@@ -48,7 +46,7 @@
                       </div>
                       <div class="taskset-name">
                           <span>记录类型:</span>
-                          <span>{{ item.registerType }}</span>
+                          <span>{{ registerTypeTransform(item.registerType) }}</span>
                       </div>
                   </div>
                   <div class="right-arrow-box" @click="taskDetailsEvent(item)">
@@ -111,11 +109,11 @@
           </div>
           <div class="dialog-center-one-line">
             <span>事件类型</span>
-            <SelectSearch ref="eventTypeOption" :itemData="eventTypeOption" :curData="currentEventType" @change="eventTypeOptionChange" />
+            <SelectSearch ref="eventTypeOption" :multiple="true" :itemData="eventTypeOption" :curData="currentEventType" @change="eventTypeOptionChange" />
           </div>
           <div class="dialog-center-one-line">
             <span>登记类型</span>
-            <SelectSearch ref="registerTypeOption" :itemData="registerTypeOption" :curData="registerType" @change="registerTypeChange" />
+            <SelectSearch ref="registerTypeOption" :multiple="true" :itemData="registerTypeOption" :curData="registerType" @change="registerTypeChange" />
           </div>
         </div>
       </van-dialog>
@@ -126,7 +124,7 @@
 <script>
 import NavBar from "@/components/NavBar";
 import { mapGetters, mapMutations } from "vuex";
-import { getEventList } from '@/api/escortManagement.js'
+import { getEventList, queryRegisterUser } from '@/api/escortManagement.js'
 import {mixinsDeviceReturn} from '@/mixins/deviceReturnFunction';
 import ScrollSelection from "@/components/ScrollSelection";
 import SelectSearch from "@/components/SelectSearch";
@@ -146,7 +144,7 @@ export default {
       backlogEmptyShow: false,
       screenDialogShow: false,
       isShowBacklogTaskNoMoreData: false,
-      storageRadio: '1',
+      storageRadio: true,
       currentDateRange: '',
       minDate: new Date(2010, 0, 1),
       maxDate: new Date(2050, 0, 31),
@@ -162,16 +160,12 @@ export default {
             value: null
         },
         {
-            text: '巡更任务详情页右上角',
+            text: '巡查',
             value: 1
         },
         {
-            text: '异常巡查项登记',
+            text: '其他',
             value: 2
-        },
-        {
-            text: '事件列表',
-            value: 3
         }
       ],
       currentEventType: null,
@@ -195,24 +189,7 @@ export default {
       ],
 
       currentRegistrant: null,
-      registrantOption: [
-        {
-            text: '请选择',
-            value: null
-        },
-        {
-            text: '飒飒',
-            value: 1
-        },
-        {
-            text: '飒飒飒飒',
-            value: 2
-        },
-        {
-            text: '飒斐德坊',
-            value: 3
-        }
-     ],
+      registrantOption: [],
       eventTypeShow: false,
       eventTypeList: ['工程报修','拾金不昧','其他'],
       fullBacklogTaskList: [],
@@ -230,6 +207,8 @@ export default {
     this.$nextTick(()=> {
       this.initScrollChange()
     });
+    // 查询登记用户
+    this.getRegisterUser();
     // 获取事件列表
     this.queryEventList(this.currentPage,this.pageSize)
   },
@@ -254,6 +233,41 @@ export default {
       this.$router.push({path: '/home'})
     },
 
+    // 是否暂存事件
+    checkboxChangeEvent (checked) {
+      if (checked) {
+      } else {
+      }
+    },
+
+    // 事件类型转换
+    eventTypeTransform (num) {
+      switch(num) {
+        case 1 :
+          return '工程报修'
+          break;
+        case 2 :
+          return '拾金不昧'
+          break;
+        case 3 :
+          return '其他'
+          break;
+      }
+    },
+
+    // 登记类型转换
+    registerTypeTransform (num) {
+      switch(num) {
+        case 1 :
+          return '巡查'
+          break;
+        case 2 :
+          return '其他'
+          break
+      }
+    },
+
+
     // 是否只看我事件
    onlyMeEvent () {
     this.isOnlyMe = !this.isOnlyMe;
@@ -262,9 +276,41 @@ export default {
     }
    },
 
-    // 进入事件详情事件
-    taskDetailsEvent (item) {
-
+    // 查询登记用户
+    getRegisterUser() {
+      this.loadingText = '查询中...';
+      this.loadingShow = true;
+      this.overlayShow = true;
+      this.goalDepartmentOption = [];
+      queryRegisterUser({proId:this.userInfo.proIds[0],system:6})
+      .then((res) => {
+        this.registrantOption = [{
+          text: '请选择',
+          value: null
+        }],
+        this.loadingText = '';
+        this.loadingShow = false;
+        this.overlayShow = false;
+        if (res && res.data.code == 200) {
+          if (res.data.data.length > 0) {
+            for (let i = 0, len = res.data.data.length; i < len; i++) {
+              this.registrantOption.push({
+                text: res.data.data[i],
+                value: i
+              })
+            };
+          }
+        }
+      })
+      .catch((err) => {
+        this.loadingText = '';
+        this.loadingShow = false;
+        this.overlayShow = false;
+        this.$dialog.alert({
+          message: `${err}`,
+          closeOnPopstate: true
+        }).then(() => {})
+      })
     },
 
     // 筛选弹框关闭前事件
@@ -370,6 +416,33 @@ export default {
       this.eventTypeShow = true
     },
 
+    // 进入事件详情事件
+    taskDetailsEvent (item) {
+      // 1-工程报修,2-拾金不昧,3-其他
+      if (item.eventType == 1) {
+        //未完成
+        if (item.state == 0) {
+          this.$router.push({path: '/repairsRegister'})
+        } else if (item.state == 1) {
+          this.$router.push({path: '/historyRepairsRegister',query:{eventId: item.id}})
+        }
+      } else if (item.eventType == 2) {
+        //未完成
+        if (item.state == 1) {
+          this.$router.push({path: '/claimRegister'})
+        } else if (item.state == 0) {
+          this.$router.push({path: '/historyClaimRegister',query:{eventId: item.id}})
+        }
+      } else if (item.eventType == 3) {
+        //未完成
+        if (item.state == 0) {
+          this.$router.push({path: '/otherRegister'})
+        } else if (item.state == 1) {
+          this.$router.push({path: '/historyOtherRegister',query:{eventId: item.id}})
+        }
+      }
+    },
+
     // 事件类型点击事件
     eventTypeClickEvent (item) {
       // 保存进入事件登记页的相关信息
@@ -385,8 +458,9 @@ export default {
         this.$router.push({path: '/otherRegister'})
       };
       temporaryEnterEventRegisterPageMessage['registerType'] = '其他';
+      temporaryEnterEventRegisterPageMessage['patrolItemName'] = '';
       temporaryEnterEventRegisterPageMessage['resultId'] = '';
-        temporaryEnterEventRegisterPageMessage['depId'] = '';
+      temporaryEnterEventRegisterPageMessage['depId'] = '';
       temporaryEnterEventRegisterPageMessage['depName'] = '';
       this.changeEnterEventRegisterPageMessage(temporaryEnterEventRegisterPageMessage)
     },

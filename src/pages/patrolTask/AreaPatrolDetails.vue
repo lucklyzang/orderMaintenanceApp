@@ -54,7 +54,7 @@
         </div>
         <div class="inspection-item">
           <span>巡查项:</span>
-          <span>{{enterProblemRecordMessage['issueInfo']['name']}}</span>
+          <span>{{ patrolItem }}</span>
         </div>
         <div class="dialog-center">
           <p v-for="(item,index) in eventTypeList" :key="index" @click="eventTypeClickEvent(item)">
@@ -100,6 +100,7 @@ export default {
       eventTypeShow: false,
       quitInfoShow: false,
       radioValue: 1,
+      patrolItem: '',
       resultId: '',
       loadingShow: false,
       eventTypeList: ['工程报修','拾金不昧','其他'],
@@ -186,6 +187,7 @@ export default {
         this.$router.push({path: '/otherRegister'})
       };
       temporaryEnterEventRegisterPageMessage['registerType'] = '巡查';
+      temporaryEnterEventRegisterPageMessage['patrolItemName'] = this.enterProblemRecordMessage['issueInfo']['name'];
       temporaryEnterEventRegisterPageMessage['resultId'] = this.resultId;
       temporaryEnterEventRegisterPageMessage['depId'] = this.departmentCheckList['depId'];
       temporaryEnterEventRegisterPageMessage['depName'] = this.patrolTaskListMessage.needSpaces.filter((item)=> { return item.id == this.departmentCheckList['depId'] })[0]['name'];
@@ -281,6 +283,7 @@ export default {
             this.changeEnterProblemRecordMessage(temporaryInfo);
             // 第一次点击X，直接选择事件类型进行登记
             if (this.departmentCheckList['checkItemList'][index]['checkResult'] == 0 || this.departmentCheckList['checkItemList'][index]['checkResult'] == 1) {
+              this.patrolItem = this.enterProblemRecordMessage['issueInfo']['name'];
               this.eventTypeShow = true
             } else {
               // 第二次及以上再点击X，进入异常巡查项事件列表页

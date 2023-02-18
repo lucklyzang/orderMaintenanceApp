@@ -79,13 +79,13 @@
 		</div>
       <div class="content-box">
         <div class="message-box">
-         <div class="select-box event-type">
+         <div class="select-box event-type" v-if="enterEventRegisterPageMessage['patrolItemName'] != ''">
             <div class="select-box-left">
               <span>*</span>
-              <span>检查项</span>
+              <span>巡查项</span>
             </div>
-            <div class="select-box-right">
-              <span>{{ patrolItem }}</span>
+            <div class="select-box-right event-type-right">
+              <span>{{ enterEventRegisterPageMessage['patrolItemName'] }}</span>
             </div>
           </div>
          <div class="select-box event-type">
@@ -93,7 +93,7 @@
               <span>*</span>
               <span>事件类型</span>
             </div>
-            <div class="select-box-right event-type-right">
+            <div class="select-box-right event-type">
               <span>{{ eventType }}</span>
             </div>
           </div>
@@ -102,8 +102,8 @@
               <span>*</span>
               <span>建筑</span>
             </div>
-            <div class="select-box-right" @click="showStructure = true">
-              <span>{{ currentStructure }}</span>
+            <div class="select-box-right" @click="enterEventRegisterPageMessage['patrolItemName'] != '' ? showStructure = false : showStructure = true">
+              <span :class="{'spanStyle':enterEventRegisterPageMessage['patrolItemName'] != ''}">{{ currentStructure }}</span>
               <van-icon name="arrow" color="#989999" size="20" />
             </div>
           </div>
@@ -220,9 +220,10 @@
 import { mapGetters, mapMutations } from "vuex";
 import {mixinsDeviceReturn} from '@/mixins/deviceReturnFunction'
 import {userSignOut} from '@/api/login.js'
-import { createRepairsTask, querySpace, queryDepartment, queryStructure} from '@/api/escortManagement.js'
+import { eventregister, querySpace, queryDepartment, queryStructure} from '@/api/escortManagement.js'
 import { setStore,removeAllLocalStorage,compress,deepClone, base64ImgtoFile } from '@/common/js/utils'
 import _ from 'lodash'
+import axios from 'axios'
 import ScrollSelection from "@/components/ScrollSelection";
 import BottomSelect from "@/components/BottomSelect";
 export default {
@@ -247,6 +248,7 @@ export default {
       photoBox: false,
       imgBoxShow: false,
       imgIndex: '',
+      imgOnlinePathArr: [],
       imgDeleteUrlArr: [],
       existOnlineImgPath: [],
       imgDeleteUrl: '',
@@ -285,6 +287,7 @@ export default {
         that.$router.push({path: '/eventList'})
       })
     };
+    console.log('页面信息',this.enterEventRegisterPageMessage);
     // this.parallelFunction();
     //判断是否回显暂存的数据
     if (JSON.stringify(this.temporaryStorageRepairsRegisterMessage) != '{}' && this.temporaryStorageRepairsRegisterMessage['isTemporaryStorage']) {
@@ -296,23 +299,20 @@ export default {
   },
 
   computed: {
-    ...mapGetters(["userInfo","transportantTaskMessage","temporaryStorageRepairsRegisterMessage","enterEventRegisterPageMessage"]),
+    ...mapGetters(["userInfo","transportantTaskMessage","departmentCheckList","enterProblemRecordMessage","temporaryStorageRepairsRegisterMessage","enterEventRegisterPageMessage"]),
     proId () {
-      return this.userInfo.extendData.proId
+      return this.userInfo.proIds[0]
     },
     userName () {
-      return this.userInfo.userName
-    },
-    proName () {
-      return this.userInfo.extendData.proName
+      return this.userInfo.name
     },
     workerId () {
-      return this.userInfo.extendData.userId
+      return this.userInfo.id
     }
   },
 
   methods: {
-    ...mapMutations(["changeCatchComponent","changeOverDueWay","changetransportTypeMessage","changeTemporaryStorageRepairsRegisterMessage"]),
+    ...mapMutations(["changeCatchComponent","changeOverDueWay","changeDepartmentCheckList","changetransportTypeMessage","changeTemporaryStorageRepairsRegisterMessage"]),
 
     onClickLeft() {
       this.commonIsTemporaryStorageMethods();
@@ -760,6 +760,7 @@ export default {
 
     // 目的科室列点击事件
     goalDepartmentClickEvent () {
+      if (this.enterEventRegisterPageMessage['patrolItemName'] != '') {return};
       if (this.currentStructure == '请选择') {
         this.$toast('请选择建筑')
       } else {
@@ -784,6 +785,7 @@ export default {
     
     // 目的房间列点击事件
     goalSpacesClickEvent () {
+      if (this.enterEventRegisterPageMessage['patrolItemName'] != '') {return};
       if (this.currentGoalDepartment == '请选择') {
         this.$toast('请选择科室')
       } else {
@@ -942,12 +944,19 @@ export default {
       this.loadingText = '创建中...';
       this.loadingShow = true;
       this.overlayShow = true;
-      createRepairsTask(data).then((res) => {
+      eventregister(data).then((res) => {
         if (res && res.data.code == 200) {
           this.$toast(`${res.data.msg}`);
+          // 更改该检查项下是否有登记的事件
+          if (this.enterEventRegisterPageMessage['patrolItemName']) {
+            let tempraryMessage = this.departmentCheckList;
+            tempraryMessage['checkItemList'][this.enterProblemRecordMessage[index]]['isHaveEventRegister'] = 1;
+            this.changeDepartmentCheckList(tempraryMessage)
+          };  
           this.commonIsTemporaryStorageMethods();
           this.$router.push({path:'/eventList'});
         } else {
+          this.imgOnlinePathArr = [];
           this.$dialog.alert({
             message: `${res.data.msg}`,
             closeOnPopstate: true
@@ -959,6 +968,7 @@ export default {
         this.overlayShow = false
       })
       .catch((err) => {
+        this.imgOnlinePathArr = [];
         this.$dialog.alert({
           message: `${err.message}`,
           closeOnPopstate: true
@@ -1297,17 +1307,23 @@ export default {
               padding-right: 20px;
               box-sizing: border-box;
               width: 0;
+              .spanStyle {
+                color: #bfbfbf !important
+              };
               >span {
                 color: #101010;
                 text-align: right;
                 flex: 1;
                 .no-wrap()
-              }
+              };
             }
           };
           .end-select-box {
               .select-box-right {
-                padding-right: 0 !important
+                padding-right: 0 !important;
+                .spanStyle {
+                  color: #bfbfbf !important
+                }
               }
           };
           .problem-overview {

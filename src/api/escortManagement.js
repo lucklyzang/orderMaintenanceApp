@@ -120,6 +120,14 @@ export function getEventList(data) {
 	})
 }
 
+// 获取事件详情
+export function getEventDetails(id) {
+	return request({
+	    url: `nblink/patrol/eventregister/${id}`,
+	    method: 'get'
+	})
+}
+
 // 登记事件
 export function eventregister(data) {
 	return request({
@@ -160,5 +168,77 @@ export function queryStructure(proId) {
 	  url: 'nblink/hospital/spaces',
 	  method: 'get',
 	  params: data
+	})
+  };
+
+  // 查询登记用户
+  export function queryRegisterUser(data) {
+	return request({
+	  url: 'nblink/patrol/eventregister/queryRegisterUser',
+	  method: 'get',
+	  params: data
+	})
+  };
+
+
+  // 留言簿
+
+  // 留言查询
+  export function queryGuestBook(data) {
+	return request({
+	  url: 'nblink/patrol/guestBook/app/list',
+	  method: 'get',
+	  params: data
+	})
+  };
+
+  // 留言删除
+  export function guestBookDelete(id) {
+	return request({
+	  url: `nblink/patrol/guestBook/${id}`,
+	  method: 'delete'
+	})
+  };
+
+  // 评论删除
+  export function guestCommentDelete(id) {
+	return request({
+	  url: `nblink/patrol/guestComment/${id}`,
+	  method: 'delete'
+	})
+  };
+
+  // 评论添加
+  export function guestCommentAdd(data) {
+	return request({
+	  url: 'nblink/patrol/guestComment',
+	  method: 'post',
+	  data
+	})
+  };
+
+  // 留言添加
+  export function guestBookAdd(data) {
+	return request({
+	  url: 'nblink/patrol/guestBook',
+	  method: 'post',
+	  data
+	})
+  };
+
+  // 点赞
+  export function guestSupport(data) {
+	return request({
+	  url: 'nblink/patrol/guestSupport',
+	  method: 'get',
+	  params: data
+	})
+  };
+
+   // 取消点赞
+   export function guestCancel(id) {
+	return request({
+	  url: `nblink/patrol/guestSupport/${id}`,
+	  method: 'get'
 	})
   };

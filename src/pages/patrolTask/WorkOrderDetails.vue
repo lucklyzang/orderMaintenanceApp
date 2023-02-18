@@ -169,11 +169,11 @@ export default {
   watch: {},
 
   computed: {
-    ...mapGetters(["userInfo","patrolTaskListMessage","departmentCheckList"])
+    ...mapGetters(["userInfo","patrolTaskListMessage","departmentCheckList","enterPostMessagePageMessage"])
   },
 
   methods: {
-    ...mapMutations(["changeDepartmentCheckList","changePatrolTaskListMessage"]),
+    ...mapMutations(["changeDepartmentCheckList","changePatrolTaskListMessage","changeEnterPostMessagePageMessage"]),
 
     // 顶部导航左边点击事件
     onClickLeft () {
@@ -198,6 +198,10 @@ export default {
 
     // 发布留言事件
     addMessageEvent () {
+      let temporaryEnterPostMessagePageMessage = this.enterPostMessagePageMessage;
+      temporaryEnterPostMessagePageMessage['collect'] = this.patrolTaskListMessage.configName;
+      temporaryEnterPostMessagePageMessage['workers'] = this.patrolTaskListMessage.workers;
+      this.changeEnterPostMessagePageMessage(temporaryEnterPostMessagePageMessage);
       this.$router.push({path: '/postMessage'})
     },
 

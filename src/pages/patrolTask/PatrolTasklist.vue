@@ -162,17 +162,21 @@ export default {
   watch: {},
 
   computed: {
-    ...mapGetters(["userInfo","taskType"])
+    ...mapGetters(["userInfo","taskType","enterPostMessagePageMessage"])
   },
 
   methods: {
-    ...mapMutations(["changePatrolTaskListMessage","changeTaskType"]),
+    ...mapMutations(["changePatrolTaskListMessage","changeTaskType","changeEnterPostMessagePageMessage"]),
 
     onClickLeft () {
         this.$router.push({path: '/home'})
     },
 
     onClickRight () {
+        let temporaryEnterPostMessagePageMessage = this.enterPostMessagePageMessage;
+        temporaryEnterPostMessagePageMessage['collect'] = '';
+        temporaryEnterPostMessagePageMessage['workers'] = '';
+        this.changeEnterPostMessagePageMessage(temporaryEnterPostMessagePageMessage);
         this.$router.push({path: '/postMessage'})
     },
 

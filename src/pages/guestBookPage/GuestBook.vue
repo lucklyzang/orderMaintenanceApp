@@ -13,9 +13,7 @@
         <div class="content-box">
             <div class="action-bar">
                 <div class="action-bar-left">
-                    <van-radio-group v-model="storageRadio">
-                        <van-radio name="1" shape="square">只看我参与得任务</van-radio>
-                    </van-radio-group>
+                  <van-checkbox v-model="storageRadio" shape="square" @change="checkboxChangeEvent">只看我参与得任务</van-checkbox>
                 </div>
             </div>
             <div class="backlog-task-list-box" ref="scrollBacklogTask">
@@ -41,10 +39,10 @@
                     <div class="message-line-one">
                         <div class="message-line-left">
                             <span>2023-02-02  16:31</span>
-                            <span>删除</span>
+                            <span @click="deleteGuestbookEvent(item)">删除</span>
                         </div>
                         <div class="message-line-right">
-                            <span>
+                            <span @click="giveLike(item)">
                                 <img :src="likeIconPng" alt="">
                                 3
                             </span>
@@ -62,7 +60,7 @@
                        <div class="comment-list">
                            <div class="comment-top">
                                <span>2023-02-02  11:31</span>
-                               <span>删除</span>
+                               <span @click="deleteCommentEvent(item)">删除</span>
                            </div>
                            <div class="comment-bottom">
                                <span>泰罗奥特曼:</span>
@@ -86,7 +84,7 @@
                     </div>
                     <div>
                     <div class="comment-input">
-                        <van-field
+                      <van-field
                             v-model="commentContent"
                             rows="1"
                             autosize
@@ -105,6 +103,16 @@
         </div>
         </div>
     </div>
+    <div class="comment-area">
+      <van-field
+        v-model="commentContent"
+        rows="1"
+        autosize
+        type="textarea"
+        placeholder="说点什么吧..."
+      />
+      <span @click="commentEvent">发送</span>
+    </div>
     <div class="img-dislog-box">
         <van-dialog v-model="imgBoxShow" width="98%" :close-on-click-overlay="true" confirm-button-text="关闭">
             <img :src="currentImgUrl" />
@@ -115,7 +123,7 @@
 <script>
 import NavBar from "@/components/NavBar";
 import { mapGetters, mapMutations } from "vuex";
-import {getTaskDetails} from '@/api/escortManagement.js'
+import {queryGuestBook, guestBookDelete, guestCommentDelete, guestCommentAdd, guestSupport, guestCancel} from '@/api/escortManagement.js'
 import {mixinsDeviceReturn} from '@/mixins/deviceReturnFunction';
 export default {
   name: "GuestBook",
@@ -131,7 +139,7 @@ export default {
       backlogEmptyShow: false,
       screenDialogShow: false,
       isShowBacklogTaskNoMoreData: false,
-      storageRadio: '1',
+      storageRadio: true,
       currentImgUrl: '',
       currentDateRange: '',
       commentContent: '',
@@ -170,26 +178,60 @@ export default {
   mounted() {
     // 控制设备物理返回按键
     this.deviceReturn("/home");
-    // 获取任务详情
-    // this.queryTaskDetails()
+    // 获取留言列表
+    this.getGuestBook({
+      date: '',
+      userId: this.workerId,
+      collect: ''
+    })
   },
 
   watch: {},
 
   computed: {
-    ...mapGetters(["userInfo","patrolTaskListMessage","departmentCheckList"])
+    ...mapGetters(["userInfo","patrolTaskListMessage","departmentCheckList","enterPostMessagePageMessage"]),
+    proId () {
+      return this.userInfo.proIds[0]
+    },
+    userName () {
+      return this.userInfo.name
+    },
+    workerId () {
+      return this.userInfo.id
+    }
   },
 
   methods: {
-    ...mapMutations(["changeDepartmentCheckList","changePatrolTaskListMessage"]),
+    ...mapMutations(["changeDepartmentCheckList","changePatrolTaskListMessage","changeEnterPostMessagePageMessage"]),
 
     // 顶部导航左边点击事件
     onClickLeft () {
       this.$router.push({path: '/home'})
     },
 
-    // 发布留言事件
+    // 只看我参与的任务复选框值变化事件
+    checkboxChangeEvent (checked) {
+      if (checked) {
+        this.getGuestBook({
+          date: '',
+          userId: this.workerId,
+          collect: ''
+        })
+      } else {
+        this.getGuestBook({
+          date: '',
+          userId: '',
+          collect: ''
+        })
+      }
+    },
+
+    // 发布留言
     postMessageEvent () {
+      let temporaryEnterPostMessagePageMessage = this.enterPostMessagePageMessage;
+      temporaryEnterPostMessagePageMessage['collect'] = '';
+      temporaryEnterPostMessagePageMessage['workers'] = '';
+      this.changeEnterPostMessagePageMessage(temporaryEnterPostMessagePageMessage);
       this.$router.push({path: '/postMessage'})
     },
 
@@ -200,20 +242,213 @@ export default {
     },
 
     // 获取留言簿列表
-    queryTaskDetails () {
+    getGuestBook (data) {
       this.loadingShow = true;
       this.overlayShow = true;
-      this.queryDataSuccess = false;
+      this.backlogEmptyShow = false;
       this.loadText = '加载中';
-      getTaskDetails(
-        this.patrolTaskListMessage.id
-      ).then((res) => {
+      this.backlogTaskList = [];
+      queryGuestBook(data).then((res) => {
+        this.loadingShow = false;
+        this.overlayShow = false;
         if (res && res.data.code == 200) {
-          console.log(res.data.data);
+          if (res.data.data.length == 0) {
+            this.backlogEmptyShow = true
+          };
+          console.log('留言',res.data.data)
+        } else {
+          this.$toast({
+            type: 'fail',
+            message: res.data.msg
+          })
+        }
+      })
+      .catch((err) => {
+        this.loadingShow = false;
+        this.overlayShow = false;
+        this.$toast({
+          type: 'fail',
+          message: err
+        })
+      })
+    },
+
+    // 删除留言(只能删除自己的留言)
+    deleteGuestbookEvent (item) {
+      this.loadingShow = true;
+      this.overlayShow = true;
+      this.loadText = '删除中';
+      guestBookDelete(item.id).then((res) => {
+        this.loadingShow = false;
+        this.overlayShow = false;
+        if (res && res.data.code == 200) {
+          if (this.storageRadio) {
+            this.getGuestBook({
+              date: '',
+              userId: this.workerId,
+              collect: ''
+            })
+          } else {
+            this.getGuestBook({
+              date: '',
+              userId: '',
+              collect: ''
+            })
+          }
+        } else {
+          this.$toast({
+            type: 'fail',
+            message: res.data.msg
+          })
+        }
+      })
+      .catch((err) => {
+        this.loadingShow = false;
+        this.overlayShow = false;
+        this.$toast({
+          type: 'fail',
+          message: err
+        })
+      })
+    },
+
+    //删除评论事件(只能删除自己的评论)
+    deleteCommentEvent (item) {
+      this.loadingShow = true;
+      this.overlayShow = true;
+      this.loadText = '删除中';
+      guestCommentDelete(item.id).then((res) => {
+        this.loadingShow = false;
+        this.overlayShow = false;
+        if (res && res.data.code == 200) {
+          if (this.storageRadio) {
+            this.getGuestBook({
+              date: '',
+              userId: this.workerId,
+              collect: ''
+            })
+          } else {
+            this.getGuestBook({
+              date: '',
+              userId: '',
+              collect: ''
+            })
+          }
+        } else {
+          this.$toast({
+            type: 'fail',
+            message: res.data.msg
+          })
+        }
+      })
+      .catch((err) => {
+        this.loadingShow = false;
+        this.overlayShow = false;
+        this.$toast({
+          type: 'fail',
+          message: err
+        })
+      })
+    },
+
+    //点赞事件(可以取消自己的点赞)
+    giveLike (item) {
+      this.loadingShow = true;
+      this.overlayShow = true;
+      //点赞
+      if (true) {
+         this.loadText = '点赞中';
+          guestSupport({
+            userId: this.workerId,
+            userName: this.userName,
+            guestId: item.id,
+            system: 6
+          }).then((res) => {
+            if (res && res.data.code == 200) {
+              this.loadingShow = false;
+              this.overlayShow = false;
+              if (this.storageRadio) {
+                this.getGuestBook({
+                  date: '',
+                  userId: this.workerId,
+                  collect: ''
+                })
+              } else {
+                this.getGuestBook({
+                  date: '',
+                  userId: '',
+                  collect: ''
+                })
+              }
+            } else {
+              this.$toast({
+                type: 'fail',
+                message: res.data.msg
+              })
+            }
+          })
+          .catch((err) => {
           this.loadingShow = false;
           this.overlayShow = false;
-          this.queryDataSuccess = true;
-          this.changePatrolTaskListMessage(res.data.data)
+          this.$toast({
+            type: 'fail',
+            message: err
+          })
+        })
+      // 取消点赞
+      } else {
+        this.loadText = '取消中';
+        guestCancel(item.id).then((res) => {
+            this.loadingShow = false;
+            this.overlayShow = false;
+            if (res && res.data.code == 200) {
+              if (this.storageRadio) {
+                this.getGuestBook({
+                  date: '',
+                  userId: this.workerId,
+                  collect: ''
+                })
+              } else {
+                this.getGuestBook({
+                  date: '',
+                  userId: '',
+                  collect: ''
+                })
+              }
+            } else {
+              this.$toast({
+                type: 'fail',
+                message: res.data.msg
+              })
+            }
+          })
+          .catch((err) => {
+            this.loadingShow = false;
+            this.overlayShow = false;
+            this.$toast({
+              type: 'fail',
+              message: err
+            })
+        })
+      } 
+    },
+
+    // 评论事件
+    commentEvent () {
+      this.loadingShow = true;
+      this.overlayShow = true;
+      this.loadText = '评论中';
+      guestCommentAdd({
+        userId: this.workerId,
+        userName: this.userName,
+        guestId: item.id,
+        system: 6,
+        proId: this.proId,
+        content: this.commentContent
+      }).then((res) => {
+        this.loadingShow = false;
+        this.overlayShow = false;
+        if (res && res.data.code == 200) {
         } else {
           this.$toast({
             type: 'fail',
@@ -497,6 +732,40 @@ export default {
           }
         }
     }    
+  };
+  .comment-area {
+    width: 100%;
+    position: fixed;
+    left: 0;
+    bottom: 10px;
+    background: #333;
+    padding: 6px 4px;
+    box-sizing: border-box;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    /deep/ .van-cell {
+      border-radius: 4px;
+      padding: 4px 6px !important;
+      background: #101010;
+      color: #fff;
+      flex: 1;
+      margin-right: 6px
+    };
+    /deep/ .van-cell::after {
+      display: none
+    };
+    >span {
+      display: inline-block;
+      width: 56px;
+      height: 33px;
+      line-height: 33px;
+      text-align: center;
+      font-size: 14px;
+      color: #fff;
+      border-radius: 2px;
+      background: #18B3EB;
+    }
   }
 }
 </style>

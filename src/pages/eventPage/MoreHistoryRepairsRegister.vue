@@ -22,12 +22,12 @@
 		</div>
       <div class="content-box">
         <div class="message-box">
-         <div class="select-box">
+          <div class="select-box">
             <div class="select-box-left">
               <span>登记人</span>
             </div>
             <div class="select-box-right">
-              <span>阿萨飒飒</span>
+              <span>{{ moreEventMessage.createName}}</span>
             </div>
           </div>
           <div class="select-box">
@@ -35,7 +35,7 @@
               <span>登记时间</span>
             </div>
             <div class="select-box-right">
-              <span>啊飒飒飒飒</span>
+              <span>{{ moreEventMessage.createTime }}</span>
             </div>
           </div>
           <div class="select-box">
@@ -43,7 +43,7 @@
               <span>最后更新人</span>
             </div>
             <div class="select-box-right">
-              <span>飒飒撒</span>
+              <span>{{ moreEventMessage.modifyName }}</span>
             </div>
           </div>
           <div class="select-box">
@@ -51,7 +51,7 @@
               <span>最后更新时间</span>
             </div>
             <div class="select-box-right">
-              <span>啊飒飒</span>
+              <span>{{ moreEventMessage.createTime }}</span>
             </div>
           </div>
           <div class="select-box">
@@ -59,7 +59,7 @@
               <span>巡更任务编号</span>
             </div>
             <div class="select-box-right">
-              <span>sasass1</span>
+              <span>{{ moreEventMessage.taskNumber }}</span>
             </div>
           </div>
           <div class="select-box">
@@ -67,7 +67,7 @@
               <span>巡更任务集名称</span>
             </div>
             <div class="select-box-right">
-              <span>sasass1</span>
+              <span>{{ moreEventMessage.collectName }}</span>
             </div>
           </div>
           <div class="select-box">
@@ -75,7 +75,7 @@
               <span>巡查项</span>
             </div>
             <div class="select-box-right">
-              <span>sasass1</span>
+              <span>{{ moreEventMessage.itemName }}</span>
             </div>
           </div>
           <div class="select-box">
@@ -83,7 +83,7 @@
               <span>报修任务状态</span>
             </div>
             <div class="select-box-right">
-              <span>sasass1</span>
+              <span>{{ taskStatusTransition(moreEventMessage.taskState) }}</span>
             </div>
           </div>
         </div>
@@ -123,7 +123,7 @@ export default {
       pushHistory();
       that.gotoURL(() => {
         pushHistory();
-        that.$router.push({path: '/historyRepairsRegister'})
+        that.$router.push({path: '/historyRepairsRegister',query:{eventId: this.moreEventMessage.id}})
       })
     }
   },
@@ -132,18 +132,15 @@ export default {
   },
 
   computed: {
-    ...mapGetters(["userInfo","transportantTaskMessage","temporaryStorageRepairsRegisterMessage"]),
+    ...mapGetters(["userInfo","transportantTaskMessage","temporaryStorageRepairsRegisterMessage","moreEventMessage"]),
     proId () {
-      return this.userInfo.extendData.proId
+      return this.userInfo.proIds[0]
     },
     userName () {
-      return this.userInfo.userName
-    },
-    proName () {
-      return this.userInfo.extendData.proName
+      return this.userInfo.name
     },
     workerId () {
-      return this.userInfo.extendData.userId
+      return this.userInfo.id
     }
   },
 
@@ -151,7 +148,37 @@ export default {
     ...mapMutations(["changeCatchComponent","changeOverDueWay","changetransportTypeMessage","changeTemporaryStorageRepairsRegisterMessage"]),
 
     onClickLeft() {
-      this.$router.push({ path: "/historyRepairsRegister"})
+      this.$router.push({ path: "/historyRepairsRegister",query:{eventId: this.moreEventMessage.id}})
+    },
+
+    // 任务状态转换
+    taskStatusTransition (num) {
+      switch(num) {
+        case 0 :
+            return '待分配'
+            break;
+        case 1 :
+            return '未开始'
+            break;
+        case 2 :
+            return '未开始'
+            break;
+        case 3 :
+            return '进行中'
+            break;
+        case 4 :
+            return '已解决'
+            break;
+        case 5 :
+            return '已解决'
+            break;
+        case 6 :
+            return '已取消'
+            break;
+        case 7 :
+            return '已延迟'
+            break;
+      }
     },
 
     // 格式化时间

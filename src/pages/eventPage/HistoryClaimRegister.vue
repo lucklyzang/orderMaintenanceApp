@@ -356,12 +356,12 @@
         </div>
         <div class="btn-box" v-if="currentStepIndex==0">
           <span class="operate-two" @click="closeEvent">关闭</span>
-          <span class="operate-three" @click="delelteEvent">
+          <span class="operate-three" @click="delelteEvent($route.query.eventId)">
             <van-icon name="delete" color="#fff" size="25" />
           </span>
         </div>
         <div class="btn-box-other" v-else>
-          <span class="operate-one" @click="delelteEvent">
+          <span class="operate-one" @click="delelteEvent($route.query.eventId)">
             <van-icon name="delete" color="#fff" size="25" />
           </span>
          <span class="operate-two">
@@ -378,7 +378,7 @@
 <script>
 import { mapGetters, mapMutations } from "vuex";
 import {mixinsDeviceReturn} from '@/mixins/deviceReturnFunction'
-import { eventDelete } from '@/api/escortManagement.js'
+import { eventDelete, getEventDetails } from '@/api/escortManagement.js'
 import _ from 'lodash'
 import ScrollSelection from "@/components/ScrollSelection";
 import BottomSelect from "@/components/BottomSelect";
@@ -472,7 +472,8 @@ export default {
         pushHistory();
         that.$router.push({path: '/eventList'})
       })
-    }
+    };
+    this.queryEventDetails(this.$route.query.eventId)
   },
 
   watch: {
@@ -481,21 +482,18 @@ export default {
   computed: {
     ...mapGetters(["userInfo","transportantTaskMessage","temporaryStorageRepairsRegisterMessage"]),
     proId () {
-      return this.userInfo.extendData.proId
+      return this.userInfo.proIds[0]
     },
     userName () {
-      return this.userInfo.userName
-    },
-    proName () {
-      return this.userInfo.extendData.proName
+      return this.userInfo.name
     },
     workerId () {
-      return this.userInfo.extendData.userId
+      return this.userInfo.id
     }
   },
 
   methods: {
-    ...mapMutations(["changeCatchComponent","changeOverDueWay","changetransportTypeMessage","changeTemporaryStorageRepairsRegisterMessage"]),
+    ...mapMutations(["changeCatchComponent","changeOverDueWay","changetransportTypeMessage","changeTemporaryStorageRepairsRegisterMessage","changeMoreEventMessage"]),
 
     onClickLeft() {
       this.$router.push({ path: "/eventList"})
@@ -582,6 +580,37 @@ export default {
     // 关闭事件
     closeEvent () {
       this.$router.push({ path: "/eventList"})
+    },
+
+    // 查询事件详情
+    queryEventDetails (id) {
+      this.loadingText = '加载中...';
+      this.loadingShow = true;
+      this.overlayShow = true;
+      getEventDetails(id).then((res) => {
+        if (res && res.data.code == 200) {
+          this.changeMoreEventMessage(res.data.data)
+        } else {
+          this.$dialog.alert({
+            message: `${res.data.msg}`,
+            closeOnPopstate: true
+          }).then(() => {
+          });
+        };
+        this.loadingText = '';
+        this.loadingShow = false;
+        this.overlayShow = false
+      })
+      .catch((err) => {
+        this.$dialog.alert({
+          message: `${err.message}`,
+          closeOnPopstate: true
+        }).then(() => {
+        });
+        this.loadingText = '';
+        this.loadingShow = false;
+        this.overlayShow = false
+      })
     },
 
     // 删除事件

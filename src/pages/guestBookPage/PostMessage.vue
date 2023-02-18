@@ -72,8 +72,10 @@
 </template>
 <script>
 import NavBar from "@/components/NavBar";
+import axios from 'axios'
 import { mapGetters, mapMutations } from "vuex";
-import { compress,base64ImgtoFile,IsPC } from "@/common/js/utils";
+import { guestBookAdd } from '@/api/escortManagement.js'
+import { compress,base64ImgtoFile } from "@/common/js/utils";
 import {getAliyunSign} from '@/api/login.js'
 import {mixinsDeviceReturn} from '@/mixins/deviceReturnFunction';
 export default {
@@ -91,6 +93,7 @@ export default {
       commentContent: '',
       loadText: '加载中',
       resultImgList: [],
+      imgOnlinePathArr: [],
       statusBackgroundPng: require("@/common/images/home/status-background.png")
     }
   },
@@ -103,7 +106,16 @@ export default {
   watch: {},
 
   computed: {
-    ...mapGetters(["userInfo","timeMessage","ossMessage"])
+    ...mapGetters(["userInfo","timeMessage","ossMessage","enterPostMessagePageMessage"]),
+    proId () {
+      return this.userInfo.proIds[0]
+    },
+    userName () {
+      return this.userInfo.name
+    },
+    workerId () {
+      return this.userInfo.id
+    }
   },
 
   methods: {
@@ -116,26 +128,79 @@ export default {
 
     // 发布事件
     async postMessageEvent () {
-        this.loadText ='提交中';
-        this.overlayShow = true;
-        this.loadingShow = true;
-        // 上传图片到阿里云服务器
-        if (this.resultImgList.length > 0) {
-            for (let imgI of this.resultImgList) {
-                if (Object.keys(this.timeMessage).length > 0) {
-                    // 判断签名信息是否过期
-                    if (new Date().getTime()/1000 - this.timeMessage['expire']  >= -30) {
-                    await this.getSign();
-                    await this.uploadImageToOss(imgI)
-                    } else {
-                    await this.uploadImageToOss(imgI)
-                    }
-                } else {
-                    await this.getSign();
-                    await this.uploadImageToOss(imgI)
-                }
+      if (!this.commentContent) {
+        this.$toast({
+          type: 'fail',
+          message: '留言不能为空'
+        });
+        return
+      };
+      this.loadText ='发布中';
+      this.overlayShow = true;
+      this.loadingShow = true;
+      let temporaryData = {
+        userId: this.workerId,
+        userName: this.userName,
+        workers: this.enterPostMessagePageMessage['workers'], //任务集参与者
+        collect: this.enterPostMessagePageMessage['collect'], //巡更集名称
+        content: this.commentContent,
+        extendData:{},
+        images:[],
+        state: '',
+        system: 6
+      };
+      // 上传图片到阿里云服务器
+      if (this.resultImgList.length > 0) {
+        for (let imgI of this.resultImgList) {
+          if (Object.keys(this.timeMessage).length > 0) {
+            // 判断签名信息是否过期
+            if (new Date().getTime()/1000 - this.timeMessage['expire']  >= -30) {
+              await this.getSign();
+              await this.uploadImageToOss(imgI)
+            } else {
+              await this.uploadImageToOss(imgI)
             }
+          } else {
+            await this.getSign();
+            await this.uploadImageToOss(imgI)
+          }
+        };
+        temporaryData['images'] = this.imgOnlinePathArr
+      };
+      this.addGuestBook(temporaryData)
+    },
+
+    // 留言发布
+    addGuestBook (data) {
+      this.loadingShow = true;
+      this.overlayShow = true;
+      this.loadText = '发布中';
+      guestBookAdd(data).then((res) => {
+        if (res && res.data.code == 200) {
+          this.loadingShow = false;
+          this.overlayShow = false;
+          this.$toast({
+            type: 'fail',
+            message: '发布成功'
+          });
+          this.$router.push({path: '/guestBook'})
+        } else {
+          this.imgOnlinePathArr = [];
+          this.$toast({
+            type: 'fail',
+            message: res.data.msg
+          })
         }
+      })
+      .catch((err) => {
+        this.imgOnlinePathArr = [];
+        this.loadingShow = false;
+        this.overlayShow = false;
+        this.$toast({
+          type: 'fail',
+          message: err
+        })
+      })
     },
     
     // 图片上传预览
@@ -295,6 +360,13 @@ export default {
 
     // 拍照点击
     issueClickEvent() {
+      if (this.resultImgList.length >= 5) {
+        this.$toast({
+          message: '至多只能上传5张照片',
+          type: 'fail'
+        });
+        return
+      };
       this.photoBox = true;
       this.overlayShow = true;
     },

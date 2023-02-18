@@ -34,6 +34,14 @@ export function getDefaultPatrolTaskState() {
 export function getDefaultEventRegisterState() {
     return {
         temporaryStorageRepairsRegisterMessage: {}, //保存事件登记(工程报修)信息
-        enterEventRegisterPageMessage: '' // 进入事件登记页的信息
+        enterEventRegisterPageMessage: {}, // 进入事件登记页的信息
+        moreEventMessage: {} // 更多信息
+    }
+};
+
+// 留言簿模块store的初始值
+export function getDefaultGuestbookState() {
+    return {
+        enterPostMessagePageMessage: {} // 进入留言发布页的信息
     }
 };

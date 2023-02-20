@@ -34,7 +34,7 @@
               <span>事件类型</span>
             </div>
             <div class="select-box-right">
-              <span>{{ eventType }}</span>
+              <span>{{ eventTypeTransform(eventType) }}</span>
             </div>
           </div>
           <div class="select-box">
@@ -58,7 +58,7 @@
               <span>房间</span>
             </div>
             <div class="select-box-right">
-              <span>{{ disposeTaskPresent(currentGoalSpaces) }}</span>
+              <span>{{ currentGoalSpaces }}</span>
             </div>
           </div>
           <div class="select-box">
@@ -106,7 +106,7 @@
         </div>
         <div class="btn-box">
           <span class="operate-two" @click="closeEvent">关闭</span>
-          <span class="operate-three" @click="delelteEvent">
+          <span class="operate-three" @click="delelteEvent($route.query.eventId)">
             <van-icon name="delete" color="#fff" size="25" />
           </span>
         </div>
@@ -131,7 +131,7 @@ export default {
   data() {
     return {
       loadingShow: false,
-      eventType: '拾金不昧',
+      eventType: '',
       problemPicturesList: [require("@/common/images/home/status-background.png"),require("@/common/images/home/status-background.png"),require("@/common/images/home/status-background.png"),require("@/common/images/home/status-background.png")],
       currentImgUrl: '',
       photoBox: false,
@@ -168,7 +168,7 @@ export default {
   },
 
   computed: {
-    ...mapGetters(["userInfo","transportantTaskMessage","temporaryStorageRepairsRegisterMessage"]),
+    ...mapGetters(["userInfo","transportantTaskMessage","temporaryStorageRepairsRegisterMessage","moreEventMessage"]),
     proId () {
       return this.userInfo.proIds[0]
     },
@@ -205,14 +205,23 @@ export default {
       this.overlayShow = true;
       getEventDetails(id).then((res) => {
         if (res && res.data.code == 200) {
-          this.changeMoreEventMessage(res.data.data)
+          this.changeMoreEventMessage(res.data.data);
+          this.eventType = res.data.data['eventType'];
+          this.currentStructure = res.data.data['structureName'];
+          this.currentGoalDepartment = res.data.data['depName'];
+          this.currentGoalSpaces = res.data.data['roomName'];
+          this.detailsSite = res.data.data['address'];
+          this.currentFindTime = res.data.data['findTime'];
+          this.problemPicturesList = res.data.data['images'];
+          this.problemOverview = res.data.data['description'];
+          this.taskDescribe = res.data.data['remark']
         } else {
           this.$dialog.alert({
             message: `${res.data.msg}`,
             closeOnPopstate: true
           }).then(() => {
-          });
-        };
+          })
+        }
         this.loadingText = '';
         this.loadingShow = false;
         this.overlayShow = false
@@ -267,6 +276,21 @@ export default {
     // 关闭事件
     closeEvent () {
       this.$router.push({ path: "/eventList"})
+    },
+
+     // 事件类型转换
+    eventTypeTransform (text) {
+      switch(text) {
+        case 1 :
+          return '工程报修'
+          break;
+        case 2 :
+          return '拾金不昧'
+          break;
+        case 3 :
+          return '其他'
+          break;
+      }
     },
 
     //删除事件

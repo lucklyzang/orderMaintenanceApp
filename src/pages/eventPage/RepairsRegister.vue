@@ -219,7 +219,7 @@
 <script>
 import { mapGetters, mapMutations } from "vuex";
 import {mixinsDeviceReturn} from '@/mixins/deviceReturnFunction'
-import {userSignOut} from '@/api/login.js'
+import {userSignOut,getAliyunSign} from '@/api/login.js'
 import { eventregister, querySpace, queryDepartment, queryStructure} from '@/api/escortManagement.js'
 import { setStore,removeAllLocalStorage,compress,deepClone, base64ImgtoFile } from '@/common/js/utils'
 import _ from 'lodash'
@@ -288,7 +288,7 @@ export default {
       })
     };
     console.log('页面信息',this.enterEventRegisterPageMessage);
-    // this.parallelFunction();
+    this.parallelFunction();
     //判断是否回显暂存的数据
     if (JSON.stringify(this.temporaryStorageRepairsRegisterMessage) != '{}' && this.temporaryStorageRepairsRegisterMessage['isTemporaryStorage']) {
       this.echoTemporaryStorageMessage()
@@ -299,7 +299,7 @@ export default {
   },
 
   computed: {
-    ...mapGetters(["userInfo","transportantTaskMessage","departmentCheckList","enterProblemRecordMessage","temporaryStorageRepairsRegisterMessage","enterEventRegisterPageMessage"]),
+    ...mapGetters(["userInfo","transportantTaskMessage","ossMessage","departmentCheckList","enterProblemRecordMessage","timeMessage","temporaryStorageRepairsRegisterMessage","enterEventRegisterPageMessage"]),
     proId () {
       return this.userInfo.proIds[0]
     },
@@ -312,7 +312,7 @@ export default {
   },
 
   methods: {
-    ...mapMutations(["changeCatchComponent","changeOverDueWay","changeDepartmentCheckList","changetransportTypeMessage","changeTemporaryStorageRepairsRegisterMessage"]),
+    ...mapMutations(["changeCatchComponent","changeOverDueWay","changeTimeMessage","changeOssMessage","changeDepartmentCheckList","changetransportTypeMessage","changeTemporaryStorageRepairsRegisterMessage"]),
 
     onClickLeft() {
       this.commonIsTemporaryStorageMethods();
@@ -333,10 +333,8 @@ export default {
     // 拍照点击
     issueClickEvent () {
       if (this.problemPicturesList.length >= 5) {
-        if (this.currentGoalSpaces == '请选择') {
-          this.$toast('至多只能上传5张图片!');
-          return
-        }
+        this.$toast('至多只能上传5张图片!');
+        return
       };
       this.photoBox = true;
       this.overlayShow = true
@@ -597,7 +595,7 @@ export default {
       this.loadingShow = true;
       this.overlayShow = true;
       this.goalDepartmentOption = [];
-      queryDepartment({proId:this.proId,struId:structureId})
+      queryDepartment({proId:this.proId,struId:structureId,permissions: 'patrol'})
       .then((res) => {
         this.loadingText = '';
         this.loadingShow = false;
@@ -947,13 +945,12 @@ export default {
       eventregister(data).then((res) => {
         if (res && res.data.code == 200) {
           this.$toast(`${res.data.msg}`);
-          // 更改该检查项下是否有登记的事件
+          // 更改该检查项下是否有登记的事件(从异常巡查项处进入该页面创建)
           if (this.enterEventRegisterPageMessage['patrolItemName']) {
             let tempraryMessage = this.departmentCheckList;
             tempraryMessage['checkItemList'][this.enterProblemRecordMessage[index]]['isHaveEventRegister'] = 1;
             this.changeDepartmentCheckList(tempraryMessage)
-          };  
-          this.commonIsTemporaryStorageMethods();
+          };
           this.$router.push({path:'/eventList'});
         } else {
           this.imgOnlinePathArr = [];

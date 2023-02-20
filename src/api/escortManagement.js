@@ -131,8 +131,35 @@ export function getEventDetails(id) {
 // 登记事件
 export function eventregister(data) {
 	return request({
-	    url: 'nblink/patrol/eventregister',
+	    url: 'nblink/patrol/eventregister/',
 	    method: 'post',
+        data
+	})
+}
+
+// 拾金不昧交接
+export function eventHandover(data) {
+	return request({
+	    url: 'nblink/patrol/eventregister/handover',
+	    method: 'put',
+        data
+	})
+}
+
+// 拾金不昧联系
+export function eventContact(data) {
+	return request({
+	    url: 'nblink/patrol/eventregister/contact',
+	    method: 'put',
+        data
+	})
+}
+
+// 拾金不昧领取
+export function eventReceive(data) {
+	return request({
+	    url: 'nblink/patrol/eventregister/receive',
+	    method: 'put',
         data
 	})
 }

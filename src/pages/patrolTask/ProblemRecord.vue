@@ -37,7 +37,7 @@
               </div>
             </div>
           </div>
-          <div class="backlog-task-list-box" ref="scrollBacklogTask">
+          <div class="backlog-task-list-box" ref="scrollBacklogTask" v-show="patrolTaskListMessage.state != 4">
               <div class="backlog-task-list" v-for="(item,index) in backlogTaskList" :key="index">
                   <div class="backlog-task-top">
                       <div class="backlog-task-top-left">
@@ -67,7 +67,7 @@
           </div> 
         </div>
     </div>
-    <div class="task-operation-box">
+    <div class="task-operation-box" v-show="patrolTaskListMessage.state != 4">
       <div class="new-increase-btn" @click="eventTypeShow = true">新增</div>
       <div class="back-btn">返回</div>
     </div>
@@ -110,7 +110,7 @@ export default {
       overlayShow: false,
       eventTypeShow: false,
       backlogEmptyShow: false,
-      isShowBacklogTaskNoMoreData: true,
+      isShowBacklogTaskNoMoreData: false,
       questionListTimer: 0,
       timeOne: null,
       checkResultValue: '1',
@@ -255,8 +255,8 @@ export default {
         if (this.questionListTimer) {return};
         this.questionListTimer = 1;
         this.timeOne = setTimeout(()=> {
-        this.questionListTimer = 0;
-        console.log('事件列表滚动了',boxBackScroll.scrollTop, boxBackScroll.offsetHeight, boxBackScroll.scrollHeight)
+          this.questionListTimer = 0;
+          console.log('事件列表滚动了',boxBackScroll.scrollTop, boxBackScroll.offsetHeight, boxBackScroll.scrollHeight)
         },300)
       }  
     },

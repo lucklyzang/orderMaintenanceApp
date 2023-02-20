@@ -131,9 +131,21 @@ export default {
   mounted() {
     // 控制设备物理返回按键
     this.deviceReturn('/home');
-    this.$nextTick(()=> {
-       this.initBacklogTaskScrollChange()
-    })
+    if (this.taskType.taskTypeName) {
+        if (this.taskType.taskTypeName == 'backlogTask') {
+            this.$nextTick(()=> {
+                this.initBacklogTaskScrollChange()
+            })
+        } else {
+            this.$nextTick(()=> {
+                this.initCompletetedTaskScrollChange()
+            })
+        }
+    } else {
+        this.$nextTick(()=> {
+            this.initBacklogTaskScrollChange()
+        })
+    }
   },
 
   beforeDestroy () {
@@ -234,7 +246,7 @@ export default {
                 if (this.currentPage >= totalPage) {
                     this.isShowBacklogTaskNoMoreData = true
                 } else {
-                    this.isShowCompletetedTaskNoMoreData = false;
+                    this.isShowBacklogTaskNoMoreData = false;
                     this.currentPage = this.currentPage + 1;
                     this.queryTaskList(1,this.currentPage,this.pageSize);
                 };
@@ -279,7 +291,7 @@ export default {
         this.backlogEmptyShow = false;
         this.completedEmptyShow = false;
         this.isShowBacklogTaskNoMoreData = false;
-        this.isShowBacklogTaskNoMoreData = false;
+        this.isShowCompletetedTaskNoMoreData = false;
 		getAllTaskList({proId : this.userInfo.proIds[0], workerId: this.userInfo.id,taskType,system:4,page,pageSize})
         .then((res) => {
             this.loadingShow = false;
@@ -288,12 +300,6 @@ export default {
                 if (taskType == 1) {
                     this.backlogTaskList = res.data.data.list;
                     this.totalCount = res.data.data.total;
-                    let totalPage = Math.ceil(this.totalCount/pageSize);
-                    if (page >= totalPage) {
-                        this.isShowBacklogTaskNoMoreData = true
-                    } else {
-                        this.isShowBacklogTaskNoMoreData = false
-                    };
                     this.fullBacklogTaskList = this.fullBacklogTaskList.concat(this.backlogTaskList);
                     if (this.fullBacklogTaskList.length == 0) {
                         this.backlogEmptyShow = true
@@ -301,12 +307,6 @@ export default {
                 } else if (taskType == 2) {
                     this.completedTaskList = res.data.data.list;
                     this.totalCount = res.data.data.total;
-                    let totalPage = Math.ceil(this.totalCount/pageSize);
-                    if (page >= totalPage) {
-                        this.isShowBacklogTaskNoMoreData = true
-                    } else {
-                        this.isShowBacklogTaskNoMoreData = false
-                    };
                     this.fullCompletedTaskList = this.fullCompletedTaskList.concat(this.completedTaskList);
                     if (this.fullCompletedTaskList.length == 0) {
                         this.completedEmptyShow = true

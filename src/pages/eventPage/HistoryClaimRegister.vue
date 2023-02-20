@@ -96,8 +96,8 @@
       <div class="content-box">
         <div class="step-box">
           <div v-for="(item,index) in stepData" :key="index">
-            <span>{{ item.stepName }}</span>
-            <img :src="stepStaticPng" alt="" v-show="index != 3">
+            <span :class="{'currentSpanStyle': currentStepIndex == index,'spanStyle': index < currentStepIndex}">{{ item.stepName }}</span>
+            <img :src="index < currentStepIndex && currentStepIndex != 0 ? stepActivePng : stepStaticPng" alt="" v-show="index != 3">
           </div>
         </div>
         <div class="message-box-one" v-if="currentStepIndex == 0">
@@ -130,7 +130,7 @@
               <span>房间</span>
             </div>
             <div class="select-box-right">
-              <span>{{ disposeTaskPresent(currentGoalSpaces) }}</span>
+              <span>{{ currentGoalSpaces }}</span>
             </div>
           </div>
           <div class="select-box-one">
@@ -146,7 +146,7 @@
               <span>拾得时间</span>
             </div>
             <div class="select-box-right">
-              <span>{{ getNowFormatDate(currentFindTime) }}</span>
+              <span>{{ currentFindTime }}</span>
             </div>
           </div>
           <div class="transport-type">
@@ -367,7 +367,7 @@
          <span class="operate-two">
             暂存
           </span>
-          <span class="operate-three">
+          <span class="operate-three" @click="repairsEvent">
             保存
           </span>
         </div>
@@ -378,7 +378,7 @@
 <script>
 import { mapGetters, mapMutations } from "vuex";
 import {mixinsDeviceReturn} from '@/mixins/deviceReturnFunction'
-import { eventDelete, getEventDetails } from '@/api/escortManagement.js'
+import { eventDelete, getEventDetails,eventHandover, eventContact, eventReceive } from '@/api/escortManagement.js'
 import _ from 'lodash'
 import ScrollSelection from "@/components/ScrollSelection";
 import BottomSelect from "@/components/BottomSelect";
@@ -391,8 +391,9 @@ export default {
   mixins:[mixinsDeviceReturn],
   data() {
     return {
-      currentStepIndex: 3,
+      currentStepIndex: 0,
       loadingShow: false,
+      eventId: '',
       eventType: '拾金不昧',
       problemPicturesList: [require("@/common/images/home/status-background.png"),require("@/common/images/home/status-background.png"),require("@/common/images/home/status-background.png"),require("@/common/images/home/status-background.png")],
       currentImgUrl: '',
@@ -405,7 +406,8 @@ export default {
       detailsSite: '',
       taskDescribe: '飒飒水水水水水水水水水水水水',
       transportNumberValue: '',
-      currentFindTime: new Date(),
+      currentFindTime: '',
+
       showHandoverTime: false,
       handoverTime: new Date(),
       connectSite: '',
@@ -480,7 +482,7 @@ export default {
   },
 
   computed: {
-    ...mapGetters(["userInfo","transportantTaskMessage","temporaryStorageRepairsRegisterMessage"]),
+    ...mapGetters(["userInfo","transportantTaskMessage","temporaryStorageRepairsRegisterMessage","moreEventMessage"]),
     proId () {
       return this.userInfo.proIds[0]
     },
@@ -582,6 +584,21 @@ export default {
       this.$router.push({ path: "/eventList"})
     },
 
+    // 事件类型转换
+    eventTypeTransform (text) {
+      switch(text) {
+        case 1 :
+          return '工程报修'
+          break;
+        case 2 :
+          return '拾金不昧'
+          break;
+        case 3 :
+          return '其他'
+          break;
+      }
+    },
+
     // 查询事件详情
     queryEventDetails (id) {
       this.loadingText = '加载中...';
@@ -589,7 +606,48 @@ export default {
       this.overlayShow = true;
       getEventDetails(id).then((res) => {
         if (res && res.data.code == 200) {
-          this.changeMoreEventMessage(res.data.data)
+          this.changeMoreEventMessage(res.data.data);
+          this.currentStepIndex = res.data.data['state'] + 1;
+          this.eventId = res.data.data['id'];
+          // 展示登记信息
+          if (this.currentStepIndex == 0) {
+            this.eventType = res.data.data['eventType'];
+            this.currentStructure = res.data.data['structureName'];
+            this.currentGoalDepartment = res.data.data['depName'];
+            this.currentGoalSpaces = res.data.data['roomName'];
+            this.detailsSite = res.data.data['address'];
+            this.currentFindTime = res.data.data['findTime'];
+            this.problemPicturesList = res.data.data['images'];
+            this.problemOverview = res.data.data['description'];
+            this.taskDescribe = res.data.data['remark']
+            // 展示交接信息
+          } else if (this.currentStepIndex == 1) {
+            this.handoverTime = new Date(res.data.data['extendData']['handover']['time']);
+            this.connectSite = res.data.data['extendData']['handover']['address'];
+            this.connectSignature = res.data.data['extendData']['handover']['from'];
+            this.keeperSignature =  res.data.data['extendData']['handover']['to']
+            // 展示联系信息
+          } else if (this.currentStepIndex == 2) {
+            this.relationTime = new Date(res.data.data['extendData']['time']);
+            this.contactDepartment = res.data.data['extendData']['department'];
+            this.linkman = res.data.data['extendData']['name'];
+            this.contactInformation = res.data.data['extendData']['situation']
+            // 展示领取信息
+          } else if (this.currentStepIndex == 3) {
+            this.getMessage = [];
+            this.getTime = new Date(res.data.data['receive']['time']);
+            this.getSite = res.data.data['receive']['address'];
+            for (let item of res.data.data['receive']['people']) {
+              if (res.data.data['receive']['people'].length > 0) {
+                this.getMessage.push({
+                  finalLinkman: item['name'],
+                  getPersonIdNumber: item['cardNo'],
+                  getContentDescribe: item['content'],
+                  getPersonSignature: item['sign']
+                })
+              }
+            }
+          }
         } else {
           this.$dialog.alert({
             message: `${res.data.msg}`,
@@ -612,6 +670,215 @@ export default {
         this.overlayShow = false
       })
     },
+
+    // 拾金不昧事件
+    async repairsEvent () {
+      if (this.currentStepIndex == 1) {
+        if (!this.handoverTime) {
+          this.$toast('交接时间不能为空');
+          return
+        };
+        if (!this.connectSite) {
+          this.$toast('交接地点不能为空');
+          return
+        };
+        if (false) {
+          this.$toast('交接人签字不能为空');
+          return
+        };
+        if (false) {
+          this.$toast('保管人签字不能为空');
+          return
+        };
+        this.loadText ='提交中';
+        this.overlayShow = true;
+        this.loadingShow = true;
+        // 拾金不昧交接
+        let temporaryMessage = {
+          time: this.handoverTime,
+          address: this.connectSite,
+          from:"",
+          to:"",
+          id: this.eventId,
+          modifyName:""
+        };
+        this.postEventHandover(temporaryMessage)
+      } else if (this.currentStepIndex == 2) {
+        if (!this.relationTime) {
+          this.$toast('联系时间不能为空');
+          return
+        };
+        if (!this.contactDepartment) {
+          this.$toast('联系部门不能为空');
+          return
+        };
+        if (!this.linkman) {
+          this.$toast('联系人不能为空');
+          return
+        };
+        if (!this.contactInformation) {
+          this.$toast('联系情况不能为空');
+          return
+        };
+        this.loadText ='提交中';
+        this.overlayShow = true;
+        this.loadingShow = true;
+        // 拾金不昧联系
+        let temporaryMessage = {
+          time: this.relationTime,
+          department: this.contactDepartment,
+          name: this.linkman,
+          situation: this.contactInformation,
+          id: this.eventId,
+          modifyName:"string"
+        };
+        this.postEventContact(temporaryMessage)
+      } else if (this.currentStepIndex == 3) {
+        if (!this.eventType) {
+          this.$toast('领取时间不能为空');
+          return
+        };
+        if (this.currentStructure == '请选择') {
+          this.$toast('领取地点不能为空');
+          return
+        };
+        if (this.currentGoalDepartment == '请选择') {
+          this.$toast('联系人不能为空');
+          return
+        };
+        if (this.currentGoalSpaces == '请选择') {
+          this.$toast('领取人身份证不能为空');
+          return
+        };
+         if (this.currentGoalSpaces == '请选择') {
+          this.$toast('领取人签字不能为空');
+          return
+        };
+        this.loadText ='提交中';
+        this.overlayShow = true;
+        this.loadingShow = true;
+        // 拾金不昧领取
+        let temporaryMessage = {
+          id: this.eventId,
+          time: this.getTime,
+          address: this.getSite,
+          people:[],
+          modifyName:"string"
+        };
+        for (let item of this.getMessage) {
+          temporaryMessage['people'].push({
+            cardNo: id['getPersonIdNumber'],
+            content: id['getContentDescribe'],
+            name: id['finalLinkman'],
+            sign: id['getPersonSignature']
+          })
+        };
+        this.postEventReceive(temporaryMessage)
+      }
+    },
+
+    // 拾金不昧交接
+    postEventHandover (data) {
+      this.loadingText = '创建中...';
+      this.loadingShow = true;
+      this.overlayShow = true;
+      eventHandover(data).then((res) => {
+        if (res && res.data.code == 200) {
+          this.$toast(`${res.data.msg}`);
+          this.$router.push({path:'/eventList'});
+        } else {
+          this.imgOnlinePathArr = [];
+          this.$dialog.alert({
+            message: `${res.data.msg}`,
+            closeOnPopstate: true
+          }).then(() => {
+          });
+        };
+        this.loadingText = '';
+        this.loadingShow = false;
+        this.overlayShow = false
+      })
+      .catch((err) => {
+        this.imgOnlinePathArr = [];
+        this.$dialog.alert({
+          message: `${err.message}`,
+          closeOnPopstate: true
+        }).then(() => {
+        });
+        this.loadingText = '';
+        this.loadingShow = false;
+        this.overlayShow = false
+      })
+    },
+
+    // 拾金不昧联系
+    postEventContact (data) {
+      this.loadingText = '创建中...';
+      this.loadingShow = true;
+      this.overlayShow = true;
+      eventContact(data).then((res) => {
+        if (res && res.data.code == 200) {
+          this.$toast(`${res.data.msg}`);
+          this.$router.push({path:'/eventList'});
+        } else {
+          this.imgOnlinePathArr = [];
+          this.$dialog.alert({
+            message: `${res.data.msg}`,
+            closeOnPopstate: true
+          }).then(() => {
+          });
+        };
+        this.loadingText = '';
+        this.loadingShow = false;
+        this.overlayShow = false
+      })
+      .catch((err) => {
+        this.imgOnlinePathArr = [];
+        this.$dialog.alert({
+          message: `${err.message}`,
+          closeOnPopstate: true
+        }).then(() => {
+        });
+        this.loadingText = '';
+        this.loadingShow = false;
+        this.overlayShow = false
+      })
+    },
+
+    // 拾金不昧领取
+    postEventReceive (data) {
+      this.loadingText = '创建中...';
+      this.loadingShow = true;
+      this.overlayShow = true;
+      eventReceive(data).then((res) => {
+        if (res && res.data.code == 200) {
+          this.$toast(`${res.data.msg}`);
+          this.$router.push({path:'/eventList'});
+        } else {
+          this.imgOnlinePathArr = [];
+          this.$dialog.alert({
+            message: `${res.data.msg}`,
+            closeOnPopstate: true
+          }).then(() => {
+          });
+        };
+        this.loadingText = '';
+        this.loadingShow = false;
+        this.overlayShow = false
+      })
+      .catch((err) => {
+        this.imgOnlinePathArr = [];
+        this.$dialog.alert({
+          message: `${err.message}`,
+          closeOnPopstate: true
+        }).then(() => {
+        });
+        this.loadingText = '';
+        this.loadingShow = false;
+        this.overlayShow = false
+      })
+    },
+
 
     // 删除事件
     delelteEvent (id) {
@@ -849,16 +1116,16 @@ export default {
               color: #8E9397
             };
             .currentSpanStyle {
-              color: #289E8E;
-              font-size: 16px;
+              color: #289E8E !important;
+              font-size: 16px !important;
               font-weight: bold;
               .bottom-border-1px(#3B9DF9,6px)
             };
             .spanStyle {
-              color: #289E8E;
-              font-size: 14px;
-              border-bottom: none
-            }
+              color: #289E8E !important;
+              font-size: 14px !important;
+              border-bottom: none !important
+            };
             img {
               width: 24px;
               height: 24px

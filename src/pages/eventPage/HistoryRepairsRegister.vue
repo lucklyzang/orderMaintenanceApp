@@ -58,7 +58,7 @@
               <span>房间</span>
             </div>
             <div class="select-box-right">
-              <span>{{ disposeTaskPresent(currentGoalSpaces) }}</span>
+              <span>{{ currentGoalSpaces }}</span>
             </div>
           </div>
           <div class="select-box">
@@ -174,7 +174,7 @@ export default {
   },
 
   computed: {
-    ...mapGetters(["userInfo","transportantTaskMessage","temporaryStorageRepairsRegisterMessage"]),
+    ...mapGetters(["userInfo","transportantTaskMessage","temporaryStorageRepairsRegisterMessage","moreEventMessage"]),
     proId () {
       return this.userInfo.proIds[0]
     },
@@ -204,6 +204,21 @@ export default {
       this.imgBoxShow = true
     },
 
+    // 事件类型转换
+    eventTypeTransform (text) {
+      switch(text) {
+        case 1 :
+          return '工程报修'
+          break;
+        case 2 :
+          return '拾金不昧'
+          break;
+        case 3 :
+          return '其他'
+          break;
+      }
+    },
+
     // 查询事件详情
     queryEventDetails (id) {
       this.loadingText = '加载中...';
@@ -211,7 +226,16 @@ export default {
       this.overlayShow = true;
       getEventDetails(id).then((res) => {
         if (res && res.data.code == 200) {
-          this.changeMoreEventMessage(res.data.data)
+          this.changeMoreEventMessage(res.data.data);
+          this.eventType = res.data.data['eventType'];
+          this.currentStructure = res.data.data['structureName'];
+          this.currentGoalDepartment = res.data.data['depName'];
+          this.currentGoalSpaces = res.data.data['roomName'];
+          this.detailsSite = res.data.data['address'];
+          this.currentFindTime = res.data.data['findTime'];
+          this.problemPicturesList = res.data.data['images'];
+          this.problemOverview = res.data.data['description'];
+          this.taskDescribe = res.data.data['remark']
         } else {
           this.$dialog.alert({
             message: `${res.data.msg}`,

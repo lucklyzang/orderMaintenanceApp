@@ -28,7 +28,7 @@
                           <span>{{ eventTypeTransform(item.eventType) }}</span>
                       </div>
                       <div class="backlog-task-top-right">
-                          <span :class="{'spanNoStartStyle': item.state == 1,'spanCompletedStyle': item.state == 4}">{{ taskStatusTransition(item.state) }}</span>
+                          <span>{{ taskStatusTransition(item.state,item.eventType) }}</span>
                       </div>
                   </div>
                   <div class="backlog-task-content">
@@ -144,7 +144,7 @@ export default {
       backlogEmptyShow: false,
       screenDialogShow: false,
       isShowBacklogTaskNoMoreData: false,
-      storageRadio: true,
+      storageRadio: false,
       currentDateRange: '',
       minDate: new Date(2010, 0, 1),
       maxDate: new Date(2050, 0, 31),
@@ -208,9 +208,29 @@ export default {
       this.initScrollChange()
     });
     // 查询登记用户
-    this.getRegisterUser();
-    // 获取事件列表
-    this.queryEventList(this.currentPage,this.pageSize)
+    this.getRegisterUser()
+  },
+
+  beforeRouteEnter(to, from, next) {
+    next(vm=>{
+      if (from.path == '/home') {
+        vm.isOnlyMe = true;
+        vm.storageRadio = false;
+        // 获取事件列表
+        vm.queryEventList(vm.currentPage,vm.pageSize,vm.userName)
+      } else {
+        vm.isOnlyMe = vm.enterEventRegisterPageMessage['isOnlyMe'];
+        vm.storageRadio = vm.enterEventRegisterPageMessage['storageRadio'];
+        if (!vm.storageRadio) {
+          if (vm.isOnlyMe) {
+            vm.queryEventList(vm.currentPage,vm.pageSize,vm.userName)
+          } else {
+            vm.queryEventList(vm.currentPage,vm.pageSize)
+          }
+        }  
+      }
+	  });
+    next() 
   },
 
   beforeDestroy () {
@@ -222,7 +242,16 @@ export default {
   watch: {},
 
   computed: {
-    ...mapGetters(["userInfo","patrolTaskListMessage","departmentCheckList","enterEventRegisterPageMessage"])
+    ...mapGetters(["userInfo","patrolTaskListMessage","departmentCheckList","enterEventRegisterPageMessage"]),
+    proId () {
+      return this.userInfo.proIds[0]
+    },
+    userName () {
+      return this.userInfo.name
+    },
+    workerId () {
+      return this.userInfo.id
+    }
   },
 
   methods: {
@@ -235,8 +264,16 @@ export default {
 
     // 是否暂存事件
     checkboxChangeEvent (checked) {
+      this.fullBacklogTaskList = [];
+      this.isShowBacklogTaskNoMoreData = false;
       if (checked) {
       } else {
+        this.currentPage = 1;
+        if (this.isOnlyMe) {
+          this.queryEventList(this.currentPage,this.pageSize,this.userName)
+        } else {
+          this.queryEventList(this.currentPage,this.pageSize)
+        }
       }
     },
 
@@ -271,9 +308,16 @@ export default {
     // 是否只看我事件
    onlyMeEvent () {
     this.isOnlyMe = !this.isOnlyMe;
-    if (this.isOnlyMe) {
-      this.fullBacklogTaskList = this.fullBacklogTaskList.filter((item) => { return item['createName'] == this['userInfo']['name']})
-    }
+    this.fullBacklogTaskList = [];
+    this.isShowBacklogTaskNoMoreData = false;
+    if (!this.storageRadio) {
+      this.currentPage = 1;
+      if (this.isOnlyMe) {
+        this.queryEventList(this.currentPage,this.pageSize,this.userName)
+      } else {
+        this.queryEventList(this.currentPage,this.pageSize)
+      }
+    }  
    },
 
     // 查询登记用户
@@ -367,10 +411,19 @@ export default {
         this.timeTwo = setTimeout(() => {
           let totalPage = Math.ceil(this.totalCount/this.pageSize);
           if (this.currentPage >= totalPage) {
-            this.isShowBacklogTaskNoMoreData = true
+            if (this.isOnlyMe && this.fullBacklogTaskList.length == 0) {
+              this.isShowBacklogTaskNoMoreData = false
+            } else {
+              this.isShowBacklogTaskNoMoreData = true
+            }
           } else {
+            this.isShowBacklogTaskNoMoreData = false;
             this.currentPage = this.currentPage + 1;
-            this.queryEventList(this.currentPage,this.pageSize)
+            if (this.isOnlyMe) {
+              this.queryEventList(this.currentPage,this.pageSize,this.userName)
+            } else {
+              this.queryEventList(this.currentPage,this.pageSize)
+            }
           };
           this.eventTime = 0;
           console.log('事件列表滚动了',boxBackScroll.scrollTop, boxBackScroll.offsetHeight, boxBackScroll.scrollHeight)
@@ -379,20 +432,46 @@ export default {
     },
 
     // 任务状态转换
-    taskStatusTransition (num) {
-      switch(num) {
-          case 1 :
-              return '未开始'
+    taskStatusTransition (num,eventType) {
+      if (eventType == 1) {
+        switch(num) {
+          case -1 :
+              return '已暂存'
               break;
-          case 2 :
-              return '进行中'
+          case 0 :
+              return '已报修'
               break;
           case 3 :
-              return '待签字'
+              return '已完成/已取消'
+              break
+        }
+      } else if (eventType == 2) {
+        switch(num) {
+          case -1 :
+              return '已暂存'
               break;
-          case 4 :
-              return '已完成'
+          case 0 :
+              return '已登记'
               break;
+          case 1 :
+              return '已交接'
+              break;
+          case 2 :
+            return '已联系'
+            break;
+          case 3 :
+              return '已领取'
+              break
+        }
+      } else if (eventType == 3) {
+        switch(num) {
+          case -1 :
+              return '已暂存'
+              break;
+          case 0 :
+              return '已登记'
+              break
+        }
       }
     },
 
@@ -420,27 +499,31 @@ export default {
     taskDetailsEvent (item) {
       // 1-工程报修,2-拾金不昧,3-其他
       if (item.eventType == 1) {
-        //未完成
-        if (item.state == 0) {
+        if (item.state == -1) {
           this.$router.push({path: '/repairsRegister'})
-        } else if (item.state == 1) {
+          //已报修
+        } else if (item.state == 0 || item.state == 3) {
           this.$router.push({path: '/historyRepairsRegister',query:{eventId: item.id}})
         }
       } else if (item.eventType == 2) {
-        //未完成
-        if (item.state == 1) {
+        if (item.state == -1) {
           this.$router.push({path: '/claimRegister'})
-        } else if (item.state == 0) {
+          //已登记
+        } else if (item.state == 0 || item.state == 1 || item.state == 2 || item.state == 3) {
           this.$router.push({path: '/historyClaimRegister',query:{eventId: item.id}})
         }
       } else if (item.eventType == 3) {
-        //未完成
-        if (item.state == 0) {
+        if (item.state == -1) {
           this.$router.push({path: '/otherRegister'})
-        } else if (item.state == 1) {
+          //已登记
+        } else if (item.state == 0 || item.state == 3) {
           this.$router.push({path: '/historyOtherRegister',query:{eventId: item.id}})
         }
-      }
+      };
+      let temporaryEnterEventRegisterPageMessage = this.enterEventRegisterPageMessage;
+      temporaryEnterEventRegisterPageMessage['isOnlyMe'] = this.isOnlyMe;
+      temporaryEnterEventRegisterPageMessage['storageRadio'] = this.storageRadio;
+      this.changeEnterEventRegisterPageMessage(temporaryEnterEventRegisterPageMessage)
     },
 
     // 事件类型点击事件
@@ -457,6 +540,8 @@ export default {
         temporaryEnterEventRegisterPageMessage['eventType'] = '其他';
         this.$router.push({path: '/otherRegister'})
       };
+      temporaryEnterEventRegisterPageMessage['isOnlyMe'] = this.isOnlyMe;
+      temporaryEnterEventRegisterPageMessage['storageRadio'] = this.storageRadio;
       temporaryEnterEventRegisterPageMessage['registerType'] = '其他';
       temporaryEnterEventRegisterPageMessage['patrolItemName'] = '';
       temporaryEnterEventRegisterPageMessage['resultId'] = '';
@@ -466,14 +551,17 @@ export default {
     },
 
     // 获取事件列表
-    queryEventList (page,pageSize) {
+    queryEventList (page,pageSize,name='') {
       this.loadingShow = true;
       this.overlayShow = true;
       this.loadText = '加载中';
-      getEventList({proId:this.userInfo.proIds[0], system: 6, workerId: this.userInfo.id,page, limit:pageSize})
+      this.backlogEmptyShow = false;
+      this.isShowBacklogTaskNoMoreData = false;
+      getEventList({proId:this.userInfo.proIds[0], system: 6, workerId: this.userInfo.id,page, limit:pageSize, name})
         .then((res) => {
             this.loadingShow = false;
             this.overlayShow = false;
+            this.loadText = '';
             if (res && res.data.code == 200) {
                   this.backlogTaskList = res.data.data.list;
                   this.totalCount = res.data.data.total;
@@ -482,15 +570,16 @@ export default {
                     this.backlogEmptyShow = true
                   }
             } else {
-            this.$toast({
-                type: 'fail',
-                message: res.data.msg
-            })
+              this.$toast({
+                  type: 'fail',
+                  message: res.data.msg
+              })
             }
       })
       .catch((err) => {
         this.loadingShow = false;
         this.overlayShow = false;
+        this.loadText = '';
         this.$toast({
           type: 'fail',
           message: err
@@ -811,9 +900,9 @@ export default {
                           display: inline-block;
                           width: 62px;
                           height: 22px;
-                          text-align: center;
+                          text-align: right;
                           line-height: 22px;
-                          color: #289E8E;
+                          color: #101010;
                           border-radius: 6px;
                       };
                       .spanNoStartStyle {
@@ -829,7 +918,7 @@ export default {
                   line-height: 28px;
                   word-break: break-all;
                   font-size: 14px;
-                  color: #101010  
+                  color: #8E9397  
                   };
                   .taskset-create-time-type {
                     display: flex;

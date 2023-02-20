@@ -1,6 +1,6 @@
 <template>
   <div class="page-box" ref="wrapper">
-    <div class="add-message" @click="addMessageEvent">
+    <div class="add-message" @click="addMessageEvent" v-show="patrolTaskListMessage.state !=4 ">
       <img :src="addMessagePng" alt="">
     </div>
     <div class="in-positioning" v-show="positioningShow">
@@ -50,7 +50,7 @@
         </div>
     </div>
     <div class="task-operation-box">
-      <div class="task-no-complete" :class="{'operationStyle': patrolTaskListMessage.state == 4 }" @click="clockInEvent">打卡</div>
+      <div class="task-no-complete"  v-show="patrolTaskListMessage.state !=4 " :class="{'operationStyle': patrolTaskListMessage.state == 4 }" @click="clockInEvent">打卡</div>
       <div class="task-complete" v-show="patrolTaskListMessage.state !=4 " @click="completeTaskEvent">完成任务</div>
     </div>
      <!-- 定位失败提示框 -->
@@ -169,11 +169,11 @@ export default {
   watch: {},
 
   computed: {
-    ...mapGetters(["userInfo","patrolTaskListMessage","departmentCheckList","enterPostMessagePageMessage"])
+    ...mapGetters(["userInfo","patrolTaskListMessage","departmentCheckList","enterPostMessagePageMessage","enterEventRegisterPageMessage"])
   },
 
   methods: {
-    ...mapMutations(["changeDepartmentCheckList","changePatrolTaskListMessage","changeEnterPostMessagePageMessage"]),
+    ...mapMutations(["changeDepartmentCheckList","changePatrolTaskListMessage","changeEnterPostMessagePageMessage","changeEnterEventRegisterPageMessage"]),
 
     // 顶部导航左边点击事件
     onClickLeft () {
@@ -187,13 +187,24 @@ export default {
 
     // 事件类型点击事件
     eventTypeClickEvent (item) {
+      // 保存进入事件登记页的相关信息
+      let temporaryEnterEventRegisterPageMessage = this.enterEventRegisterPageMessage;
       if ( item == '工程报修') {
-
+        temporaryEnterEventRegisterPageMessage['eventType'] = '工程报修';
+        this.$router.push({path: '/repairsRegister'})
       } else if (item == '拾金不昧') {
-
+        temporaryEnterEventRegisterPageMessage['eventType'] = '拾金不昧';
+        this.$router.push({path: '/claimRegister'})
       } else if (item == '其他') {
-
-      }
+        temporaryEnterEventRegisterPageMessage['eventType'] = '其他';
+        this.$router.push({path: '/otherRegister'})
+      };
+      temporaryEnterEventRegisterPageMessage['registerType'] = '巡查';
+      temporaryEnterEventRegisterPageMessage['patrolItemName'] = '';
+      temporaryEnterEventRegisterPageMessage['resultId'] = '';
+      temporaryEnterEventRegisterPageMessage['depId'] = '';
+      temporaryEnterEventRegisterPageMessage['depName'] = '';
+      this.changeEnterEventRegisterPageMessage(temporaryEnterEventRegisterPageMessage)
     },
 
     // 发布留言事件

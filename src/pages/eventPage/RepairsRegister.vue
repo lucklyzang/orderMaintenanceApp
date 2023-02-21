@@ -299,7 +299,7 @@ export default {
   },
 
   computed: {
-    ...mapGetters(["userInfo","transportantTaskMessage","ossMessage","departmentCheckList","enterProblemRecordMessage","timeMessage","temporaryStorageRepairsRegisterMessage","enterEventRegisterPageMessage"]),
+    ...mapGetters(["userInfo","transportantTaskMessage","ossMessage","timeMessage","departmentCheckList","enterProblemRecordMessage","temporaryStorageRepairsRegisterMessage","enterEventRegisterPageMessage"]),
     proId () {
       return this.userInfo.proIds[0]
     },

@@ -2,7 +2,8 @@
   <section class="signature">
     <div class="signatureBox">
       <div class="canvasBox" ref="boardBox" :currentSinnatureData="signNatureData">
-        <canvas ref="board" 
+        <canvas ref="board"
+          style="color:#101010;font-weight:bold" 
           @touchstart='touchStart' 
           @touchmove='touchMove' 
           @touchend='touchEnd' 

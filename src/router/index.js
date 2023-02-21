@@ -8,8 +8,10 @@ const Login = () =>
     import ('@/pages/Login')
 const MyInfo = () =>
     import ('@/pages/MyInfo')
-const ElectronicSignaturePage = () =>
-    import ('@/pages/ElectronicSignaturePage')
+const PatrolTaskElectronicSignaturePage = () =>
+    import ('@/pages/patrolTask/PatrolTaskElectronicSignaturePage')
+const EventRegisterElectronicSignaturePage = () =>
+    import ('@/pages/eventPage/EventRegisterElectronicSignaturePage')
 const PatrolTasklist = () =>
     import ('@/pages/patrolTask/PatrolTasklist')
 const WorkOrderDetails = () =>
@@ -54,9 +56,14 @@ let baseRoute = [{
         component: Home
     },
     {
-        path: '/electronicSignaturePage',
-        name: 'electronicSignaturePage',
-        component: ElectronicSignaturePage
+        path: '/patrolTaskElectronicSignaturePage',
+        name: 'patrolTaskElectronicSignaturePage',
+        component: PatrolTaskElectronicSignaturePage
+    },
+    {
+        path: '/eventRegisterElectronicSignaturePage',
+        name: 'eventRegisterElectronicSignaturePage',
+        component: EventRegisterElectronicSignaturePage
     },
     {
         path: '/myInfo',

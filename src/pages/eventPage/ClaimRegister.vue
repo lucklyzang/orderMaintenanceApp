@@ -571,7 +571,7 @@ export default {
     };
     this.parallelFunction();
     //判断是否回显暂存的数据
-    if (JSON.stringify(this.temporaryStorageRepairsRegisterMessage) != '{}' && this.temporaryStorageRepairsRegisterMessage['isTemporaryStorage']) {
+    if (JSON.stringify(this.temporaryStorageClaimRegisterMessage) != '{}' && this.temporaryStorageClaimRegisterMessage['isTemporaryStorage']) {
       this.echoTemporaryStorageMessage()
     }
   },
@@ -580,7 +580,7 @@ export default {
   },
 
   computed: {
-    ...mapGetters(["userInfo","transportantTaskMessage","ossMessage","departmentCheckList","timeMessage","enterProblemRecordMessage","temporaryStorageRepairsRegisterMessage","enterEventRegisterPageMessage"]),
+    ...mapGetters(["userInfo","transportantTaskMessage","ossMessage","departmentCheckList","timeMessage","enterProblemRecordMessage","temporaryStorageClaimRegisterMessage","enterEventRegisterPageMessage"]),
     proId () {
       return this.userInfo.proIds[0]
     },
@@ -593,7 +593,7 @@ export default {
   },
 
   methods: {
-    ...mapMutations(["changeCatchComponent","changeOverDueWay","changeTimeMessage","changeOssMessage","changeDepartmentCheckList","changetransportTypeMessage","changeTemporaryStorageRepairsRegisterMessage"]),
+    ...mapMutations(["changeCatchComponent","changeOverDueWay","changeTimeMessage","changeOssMessage","changeDepartmentCheckList","changetransportTypeMessage","changeTemporaryStorageClaimRegisterMessage"]),
 
     onClickLeft() {
       this.commonIsTemporaryStorageMethods();
@@ -673,7 +673,7 @@ export default {
 
     // 回显暂存的信息
     async echoTemporaryStorageMessage () {
-      let casuallyTemporaryStorageCreateRepairsTaskMessage = this.temporaryStorageRepairsRegisterMessage;
+      let casuallyTemporaryStorageCreateRepairsTaskMessage = this.temporaryStorageClaimRegisterMessage;
       this.currentStructure = casuallyTemporaryStorageCreateRepairsTaskMessage['currentStructure'];
       this.currentGoalDepartment = casuallyTemporaryStorageCreateRepairsTaskMessage['currentGoalDepartment'];
       this.currentGoalSpaces = casuallyTemporaryStorageCreateRepairsTaskMessage['currentGoalSpaces'];
@@ -682,9 +682,9 @@ export default {
 
     // 公共修改是否暂存的方法
     commonIsTemporaryStorageMethods () {
-      let casuallyTemporaryStorageCreateRepairsTaskMessage = this.temporaryStorageRepairsRegisterMessage;
+      let casuallyTemporaryStorageCreateRepairsTaskMessage = this.temporaryStorageClaimRegisterMessage;
       casuallyTemporaryStorageCreateRepairsTaskMessage['isTemporaryStorage'] = false;
-      this.changeTemporaryStorageRepairsRegisterMessage(casuallyTemporaryStorageCreateRepairsTaskMessage)
+      this.changeTemporaryStorageClaimRegisterMessage(casuallyTemporaryStorageCreateRepairsTaskMessage)
     },
 
     // 处理维修任务参与者
@@ -1284,13 +1284,13 @@ export default {
 
     // 暂存事件
     temporaryStorageEvent () {
-      let casuallyTemporaryStorageCreateRepairsTaskMessage = this.temporaryStorageRepairsRegisterMessage;
+      let casuallyTemporaryStorageCreateRepairsTaskMessage = this.temporaryStorageClaimRegisterMessage;
       casuallyTemporaryStorageCreateRepairsTaskMessage['currentStructure'] = this.currentStructure;
       casuallyTemporaryStorageCreateRepairsTaskMessage['currentGoalDepartment'] = this.currentGoalDepartment;
       casuallyTemporaryStorageCreateRepairsTaskMessage['currentGoalSpaces'] = this.currentGoalSpaces;
       casuallyTemporaryStorageCreateRepairsTaskMessage['taskDescribe'] = this.taskDescribe;
       casuallyTemporaryStorageCreateRepairsTaskMessage['isTemporaryStorage'] = true;
-      this.changeTemporaryStorageRepairsRegisterMessage(casuallyTemporaryStorageCreateRepairsTaskMessage);
+      this.changeTemporaryStorageClaimRegisterMessage(casuallyTemporaryStorageCreateRepairsTaskMessage);
       this.$toast('暂存成功');
       this.$router.push({path: '/eventList'})
     }

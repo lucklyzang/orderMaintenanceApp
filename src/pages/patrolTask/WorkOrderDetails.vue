@@ -289,7 +289,7 @@ export default {
         this.$Alert({message:"请完成所有巡查项!",duration:3000,type:'fail'})
         return
       };
-      this.$router.push({path: '/electronicSignaturePage'})
+      this.$router.push({path: '/patrolTaskElectronicSignaturePage'})
     },
 
     // 获取任务详情

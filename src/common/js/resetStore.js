@@ -33,9 +33,19 @@ export function getDefaultPatrolTaskState() {
 // 事件登记模块store的初始值
 export function getDefaultEventRegisterState() {
     return {
-        temporaryStorageRepairsRegisterMessage: {}, //保存事件登记(工程报修)信息
+        temporaryStorageRepairsRegisterMessage: {}, //暂存事件登记(工程报修)信息
+        temporaryStorageOtherRegisterMessage: {}, //暂存事件登记(其他)信息
+        temporaryStorageClaimRegisterMessage: {}, //暂存事件登记(拾金不昧)信息
         enterEventRegisterPageMessage: {}, // 进入事件登记页的信息
-        moreEventMessage: {} // 更多信息
+        moreEventMessage: {}, // 更多信息
+        claimRegisterElectronicSignatureMessage: {
+            step: '', // 进入到签名页的步骤
+            eventId: '', // 事件id
+            connectSignature: '', // 交接人签字 
+            keeperSignature: '', // 保管人签字
+            receiverSignature: [] // 领取人签字
+
+        }
     }
 };
 

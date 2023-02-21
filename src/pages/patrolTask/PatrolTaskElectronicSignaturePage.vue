@@ -33,13 +33,6 @@
         <span>签</span>
         <span>名</span>
       </div>
-
-      <div class="content-right">
-        <span>确</span>
-        <span>认</span>
-        <span>签</span>
-        <span>名</span>
-      </div>
     </div>
   </div>
 </template>
@@ -53,7 +46,7 @@ import { base64ImgtoFile } from '@/common/js/utils'
 import {mixinsDeviceReturn} from '@/mixins/deviceReturnFunction';
 import axios from 'axios'
 export default {
-  name: "ElectronicSignaturePage",
+  name: "PatrolTaskElectronicSignaturePage",
   components: {
     NavBar,
     ElectronicSignature

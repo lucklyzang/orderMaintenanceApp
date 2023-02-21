@@ -199,8 +199,11 @@
               <span>*</span>
               <span>交接人签字</span>
             </div>
-            <div class="signature-right">
-              <span>请签字</span>
+            <div class="signature-right" @click="connectSignatureEvent('交接')">
+              <span v-if="!claimRegisterElectronicSignatureMessage.connectSignature" class="span-one">请签字</span>
+              <span v-else class="span-two">
+                <img :src="claimRegisterElectronicSignatureMessage.connectSignature" alt="">
+              </span>
             </div>
           </div>
           <div class="signature-box">
@@ -208,8 +211,11 @@
               <span>*</span>
               <span>保管人签字</span>
             </div>
-            <div class="signature-right">
-              <span>请签字</span>
+            <div class="signature-right" @click="connectSignatureEvent('保管')">
+              <span v-if="!claimRegisterElectronicSignatureMessage.keeperSignature" class="span-one">请签字</span>
+              <span v-else class="span-two">
+                <img :src="claimRegisterElectronicSignatureMessage.keeperSignature" alt="">
+              </span>
             </div>
           </div>
         </div>
@@ -346,8 +352,98 @@
                 <span>*</span>
                 <span>领取人签字</span>
               </div>
-              <div class="signature-right">
-                <span>请签字</span>
+              <div class="signature-right" @click="connectSignatureEvent('领取',index)">
+                <span class="span-one" v-if="!item.getPersonSignature">请签字</span>
+                <span class="span-two" v-else>
+                  <img :src="item.getPersonSignature" alt="">
+                </span>
+              </div>
+            </div>
+            <img :src="addIconPng" alt="" @click="addLinkmanMessage" v-if="index == 0">
+            <img :src="subtractIconPng" alt="" @click="subtractLinkmanMessage(index)" v-if="index != 0">
+          </div>
+        </div>
+        <div class="message-box" v-if="currentStepIndex - 1 == 3">
+          <div class="select-box end-select-box">
+            <div class="select-box-left">
+              <span>*</span>
+              <span>领取时间</span>
+            </div>
+            <div class="select-box-right" @click="showGetTime = true">
+              <span>{{ getNowFormatDate(getTime) }}</span>
+              <van-icon name="arrow" color="#989999" size="20" />
+            </div>
+          </div>
+          <div class="details-site problem-overview">
+            <div class="transport-type-left">
+              <span>*</span>
+              <span>领取地点</span>
+            </div>
+            <div class="transport-type-right">
+              <van-field
+                v-model="getSite"
+                rows="1"
+                autosize
+                type="textarea"
+                placeholder="请输入"
+              />
+            </div>
+          </div>
+          <div class="linkman-message-box" v-for="(item,index) in getMessage" :key="index">
+            <div class="details-site problem-overview">
+              <div class="transport-type-left">
+                <span>*</span>
+                <span>联系人</span>
+              </div>
+              <div class="transport-type-right">
+                <van-field
+                  v-model="item.finalLinkman"
+                  rows="1"
+                  autosize
+                  type="textarea"
+                  placeholder="请输入"
+                />
+              </div>
+            </div>
+            <div class="details-site problem-overview">
+              <div class="transport-type-left">
+                <span>*</span>
+                <span>领取人身份证号</span>
+              </div>
+              <div class="transport-type-right">
+                <van-field
+                  v-model="item.getPersonIdNumber"
+                  rows="1"
+                  autosize
+                  type="textarea"
+                  placeholder="请输入"
+                />
+              </div>
+            </div>
+            <div class="transport-type get-content-describe">
+              <div class="transport-type-left">
+                <span>领取内容描述</span>
+              </div>
+              <div class="transport-type-right">
+                <van-field
+                  v-model="item.getContentDescribe"
+                  rows="3"
+                  autosize
+                  type="textarea"
+                  placeholder="可联系失主,告知联系电话"
+                />
+              </div>
+            </div>
+            <div class="signature-box">
+              <div class="signature-left">
+                <span>*</span>
+                <span>领取人签字</span>
+              </div>
+              <div class="signature-right" @click="connectSignatureEvent('领取',index)">
+                <span class="span-one" v-if="!item.getPersonSignature">请签字</span>
+                <span class="span-two" v-else>
+                  <img :src="item.getPersonSignature" alt="">
+                </span>
               </div>
             </div>
             <img :src="addIconPng" alt="" @click="addLinkmanMessage" v-if="index == 0">
@@ -364,7 +460,7 @@
           <span class="operate-one" @click="delelteEvent($route.query.eventId)">
             <van-icon name="delete" color="#fff" size="25" />
           </span>
-         <span class="operate-two">
+         <span class="operate-two" @click="temporaryStorageEvent">
             暂存
           </span>
           <span class="operate-three" @click="repairsEvent">
@@ -380,6 +476,9 @@ import { mapGetters, mapMutations } from "vuex";
 import {mixinsDeviceReturn} from '@/mixins/deviceReturnFunction'
 import { eventDelete, getEventDetails,eventHandover, eventContact, eventReceive } from '@/api/escortManagement.js'
 import _ from 'lodash'
+import axios from 'axios'
+import { base64ImgtoFile } from '@/common/js/utils'
+import {getAliyunSign} from '@/api/login.js'
 import ScrollSelection from "@/components/ScrollSelection";
 import BottomSelect from "@/components/BottomSelect";
 export default {
@@ -407,7 +506,8 @@ export default {
       taskDescribe: '飒飒水水水水水水水水水水水水',
       transportNumberValue: '',
       currentFindTime: '',
-
+      imgOnlinePathArr: [],
+      linkmanImgOnlinePathArr: [],
       showHandoverTime: false,
       handoverTime: new Date(),
       connectSite: '',
@@ -475,14 +575,28 @@ export default {
         that.$router.push({path: '/eventList'})
       })
     };
-    this.queryEventDetails(this.$route.query.eventId)
+    //判断是否回显暂存的数据
+    if (JSON.stringify(this.temporaryStorageClaimRegisterMessage) != '{}' && this.temporaryStorageClaimRegisterMessage['isTemporaryStorage']) {
+      this.echoTemporaryStorageMessage()
+    }
+  },
+
+  beforeRouteEnter(to, from, next) {
+    next(vm=>{
+      if (from.path == '/eventList') {
+        vm.queryEventDetails(vm.$route.query.eventId,false)
+      } else if (from.path == '/eventRegisterElectronicSignaturePage') {
+        vm.queryEventDetails(vm.claimRegisterElectronicSignatureMessage.eventId,true)
+      }
+	});
+    next() 
   },
 
   watch: {
   },
 
   computed: {
-    ...mapGetters(["userInfo","transportantTaskMessage","temporaryStorageRepairsRegisterMessage","moreEventMessage"]),
+    ...mapGetters(["userInfo","transportantTaskMessage","ossMessage","timeMessage","claimRegisterElectronicSignatureMessage","temporaryStorageClaimRegisterMessage","moreEventMessage"]),
     proId () {
       return this.userInfo.proIds[0]
     },
@@ -495,7 +609,7 @@ export default {
   },
 
   methods: {
-    ...mapMutations(["changeCatchComponent","changeOverDueWay","changetransportTypeMessage","changeTemporaryStorageRepairsRegisterMessage","changeMoreEventMessage"]),
+    ...mapMutations(["changeCatchComponent","changeOverDueWay","changeTimeMessage","changeOssMessage","changeClaimRegisterElectronicSignatureMessage","changetransportTypeMessage","changeTemporaryStorageClaimRegisterMessage","changeMoreEventMessage"]),
 
     onClickLeft() {
       this.$router.push({ path: "/eventList"})
@@ -539,7 +653,11 @@ export default {
 
     // 领取步骤删除联系人
     subtractLinkmanMessage (index) {
-      this.getMessage.splice(index,1)
+      this.getMessage.splice(index,1);
+      // 删除该联系人中对应的签名base64字符串
+      let temporaryClaimRegisterElectronicSignatureMessage = this.claimRegisterElectronicSignatureMessage;
+      temporaryClaimRegisterElectronicSignatureMessage['receiverSignature'] = temporaryClaimRegisterElectronicSignatureMessage['receiverSignature'].filter((item) => { return item['eventIndex'] != index});
+      this.changeClaimRegisterElectronicSignatureMessage(temporaryClaimRegisterElectronicSignatureMessage);
     },
 
 
@@ -552,6 +670,24 @@ export default {
         temporaryArray.push(innerItem.text)
       };
       return temporaryArray.join('、')
+    },
+
+    // 交接环节签字事件
+    connectSignatureEvent (text,index = '') {
+      let temporaryClaimRegisterElectronicSignatureMessage = this.claimRegisterElectronicSignatureMessage;
+      temporaryClaimRegisterElectronicSignatureMessage['step'] = text;
+      if (text == '交接' || text == '保管') {
+        temporaryClaimRegisterElectronicSignatureMessage['handoverTime'] = new Date(this.handoverTime);
+        temporaryClaimRegisterElectronicSignatureMessage['connectSite'] = this.connectSite
+      } else if (text == '领取') {
+        temporaryClaimRegisterElectronicSignatureMessage['getTime'] = new Date(this.getTime);
+        temporaryClaimRegisterElectronicSignatureMessage['getSite'] = this.getSite;
+        temporaryClaimRegisterElectronicSignatureMessage['receiverIndex'] = index;
+        temporaryClaimRegisterElectronicSignatureMessage['getMessage'] = this.getMessage
+      };  
+      temporaryClaimRegisterElectronicSignatureMessage['eventId'] = this.$route.query.eventId ? this.$route.query.eventId : temporaryClaimRegisterElectronicSignatureMessage['eventId'];
+      this.changeClaimRegisterElectronicSignatureMessage(temporaryClaimRegisterElectronicSignatureMessage);
+      this.$router.push({path: '/eventRegisterElectronicSignaturePage'})
     },
 
     // 格式化时间
@@ -599,8 +735,25 @@ export default {
       }
     },
 
+    // 回显暂存的信息
+    async echoTemporaryStorageMessage () {
+      let casuallyTemporaryStorageCreateRepairsTaskMessage = this.temporaryStorageClaimRegisterMessage;
+      this.currentStructure = casuallyTemporaryStorageCreateRepairsTaskMessage['currentStructure'];
+      this.currentGoalDepartment = casuallyTemporaryStorageCreateRepairsTaskMessage['currentGoalDepartment'];
+      this.currentGoalSpaces = casuallyTemporaryStorageCreateRepairsTaskMessage['currentGoalSpaces'];
+      this.taskDescribe = casuallyTemporaryStorageCreateRepairsTaskMessage['taskDescribe']
+    },
+
+    // 公共修改是否暂存的方法
+    commonIsTemporaryStorageMethods () {
+      let casuallyTemporaryStorageCreateRepairsTaskMessage = this.temporaryStorageClaimRegisterMessage;
+      casuallyTemporaryStorageCreateRepairsTaskMessage['isTemporaryStorage'] = false;
+      this.changeTemporaryStorageClaimRegisterMessage(casuallyTemporaryStorageCreateRepairsTaskMessage)
+    },
+
     // 查询事件详情
-    queryEventDetails (id) {
+    queryEventDetails (id,flag) {
+      // flag true: 从签名页进入 false: 从事件列表页进入
       this.loadingText = '加载中...';
       this.loadingShow = true;
       this.overlayShow = true;
@@ -610,7 +763,7 @@ export default {
           this.currentStepIndex = res.data.data['state'] + 1;
           this.eventId = res.data.data['id'];
           // 展示登记信息
-          if (this.currentStepIndex == 0) {
+          if (this.currentStepIndex - 1 == 0) {
             this.eventType = res.data.data['eventType'];
             this.currentStructure = res.data.data['structureName'];
             this.currentGoalDepartment = res.data.data['depName'];
@@ -619,26 +772,44 @@ export default {
             this.currentFindTime = res.data.data['findTime'];
             this.problemPicturesList = res.data.data['images'];
             this.problemOverview = res.data.data['description'];
-            this.taskDescribe = res.data.data['remark']
+            this.taskDescribe = res.data.data['remark'];
+            // 保存进入签名页之前的交接时间和交接地点信息
+            if (flag) {
+            this.handoverTime = this.claimRegisterElectronicSignatureMessage['handoverTime'];
+            this.connectSite = this.claimRegisterElectronicSignatureMessage['connectSite']
             // 展示交接信息
-          } else if (this.currentStepIndex == 1) {
+          } else if (this.currentStepIndex - 1 == 1) {
             this.handoverTime = new Date(res.data.data['extendData']['handover']['time']);
             this.connectSite = res.data.data['extendData']['handover']['address'];
             this.connectSignature = res.data.data['extendData']['handover']['from'];
             this.keeperSignature =  res.data.data['extendData']['handover']['to']
+            };
             // 展示联系信息
-          } else if (this.currentStepIndex == 2) {
+          } else if (this.currentStepIndex - 1 == 2) {
             this.relationTime = new Date(res.data.data['extendData']['time']);
             this.contactDepartment = res.data.data['extendData']['department'];
             this.linkman = res.data.data['extendData']['name'];
-            this.contactInformation = res.data.data['extendData']['situation']
+            this.contactInformation = res.data.data['extendData']['situation'];
+            // 保存进入签名页之前领取的相关信息
+            if (flag) {
+              this.getTime = this.claimRegisterElectronicSignatureMessage['getTime'];
+              this.getSite = this.claimRegisterElectronicSignatureMessage['getSite'];
+              this.getMessage = this.claimRegisterElectronicSignatureMessage['getMessage'];
+              // 将领取人签名base64字符串赋予对应的领取人信息里的签名字段
+              for (let i = 0, len = this.getMessage.length; i < len; i++) {
+                let temporaryItem = this.claimRegisterElectronicSignatureMessage['receiverSignature'].filter((item) => { return item.eventIndex == i})[0];
+                if (temporaryItem) {
+                  this.getMessage[i]['getPersonSignature'] = temporaryItem['signature']
+                }
+              }
+            }
             // 展示领取信息
-          } else if (this.currentStepIndex == 3) {
+          } else if (this.currentStepIndex - 1 == 3) {
             this.getMessage = [];
-            this.getTime = new Date(res.data.data['receive']['time']);
-            this.getSite = res.data.data['receive']['address'];
-            for (let item of res.data.data['receive']['people']) {
-              if (res.data.data['receive']['people'].length > 0) {
+            this.getTime = new Date(res.data.data['extendData']['receive']['time']);
+            this.getSite = res.data.data['extendData']['receive']['address'];
+            for (let item of res.data.data['extendData']['receive']['people']) {
+              if (res.data.data['extendData']['receive']['people'].length > 0) {
                 this.getMessage.push({
                   finalLinkman: item['name'],
                   getPersonIdNumber: item['cardNo'],
@@ -671,6 +842,93 @@ export default {
       })
     },
 
+    // 获取阿里云签名接口
+    getSign (filePath = '') {
+      return new Promise((resolve, reject) => {
+        getAliyunSign().then((res) => {
+          if (res && res.data.code == 200) {
+            // 存储签名信息
+            this.changeOssMessage(res.data.data);
+            let temporaryTimeInfo = {};
+            temporaryTimeInfo['expire'] = Number(res.data.data.expire);
+            // 存储过期时间信息
+            this.changeTimeMessage(temporaryTimeInfo);
+            if (this.isExpire) {
+              this.uploadImageToOss(filePath)
+            };
+            this.isExpire = false;
+            resolve()
+          } else {
+            this.overlayShow = false;
+            this.loadingShow = false;
+            this.$toast({
+              message: `${res.data.msg}`,
+              type: 'fail'
+            });
+            reject()
+          }
+        })
+        .catch((err) => {
+          this.overlayShow = false;
+          this.loadingShow = false;
+          this.$toast({
+            message: `${err}`,
+            type: 'fail'
+          });
+          reject()
+        })
+      })	
+    },
+    
+    // 上传图片到阿里云服务器
+    uploadImageToOss (filePath,itemIndex,flag) {
+      return new Promise((resolve, reject) => {
+        // OSS地址
+        const aliyunServerURL = this.ossMessage.host;
+        // 存储路径(后台固定位置+随即数+文件格式)
+        const aliyunFileKey = this.ossMessage.dir + new Date().getTime() + Math.floor(Math.random() * 100) + base64ImgtoFile(filePath).name;
+        // 临时AccessKeyID0
+        const OSSAccessKeyId = this.ossMessage.accessid;
+        // 加密策略
+        const policy = this.ossMessage.policy;
+        // 签名
+        const signature = this.ossMessage.signature;
+        let formData = new FormData();
+        formData.append('key',aliyunFileKey);
+        formData.append('policy',policy);
+        formData.append('OSSAccessKeyId',OSSAccessKeyId);
+        formData.append('success_action_status','200');
+        formData.append('Signature',signature);
+        formData.append('file',base64ImgtoFile(filePath));
+        axios({
+          url: aliyunServerURL,
+          method: 'post',
+          data: formData,
+          headers: {'Content-Type': 'multipart/form-data'}
+        }).then((res) => {
+          if (!flag) {
+            this.imgOnlinePathArr.push(`${aliyunServerURL}/${aliyunFileKey}`);
+          } else {
+            this.linkmanImgOnlinePathArr.push({
+              signature: `${aliyunServerURL}/${aliyunFileKey}`,
+              eventIndex: itemIndex
+            })
+          }
+          resolve();
+          console.log('当前图片',this.imgOnlinePathArr);
+        })
+        .catch((err) => {
+          this.overlayShow = false;
+          this.loadingShow = false;
+          this.$toast({
+            message: `${err}`,
+            type: 'fail'
+          });
+          reject()
+        })
+      })
+    },
+
     // 拾金不昧事件
     async repairsEvent () {
       if (this.currentStepIndex == 1) {
@@ -682,25 +940,41 @@ export default {
           this.$toast('交接地点不能为空');
           return
         };
-        if (false) {
+        if (!this.claimRegisterElectronicSignatureMessage.connectSignature) {
           this.$toast('交接人签字不能为空');
           return
         };
-        if (false) {
+        if (!this.claimRegisterElectronicSignatureMessage.keeperSignature) {
           this.$toast('保管人签字不能为空');
           return
         };
         this.loadText ='提交中';
         this.overlayShow = true;
         this.loadingShow = true;
+        // 将交接人、保管人签名图片上传到阿里云
+        let connectSignatureStepList = [this.claimRegisterElectronicSignatureMessage.connectSignature,this.claimRegisterElectronicSignatureMessage.keeperSignature];
+        for (let imgI of connectSignatureStepList) {
+          if (Object.keys(this.timeMessage).length > 0) {
+          // 判断签名信息是否过期
+          if (new Date().getTime()/1000 - this.timeMessage['expire']  >= -30) {
+            await this.getSign();
+            await this.uploadImageToOss(imgI,'',false)
+          } else {
+            await this.uploadImageToOss(imgI,'',false)
+          }
+          } else {
+          await this.getSign();
+          await this.uploadImageToOss(imgI,'',false)
+          }
+        };
         // 拾金不昧交接
         let temporaryMessage = {
-          time: this.handoverTime,
+          time: this.getNowFormatDate(this.handoverTime),
           address: this.connectSite,
-          from:"",
-          to:"",
+          from: this.imgOnlinePathArr[0], // 交接人签名
+          to: this.imgOnlinePathArr[1], // 保管人签名
           id: this.eventId,
-          modifyName:""
+          modifyName: this.userName
         };
         this.postEventHandover(temporaryMessage)
       } else if (this.currentStepIndex == 2) {
@@ -725,52 +999,74 @@ export default {
         this.loadingShow = true;
         // 拾金不昧联系
         let temporaryMessage = {
-          time: this.relationTime,
+          time: this.getNowFormatDate(this.relationTime),
           department: this.contactDepartment,
           name: this.linkman,
           situation: this.contactInformation,
           id: this.eventId,
-          modifyName:"string"
+          modifyName: this.userName
         };
         this.postEventContact(temporaryMessage)
       } else if (this.currentStepIndex == 3) {
-        if (!this.eventType) {
+        if (!this.getTime) {
           this.$toast('领取时间不能为空');
           return
         };
-        if (this.currentStructure == '请选择') {
+        if (!this.getSite) {
           this.$toast('领取地点不能为空');
           return
         };
-        if (this.currentGoalDepartment == '请选择') {
+        if (this.getMessage.some((item) => { return item.finalLinkman == ''})) {
           this.$toast('联系人不能为空');
           return
         };
-        if (this.currentGoalSpaces == '请选择') {
+        if (this.getMessage.some((item) => { return item.getPersonIdNumber == ''})) {
           this.$toast('领取人身份证不能为空');
           return
         };
-         if (this.currentGoalSpaces == '请选择') {
+         if (this.getMessage.some((item) => { return item.getPersonSignature == ''})) {
           this.$toast('领取人签字不能为空');
           return
         };
         this.loadText ='提交中';
         this.overlayShow = true;
         this.loadingShow = true;
+        // 将领取人签名图片上传到阿里云
+        for (let imgI of this.claimRegisterElectronicSignatureMessage['receiverSignature']) {
+          if (Object.keys(this.timeMessage).length > 0) {
+          // 判断签名信息是否过期
+          if (new Date().getTime()/1000 - this.timeMessage['expire']  >= -30) {
+            await this.getSign();
+            await this.uploadImageToOss(imgI['signature'],imgI['eventIndex'],true)
+          } else {
+            await this.uploadImageToOss(imgI['signature'],imgI['eventIndex'],true)
+          }
+          } else {
+          await this.getSign();
+          await this.uploadImageToOss(imgI['signature'],imgI['eventIndex'],true)
+          }
+        };
+        // 将上传到阿里云上的领取人签名路径赋予对应的领取人签名信息字段
+        for (let i = 0, len = this.getMessage.length; i < len; i++) {
+          let temporaryItem = this.linkmanImgOnlinePathArr.filter((item) => { return item.eventIndex == i})[0];
+          if (temporaryItem) {
+            this.getMessage[i]['getPersonSignature'] = temporaryItem['signature']
+          }
+        };
         // 拾金不昧领取
         let temporaryMessage = {
           id: this.eventId,
-          time: this.getTime,
+          time: this.getNowFormatDate(this.getTime),
           address: this.getSite,
           people:[],
-          modifyName:"string"
+          modifyName: this.userName
         };
         for (let item of this.getMessage) {
           temporaryMessage['people'].push({
-            cardNo: id['getPersonIdNumber'],
-            content: id['getContentDescribe'],
-            name: id['finalLinkman'],
-            sign: id['getPersonSignature']
+            cardNo: item['getPersonIdNumber'],
+            content: item['getContentDescribe'],
+            name: item['finalLinkman'],
+            sign: item['getPersonSignature']
           })
         };
         this.postEventReceive(temporaryMessage)
@@ -783,11 +1079,11 @@ export default {
       this.loadingShow = true;
       this.overlayShow = true;
       eventHandover(data).then((res) => {
+        this.imgOnlinePathArr = [];
         if (res && res.data.code == 200) {
           this.$toast(`${res.data.msg}`);
           this.$router.push({path:'/eventList'});
         } else {
-          this.imgOnlinePathArr = [];
           this.$dialog.alert({
             message: `${res.data.msg}`,
             closeOnPopstate: true
@@ -821,7 +1117,7 @@ export default {
           this.$toast(`${res.data.msg}`);
           this.$router.push({path:'/eventList'});
         } else {
-          this.imgOnlinePathArr = [];
+          this.linkmanImgOnlinePathArr = [];
           this.$dialog.alert({
             message: `${res.data.msg}`,
             closeOnPopstate: true
@@ -833,7 +1129,7 @@ export default {
         this.overlayShow = false
       })
       .catch((err) => {
-        this.imgOnlinePathArr = [];
+        this.linkmanImgOnlinePathArr = [];
         this.$dialog.alert({
           message: `${err.message}`,
           closeOnPopstate: true
@@ -910,6 +1206,19 @@ export default {
         this.loadingShow = false;
         this.overlayShow = false
       })
+    },
+
+    // 暂存事件
+    temporaryStorageEvent () {
+      let casuallyTemporaryStorageCreateRepairsTaskMessage = this.temporaryStorageClaimRegisterMessage;
+      casuallyTemporaryStorageCreateRepairsTaskMessage['currentStructure'] = this.currentStructure;
+      casuallyTemporaryStorageCreateRepairsTaskMessage['currentGoalDepartment'] = this.currentGoalDepartment;
+      casuallyTemporaryStorageCreateRepairsTaskMessage['currentGoalSpaces'] = this.currentGoalSpaces;
+      casuallyTemporaryStorageCreateRepairsTaskMessage['taskDescribe'] = this.taskDescribe;
+      casuallyTemporaryStorageCreateRepairsTaskMessage['isTemporaryStorage'] = true;
+      this.changeTemporaryStorageClaimRegisterMessage(casuallyTemporaryStorageCreateRepairsTaskMessage);
+      this.$toast('暂存成功');
+      this.$router.push({path: '/eventList'})
     }
   }
 };
@@ -1342,14 +1651,25 @@ export default {
               background: #F9F9F9;
               align-items: center;
               justify-content: center;
-              span {
+              >span {
+                display: inline-block;
                 font-size: 14px;
-                color: #BBBBBB
+                color: #BBBBBB;
               };
-              img {
-                width: 63px;
-                height: 30px
-              }
+              .span-one {
+                  width: 100%;
+                  padding-left: 4px;
+                  box-sizing: border-box
+                };
+                .span-two {
+                  width: 70px;
+                  height: 35px;
+                  background: #fff;
+                  img {
+                    width: 100%;
+                    height: 100%;
+                  }
+                }
             }
           };
           .linkman-message-box {

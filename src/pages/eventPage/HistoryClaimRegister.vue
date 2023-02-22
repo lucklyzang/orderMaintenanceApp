@@ -77,7 +77,7 @@
        <van-nav-bar
         title="事件详情"
         left-text="返回"
-        right-text="更多信息"
+        :right-text="currentStepIndex == 0 ? '更多信息' : ''"
         :left-arrow="true"
         :placeholder="true"
         :border="false"
@@ -572,12 +572,10 @@ export default {
       pushHistory();
       that.gotoURL(() => {
         pushHistory();
+        //清除拾金不昧签名相关信息
+        this.changeClaimRegisterElectronicSignatureMessage({});
         that.$router.push({path: '/eventList'})
       })
-    };
-    //判断是否回显暂存的数据
-    if (JSON.stringify(this.temporaryStorageClaimRegisterMessage) != '{}' && this.temporaryStorageClaimRegisterMessage['isTemporaryStorage']) {
-      this.echoTemporaryStorageMessage()
     }
   },
 
@@ -612,6 +610,8 @@ export default {
     ...mapMutations(["changeCatchComponent","changeOverDueWay","changeTimeMessage","changeOssMessage","changeClaimRegisterElectronicSignatureMessage","changetransportTypeMessage","changeTemporaryStorageClaimRegisterMessage","changeMoreEventMessage"]),
 
     onClickLeft() {
+      //清除拾金不昧签名相关信息
+      this.changeClaimRegisterElectronicSignatureMessage({});
       this.$router.push({ path: "/eventList"})
     },
 
@@ -913,7 +913,7 @@ export default {
               signature: `${aliyunServerURL}/${aliyunFileKey}`,
               eventIndex: itemIndex
             })
-          }
+          };
           resolve();
           console.log('当前图片',this.imgOnlinePathArr);
         })
@@ -1210,13 +1210,61 @@ export default {
 
     // 暂存事件
     temporaryStorageEvent () {
-      let casuallyTemporaryStorageCreateRepairsTaskMessage = this.temporaryStorageClaimRegisterMessage;
-      casuallyTemporaryStorageCreateRepairsTaskMessage['currentStructure'] = this.currentStructure;
-      casuallyTemporaryStorageCreateRepairsTaskMessage['currentGoalDepartment'] = this.currentGoalDepartment;
-      casuallyTemporaryStorageCreateRepairsTaskMessage['currentGoalSpaces'] = this.currentGoalSpaces;
-      casuallyTemporaryStorageCreateRepairsTaskMessage['taskDescribe'] = this.taskDescribe;
-      casuallyTemporaryStorageCreateRepairsTaskMessage['isTemporaryStorage'] = true;
-      this.changeTemporaryStorageClaimRegisterMessage(casuallyTemporaryStorageCreateRepairsTaskMessage);
+      let casuallyTemporaryStorageClaimRegisterMessage = this.temporaryStorageClaimRegisterMessage;
+      if (this.temporaryStorageClaimRegisterMessage.length > 0 ) {
+          let temporaryIndex = this.temporaryStorageClaimRegisterMessage.findIndex((item) => { return item.id == this.$route.query.eventId});
+          if (temporaryIndex != -1) {
+            casuallyTemporaryStorageClaimRegisterMessage[temporaryIndex]['signature'] = ''
+          } else {
+            casuallyTemporaryStorageClaimRegisterMessage.push({
+              id: this.$route.query.eventId,
+              eventType: '',
+              registerType: '',
+              findTime: '',
+              structureName: '',
+              depName: '',
+              roomName: '',
+              address: '',
+              description: '',
+              remark: '',
+              images: [],
+              state: 0,
+              createName: '',
+              createTime: '',
+              createId: '',
+              modifyName: '',
+              extendData:{
+                receive:{
+                  address: '',
+                  time: '',
+                  people:[]
+                },
+                handover:{
+                  address: '',
+                  from: '',
+                  to: '',
+                  time: ''
+                },
+                contact:{
+                  name: '',
+                  time: '',
+                  department: '',
+                  situation: ''
+                }
+              },
+              taskNumber: '',
+              itemName: '',
+              taskState: '',
+              collectName: '',
+              taskType: ''
+            })
+          }
+        } else {
+          casuallyTemporaryStorageClaimRegisterMessage.push({
+
+          })
+      };
+      this.changeTemporaryStorageClaimRegisterMessage(casuallyTemporaryStorageClaimRegisterMessage);
       this.$toast('暂存成功');
       this.$router.push({path: '/eventList'})
     }

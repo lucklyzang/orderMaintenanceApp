@@ -6,14 +6,17 @@ export default {
     getters: {
 
         temporaryStorageRepairsRegisterMessage: (state) => {
+            state.temporaryStorageRepairsRegisterMessage = JSON.parse(getStore('temporaryStorageRepairsRegisterMessage')) ? JSON.parse(getStore('temporaryStorageRepairsRegisterMessage')) : [];
             return state.temporaryStorageRepairsRegisterMessage
         },
 
         temporaryStorageOtherRegisterMessage: (state) => {
+            state.temporaryStorageOtherRegisterMessage = JSON.parse(getStore('temporaryStorageOtherRegisterMessage')) ? JSON.parse(getStore('temporaryStorageOtherRegisterMessage')) : [];
             return state.temporaryStorageOtherRegisterMessage
         },
 
         temporaryStorageClaimRegisterMessage: (state) => {
+            state.temporaryStorageClaimRegisterMessage = JSON.parse(getStore('temporaryStorageClaimRegisterMessage')) ? JSON.parse(getStore('temporaryStorageClaimRegisterMessage')) : [];
             return state.temporaryStorageClaimRegisterMessage
         },
 
@@ -35,6 +38,7 @@ export default {
         // 保存事件登记(工程报修)信息
         changeTemporaryStorageRepairsRegisterMessage(state, playLoad) {
             if (playLoad && playLoad != 'null') {
+                setStore('temporaryStorageRepairsRegisterMessage', playLoad);
                 state.temporaryStorageRepairsRegisterMessage = playLoad
             }
         },
@@ -50,13 +54,15 @@ export default {
         // 保存事件登记(其他)信息
         changeTemporaryStorageOtherRegisterMessage(state, playLoad) {
             if (playLoad && playLoad != 'null') {
+                setStore('temporaryStorageOtherRegisterMessage', playLoad);
                 state.temporaryStorageOtherRegisterMessage = playLoad
             }
         },
 
-        // 保存事件登记(其他)信息
+        // 保存事件登记(拾金不昧)信息
         changeTemporaryStorageClaimRegisterMessage(state, playLoad) {
             if (playLoad && playLoad != 'null') {
+                setStore('temporaryStorageClaimRegisterMessage', playLoad);
                 state.temporaryStorageClaimRegisterMessage = playLoad
             }
         },

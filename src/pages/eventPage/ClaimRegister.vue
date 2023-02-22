@@ -291,8 +291,11 @@
               <span>*</span>
               <span>交接人签字</span>
             </div>
-            <div class="signature-right">
-              <span>请签字</span>
+            <div class="signature-right" @click="connectSignatureEvent('交接')">
+              <span v-if="!claimRegisterElectronicSignatureMessage.connectSignature" class="span-one">请签字</span>
+              <span v-else class="span-two">
+                <img :src="claimRegisterElectronicSignatureMessage.connectSignature" alt="">
+              </span>
             </div>
           </div>
           <div class="signature-box">
@@ -300,8 +303,11 @@
               <span>*</span>
               <span>保管人签字</span>
             </div>
-            <div class="signature-right">
-              <span>请签字</span>
+            <div class="signature-right" @click="connectSignatureEvent('保管')">
+              <span v-if="!claimRegisterElectronicSignatureMessage.keeperSignature" class="span-one">请签字</span>
+              <span v-else class="span-two">
+                <img :src="claimRegisterElectronicSignatureMessage.keeperSignature" alt="">
+              </span>
             </div>
           </div>
         </div>
@@ -438,8 +444,11 @@
                 <span>*</span>
                 <span>领取人签字</span>
               </div>
-              <div class="signature-right">
-                <span>请签字</span>
+              <div class="signature-right" @click="connectSignatureEvent('领取',index)">
+                <span class="span-one" v-if="!item.getPersonSignature">请签字</span>
+                <span class="span-two" v-else>
+                  <img :src="item.getPersonSignature" alt="">
+                </span>
               </div>
             </div>
             <img :src="addIconPng" alt="" @click="addLinkmanMessage" v-if="index == 0">
@@ -449,7 +458,8 @@
         <div class="btn-box">
           <span class="operate-one" @click="quitEvent">退出</span>
           <span class="operate-two" @click="temporaryStorageEvent">暂存</span>
-          <span class="operate-three" @click="repairsEvent">保存</span>
+          <span class="operate-three" @click="repairsRegisterEvent">保存</span>
+          <span class="operate-three" @click="repairsEvent" v-if="currentStepIndex != 0">保存</span>
         </div>
       </div>
     </div>
@@ -459,7 +469,7 @@
 import { mapGetters, mapMutations } from "vuex";
 import {mixinsDeviceReturn} from '@/mixins/deviceReturnFunction'
 import {userSignOut,getAliyunSign} from '@/api/login.js'
-import { eventregister, querySpace, queryDepartment, queryStructure} from '@/api/escortManagement.js'
+import { eventregister, querySpace, queryDepartment, queryStructure, eventHandover, eventContact, eventReceive} from '@/api/escortManagement.js'
 import { setStore,removeAllLocalStorage,compress,deepClone, base64ImgtoFile } from '@/common/js/utils'
 import axios from 'axios'
 import _ from 'lodash'
@@ -489,6 +499,7 @@ export default {
       imgBoxShow: false,
       imgIndex: '',
       imgOnlinePathArr: [],
+      linkmanImgOnlinePathArr: [],
       imgDeleteUrlArr: [],
       existOnlineImgPath: [],
       imgDeleteUrl: '',
@@ -566,8 +577,16 @@ export default {
       that.gotoURL(() => {
         that.commonIsTemporaryStorageMethods();
         pushHistory();
+        //清除拾金不昧签名相关信息
+        this.changeClaimRegisterElectronicSignatureMessage({});
         that.$router.push({path: '/eventList'})
       })
+    };
+    // 如果是从异常巡查项从处进来的，则回显区域名称
+    if (this.enterEventRegisterPageMessage['patrolItemName'] != '') {
+      this.currentGoalDepartment = this.enterEventRegisterPageMessage['depName'];
+      // 查询该回显科室下对应的房间信息
+      this.getSpacesByDepartmentId(this.enterEventRegisterPageMessage['depId'],this.enterEventRegisterPageMessage['structId'],false)
     };
     this.parallelFunction();
     //判断是否回显暂存的数据
@@ -580,7 +599,7 @@ export default {
   },
 
   computed: {
-    ...mapGetters(["userInfo","transportantTaskMessage","ossMessage","departmentCheckList","timeMessage","enterProblemRecordMessage","temporaryStorageClaimRegisterMessage","enterEventRegisterPageMessage"]),
+    ...mapGetters(["userInfo","transportantTaskMessage","ossMessage","claimRegisterElectronicSignatureMessage","departmentCheckList","timeMessage","enterProblemRecordMessage","temporaryStorageClaimRegisterMessage","enterEventRegisterPageMessage"]),
     proId () {
       return this.userInfo.proIds[0]
     },
@@ -593,10 +612,12 @@ export default {
   },
 
   methods: {
-    ...mapMutations(["changeCatchComponent","changeOverDueWay","changeTimeMessage","changeOssMessage","changeDepartmentCheckList","changetransportTypeMessage","changeTemporaryStorageClaimRegisterMessage"]),
+    ...mapMutations(["changeCatchComponent","changeOverDueWay","changeClaimRegisterElectronicSignatureMessage","changeTimeMessage","changeOssMessage","changeDepartmentCheckList","changetransportTypeMessage","changeTemporaryStorageClaimRegisterMessage"]),
 
     onClickLeft() {
       this.commonIsTemporaryStorageMethods();
+      //清除拾金不昧签名相关信息
+      this.changeClaimRegisterElectronicSignatureMessage({});
       this.$router.push({ path: "/eventList"})
     },
 
@@ -630,9 +651,30 @@ export default {
       })
     },
 
+    // 交接环节签字事件
+    connectSignatureEvent (text,index = '') {
+      let temporaryClaimRegisterElectronicSignatureMessage = this.claimRegisterElectronicSignatureMessage;
+      temporaryClaimRegisterElectronicSignatureMessage['step'] = text;
+      if (text == '交接' || text == '保管') {
+        temporaryClaimRegisterElectronicSignatureMessage['handoverTime'] = new Date(this.handoverTime);
+        temporaryClaimRegisterElectronicSignatureMessage['connectSite'] = this.connectSite
+      } else if (text == '领取') {
+        temporaryClaimRegisterElectronicSignatureMessage['getTime'] = new Date(this.getTime);
+        temporaryClaimRegisterElectronicSignatureMessage['getSite'] = this.getSite;
+        temporaryClaimRegisterElectronicSignatureMessage['receiverIndex'] = index;
+        temporaryClaimRegisterElectronicSignatureMessage['getMessage'] = this.getMessage
+      };  
+      this.changeClaimRegisterElectronicSignatureMessage(temporaryClaimRegisterElectronicSignatureMessage);
+      this.$router.push({path: '/eventRegisterElectronicSignaturePage'})
+    },
+
     // 领取步骤删除联系人
     subtractLinkmanMessage (index) {
-      this.getMessage.splice(index,1)
+      this.getMessage.splice(index,1);
+      // 删除该联系人中对应的签名base64字符串
+      let temporaryClaimRegisterElectronicSignatureMessage = this.claimRegisterElectronicSignatureMessage;
+      temporaryClaimRegisterElectronicSignatureMessage['receiverSignature'] = temporaryClaimRegisterElectronicSignatureMessage['receiverSignature'].filter((item) => { return item['eventIndex'] != index});
+      this.changeClaimRegisterElectronicSignatureMessage(temporaryClaimRegisterElectronicSignatureMessage)
     },
 
     // 图片放大事件
@@ -736,7 +778,7 @@ export default {
     },
     
     // 上传图片到阿里云服务器
-    uploadImageToOss (filePath) {
+    uploadImageToOss (filePath,itemIndex,flag) {
       return new Promise((resolve, reject) => {
         // OSS地址
         const aliyunServerURL = this.ossMessage.host;
@@ -761,7 +803,14 @@ export default {
           data: formData,
           headers: {'Content-Type': 'multipart/form-data'}
         }).then((res) => {
-          this.imgOnlinePathArr.push(`${aliyunServerURL}/${aliyunFileKey}`);
+          if (!flag) {
+            this.imgOnlinePathArr.push(`${aliyunServerURL}/${aliyunFileKey}`);
+          } else {
+            this.linkmanImgOnlinePathArr.push({
+              signature: `${aliyunServerURL}/${aliyunFileKey}`,
+              eventIndex: itemIndex
+            })
+          };
           resolve();
           console.log('当前图片',this.imgOnlinePathArr);
         })
@@ -894,7 +943,7 @@ export default {
             };
             if (isInitial) {
               if (this.currentGoalDepartment != '请选择') {
-                this.getSpacesByDepartmentId(this.goalDepartmentOption.filter((item) => { return item['text'] == this.currentGoalDepartment})[0]['value'],false)
+                this.getSpacesByDepartmentId(this.goalDepartmentOption.filter((item) => { return item['text'] == this.currentGoalDepartment})[0]['value'],this.structureOption.filter((item) => { return item['text'] == this.currentStructure})[0]['value'],false)
               }
             }  
           };
@@ -915,12 +964,12 @@ export default {
     },
 
     // 根据科室查询房间信息
-    getSpacesByDepartmentId (depId,flag) {
+    getSpacesByDepartmentId (depId,struId,flag) {
       this.loadingText = '查询中...';
       this.loadingShow = true;
       this.overlayShow = true;
       this.goalSpacesOption = [];
-      querySpace({hospitalId:this.proId,struId:this.structureOption.filter((item) => { return item['text'] == this.currentStructure})[0]['value'],depId:depId})
+      querySpace({hospitalId:this.proId,struId:struId,depId:depId})
       .then((res) => {
         this.loadingText = '';
         this.loadingShow = false;
@@ -971,7 +1020,11 @@ export default {
                   id: i
                 })
               };
-              if (this.currentStructure != '请选择') {
+              // 如果是从异常巡查项从处进来的，则回显建筑名称
+              if (this.enterEventRegisterPageMessage['patrolItemName'] != '') {
+                this.currentStructure = this.structureOption.fliter((innerItem) => { return innerItem.value == this.enterEventRegisterPageMessage['structId']})[0]['text']
+              };
+              if (this.currentStructure != '请选择' && this.enterEventRegisterPageMessage['patrolItemName'] == '') {
                 this.getDepartmentByStructureId(this.structureOption.filter((item) => { return item['text'] == this.currentStructure})[0]['value'],false,true)
               }
             }
@@ -1031,7 +1084,7 @@ export default {
       if (val) {
         this.currentGoalDepartment =  val;
         this.currentGoalSpaces = '请选择';
-        this.getSpacesByDepartmentId(this.goalDepartmentOption.filter((item) => { return item['text'] == this.currentGoalDepartment})[0]['value'],false)
+        this.getSpacesByDepartmentId(this.goalDepartmentOption.filter((item) => { return item['text'] == this.currentGoalDepartment})[0]['value'],this.structureOption.filter((item) => { return item['text'] == this.currentStructure})[0]['value'],false)
       } else {
         this.currentGoalDepartment = '请选择'
       };
@@ -1065,11 +1118,10 @@ export default {
     
     // 目的房间列点击事件
     goalSpacesClickEvent () {
-      if (this.enterEventRegisterPageMessage['patrolItemName'] != '') {return};
       if (this.currentGoalDepartment == '请选择') {
         this.$toast('请选择科室')
       } else {
-        this.getSpacesByDepartmentId(this.goalDepartmentOption.filter((item) => { return item['text'] == this.currentGoalDepartment})[0]['value'],true)
+        this.getSpacesByDepartmentId(this.goalDepartmentOption.filter((item) => { return item['text'] == this.currentGoalDepartment})[0]['value'],this.structureOption.filter((item) => { return item['text'] == this.currentStructure})[0]['value'],true)
       }
     },
 
@@ -1088,48 +1140,48 @@ export default {
       this.showGoalSpaces = false
     },
 
-      // 下班签退事件
-      signOutEvent () {
-          this.$dialog.alert({
-            message: '确定签退?',
-            closeOnPopstate: true,
-            showCancelButton: true
-          }).then(() => {
-            this.userLoginOut(this.proId, this.userInfo.userName)
-          })
-          .catch(() => {
-          })
-      },
+    // 下班签退事件
+    signOutEvent () {
+        this.$dialog.alert({
+          message: '确定签退?',
+          closeOnPopstate: true,
+          showCancelButton: true
+        }).then(() => {
+          this.userLoginOut(this.proId, this.userInfo.userName)
+        })
+        .catch(() => {
+        })
+    },
 
-      // 用户签退
-      userLoginOut (proId,workerId) {
-        this.changeOverDueWay(true);
-        setStore('storeOverDueWay',true);
-        userSignOut(proId,workerId).then((res) => {
-          if (res && res.data.code == 200) {
-            removeAllLocalStorage();
-            this.changeCatchComponent([]);
-            this.$router.push({path:'/'})
-          } else {
-            this.$dialog.alert({
-              message: `${res.data.msg}`,
-              closeOnPopstate: true
-            }).then(() => {
-            });
-            this.changeOverDueWay(false);
-            setStore('storeOverDueWay',false);
-          }
-        }).
-        catch((err) => {
-          this.changeOverDueWay(false);
-          setStore('storeOverDueWay',false);
+    // 用户签退
+    userLoginOut (proId,workerId) {
+      this.changeOverDueWay(true);
+      setStore('storeOverDueWay',true);
+      userSignOut(proId,workerId).then((res) => {
+        if (res && res.data.code == 200) {
+          removeAllLocalStorage();
+          this.changeCatchComponent([]);
+          this.$router.push({path:'/'})
+        } else {
           this.$dialog.alert({
-            message: `${err.message}`,
+            message: `${res.data.msg}`,
             closeOnPopstate: true
           }).then(() => {
           });
-        })
-      },
+          this.changeOverDueWay(false);
+          setStore('storeOverDueWay',false);
+        }
+      }).
+      catch((err) => {
+        this.changeOverDueWay(false);
+        setStore('storeOverDueWay',false);
+        this.$dialog.alert({
+          message: `${err.message}`,
+          closeOnPopstate: true
+        }).then(() => {
+        });
+      })
+    },
 
     // 退出事件
     quitEvent () {
@@ -1165,7 +1217,7 @@ export default {
     },
 
     // 登记拾金不昧事件
-    async repairsEvent () {
+    async repairsRegisterEvent () {
       if (!this.eventType) {
         this.$toast('事件类型不能为空');
         return
@@ -1208,13 +1260,13 @@ export default {
           // 判断签名信息是否过期
           if (new Date().getTime()/1000 - this.timeMessage['expire']  >= -30) {
               await this.getSign();
-              await this.uploadImageToOss(imgI)
+              await this.uploadImageToOss(imgI,'',false)
           } else {
-              await this.uploadImageToOss(imgI)
+              await this.uploadImageToOss(imgI,'',false)
           }
           } else {
           await this.getSign();
-          await this.uploadImageToOss(imgI)
+          await this.uploadImageToOss(imgI,'',false)
           }
       };
       // 创建拾金不昧任务
@@ -1256,6 +1308,252 @@ export default {
             tempraryMessage['checkItemList'][this.enterProblemRecordMessage[index]]['isHaveEventRegister'] = 1;
             this.changeDepartmentCheckList(tempraryMessage)
           };
+          this.$router.push({path:'/eventList'});
+        } else {
+          this.imgOnlinePathArr = [];
+          this.$dialog.alert({
+            message: `${res.data.msg}`,
+            closeOnPopstate: true
+          }).then(() => {
+          });
+        };
+        this.loadingText = '';
+        this.loadingShow = false;
+        this.overlayShow = false
+      })
+      .catch((err) => {
+        this.imgOnlinePathArr = [];
+        this.$dialog.alert({
+          message: `${err.message}`,
+          closeOnPopstate: true
+        }).then(() => {
+        });
+        this.loadingText = '';
+        this.loadingShow = false;
+        this.overlayShow = false
+      })
+    },
+
+    // 拾金不昧操作事件(交接、联系、领取)
+    async repairsEvent () {
+      if (this.currentStepIndex == 1) {
+        if (!this.handoverTime) {
+          this.$toast('交接时间不能为空');
+          return
+        };
+        if (!this.connectSite) {
+          this.$toast('交接地点不能为空');
+          return
+        };
+        if (!this.claimRegisterElectronicSignatureMessage.connectSignature) {
+          this.$toast('交接人签字不能为空');
+          return
+        };
+        if (!this.claimRegisterElectronicSignatureMessage.keeperSignature) {
+          this.$toast('保管人签字不能为空');
+          return
+        };
+        this.loadText ='提交中';
+        this.overlayShow = true;
+        this.loadingShow = true;
+        // 将交接人、保管人签名图片上传到阿里云
+        let connectSignatureStepList = [this.claimRegisterElectronicSignatureMessage.connectSignature,this.claimRegisterElectronicSignatureMessage.keeperSignature];
+        for (let imgI of connectSignatureStepList) {
+          if (Object.keys(this.timeMessage).length > 0) {
+          // 判断签名信息是否过期
+          if (new Date().getTime()/1000 - this.timeMessage['expire']  >= -30) {
+            await this.getSign();
+            await this.uploadImageToOss(imgI,'',false)
+          } else {
+            await this.uploadImageToOss(imgI,'',false)
+          }
+          } else {
+          await this.getSign();
+          await this.uploadImageToOss(imgI,'',false)
+          }
+        };
+        // 拾金不昧交接
+        let temporaryMessage = {
+          time: this.getNowFormatDate(this.handoverTime),
+          address: this.connectSite,
+          from: this.imgOnlinePathArr[0], // 交接人签名
+          to: this.imgOnlinePathArr[1], // 保管人签名
+          id: this.eventId,
+          modifyName: this.userName
+        };
+        this.postEventHandover(temporaryMessage)
+      } else if (this.currentStepIndex == 2) {
+        if (!this.relationTime) {
+          this.$toast('联系时间不能为空');
+          return
+        };
+        if (!this.contactDepartment) {
+          this.$toast('联系部门不能为空');
+          return
+        };
+        if (!this.linkman) {
+          this.$toast('联系人不能为空');
+          return
+        };
+        if (!this.contactInformation) {
+          this.$toast('联系情况不能为空');
+          return
+        };
+        this.loadText ='提交中';
+        this.overlayShow = true;
+        this.loadingShow = true;
+        // 拾金不昧联系
+        let temporaryMessage = {
+          time: this.getNowFormatDate(this.relationTime),
+          department: this.contactDepartment,
+          name: this.linkman,
+          situation: this.contactInformation,
+          id: this.eventId,
+          modifyName: this.userName
+        };
+        this.postEventContact(temporaryMessage)
+      } else if (this.currentStepIndex == 3) {
+       if (!this.getTime) {
+          this.$toast('领取时间不能为空');
+          return
+        };
+        if (!this.getSite) {
+          this.$toast('领取地点不能为空');
+          return
+        };
+        if (this.getMessage.some((item) => { return item.finalLinkman == ''})) {
+          this.$toast('联系人不能为空');
+          return
+        };
+        if (this.getMessage.some((item) => { return item.getPersonIdNumber == ''})) {
+          this.$toast('领取人身份证不能为空');
+          return
+        };
+         if (this.getMessage.some((item) => { return item.getPersonSignature == ''})) {
+          this.$toast('领取人签字不能为空');
+          return
+        };
+        this.loadText ='提交中';
+        this.overlayShow = true;
+        this.loadingShow = true;
+        // 将领取人签名图片上传到阿里云
+        for (let imgI of this.claimRegisterElectronicSignatureMessage['receiverSignature']) {
+          if (Object.keys(this.timeMessage).length > 0) {
+          // 判断签名信息是否过期
+          if (new Date().getTime()/1000 - this.timeMessage['expire']  >= -30) {
+            await this.getSign();
+            await this.uploadImageToOss(imgI['signature'],imgI['eventIndex'],true)
+          } else {
+            await this.uploadImageToOss(imgI['signature'],imgI['eventIndex'],true)
+          }
+          } else {
+          await this.getSign();
+          await this.uploadImageToOss(imgI['signature'],imgI['eventIndex'],true)
+          }
+        };
+        // 将上传到阿里云上的领取人签名路径赋予对应的领取人签名信息字段
+        for (let i = 0, len = this.getMessage.length; i < len; i++) {
+          let temporaryItem = this.linkmanImgOnlinePathArr.filter((item) => { return item.eventIndex == i})[0];
+          if (temporaryItem) {
+            this.getMessage[i]['getPersonSignature'] = temporaryItem['signature']
+          }
+        };
+        // 拾金不昧领取
+        let temporaryMessage = {
+          id: this.eventId,
+          time: this.getNowFormatDate(this.getTime),
+          address: this.getSite,
+          people:[],
+          modifyName: this.userName
+        };
+        for (let item of this.getMessage) {
+          temporaryMessage['people'].push({
+            cardNo: item['getPersonIdNumber'],
+            content: item['getContentDescribe'],
+            name: item['finalLinkman'],
+            sign: item['getPersonSignature']
+          })
+        };
+        this.postEventReceive(temporaryMessage)
+      }
+    },
+
+    // 拾金不昧交接
+    postEventHandover (data) {
+      this.loadingText = '创建中...';
+      this.loadingShow = true;
+      this.overlayShow = true;
+      eventHandover(data).then((res) => {
+        this.imgOnlinePathArr = [];
+        if (res && res.data.code == 200) {
+          this.$toast(`${res.data.msg}`);
+          this.$router.push({path:'/eventList'});
+        } else {
+          this.$dialog.alert({
+            message: `${res.data.msg}`,
+            closeOnPopstate: true
+          }).then(() => {
+          });
+        };
+        this.loadingText = '';
+        this.loadingShow = false;
+        this.overlayShow = false
+      })
+      .catch((err) => {
+        this.imgOnlinePathArr = [];
+        this.$dialog.alert({
+          message: `${err.message}`,
+          closeOnPopstate: true
+        }).then(() => {
+        });
+        this.loadingText = '';
+        this.loadingShow = false;
+        this.overlayShow = false
+      })
+    },
+
+    // 拾金不昧联系
+    postEventContact (data) {
+      this.loadingText = '创建中...';
+      this.loadingShow = true;
+      this.overlayShow = true;
+      eventContact(data).then((res) => {
+        if (res && res.data.code == 200) {
+          this.$toast(`${res.data.msg}`);
+          this.$router.push({path:'/eventList'});
+        } else {
+          this.linkmanImgOnlinePathArr = [];
+          this.$dialog.alert({
+            message: `${res.data.msg}`,
+            closeOnPopstate: true
+          }).then(() => {
+          });
+        };
+        this.loadingText = '';
+        this.loadingShow = false;
+        this.overlayShow = false
+      })
+      .catch((err) => {
+        this.linkmanImgOnlinePathArr = [];
+        this.$dialog.alert({
+          message: `${err.message}`,
+          closeOnPopstate: true
+        }).then(() => {
+        });
+        this.loadingText = '';
+        this.loadingShow = false;
+        this.overlayShow = false
+      })
+    },
+
+    // 拾金不昧领取
+    postEventReceive (data) {
+      this.loadingText = '创建中...';
+      this.loadingShow = true;
+      this.overlayShow = true;
+      eventReceive(data).then((res) => {
+        if (res && res.data.code == 200) {
+          this.$toast(`${res.data.msg}`);
           this.$router.push({path:'/eventList'});
         } else {
           this.imgOnlinePathArr = [];
@@ -1689,14 +1987,25 @@ export default {
               background: #F9F9F9;
               align-items: center;
               justify-content: center;
-              span {
+              >span {
+                display: inline-block;
                 font-size: 14px;
-                color: #BBBBBB
+                color: #BBBBBB;
               };
-              img {
-                width: 63px;
-                height: 30px
-              }
+              .span-one {
+                  width: 100%;
+                  padding-left: 4px;
+                  box-sizing: border-box
+                };
+                .span-two {
+                  width: 70px;
+                  height: 35px;
+                  background: #fff;
+                  img {
+                    width: 100%;
+                    height: 100%;
+                  }
+                }
             }
           };
           .linkman-message-box {
@@ -1923,7 +2232,12 @@ export default {
               border: 1px solid #3B9DF9;
               margin-right: 30px
             };
-            &:last-child {
+            &:nth-child(3) {
+              color: #fff;
+              background: linear-gradient(to right, #6cd2f8, #2390fe);
+              box-shadow: 0px 2px 6px 0 rgba(36, 149, 213, 1);
+            };
+            &:nth-child(4) {
               color: #fff;
               background: linear-gradient(to right, #6cd2f8, #2390fe);
               box-shadow: 0px 2px 6px 0 rgba(36, 149, 213, 1);

@@ -650,7 +650,9 @@ export const removeAllLocalStorage = () => {
     removeStore('roleNameList');
     removeStore('changeOverDueWay');
     removeStore('timeMessage');
-    removeStore('ossMessage')
+    removeStore('ossMessage');
+    removeStore('temporaryStorageClaimRegisterMessage');
+    removeStore('temporaryStorageOtherRegisterMessage')
 }
 
 /*

@@ -132,31 +132,31 @@ export default {
   signatureRotateCallback (signatureValue) {
     let temporaryClaimRegisterElectronicSignatureMessage = this.claimRegisterElectronicSignatureMessage;
     if (temporaryClaimRegisterElectronicSignatureMessage['step'] == '交接') {
-        temporaryClaimRegisterElectronicSignatureMessage['connectSignature'] = signatureValue
+      temporaryClaimRegisterElectronicSignatureMessage['connectSignature'] = signatureValue
     } else if (temporaryClaimRegisterElectronicSignatureMessage['step'] == '保管') {
-        temporaryClaimRegisterElectronicSignatureMessage['keeperSignature'] = signatureValue
+      temporaryClaimRegisterElectronicSignatureMessage['keeperSignature'] = signatureValue
     } else if (temporaryClaimRegisterElectronicSignatureMessage['step'] == '领取') {
-        // 存储和更新领取人签名信息
-        if (this.claimRegisterElectronicSignatureMessage['receiverSignature'].length > 0 ) {
-            let temporaryIndex = this.claimRegisterElectronicSignatureMessage['receiverSignature'].findIndex((item) => { return item.eventIndex == this.claimRegisterElectronicSignatureMessage['receiverIndex']});
-            if (temporaryIndex != -1) {
-                temporaryClaimRegisterElectronicSignatureMessage['receiverSignature'][temporaryIndex]['signature'] = signatureValue
-            } else {
-                temporaryClaimRegisterElectronicSignatureMessage['receiverSignature'].push(
-                    {
-                        signature: signatureValue,
-                        eventIndex: this.claimRegisterElectronicSignatureMessage['receiverIndex']
-                    }
-                )
-            }
-        } else {
+      // 存储和更新领取人签名信息
+      if (this.claimRegisterElectronicSignatureMessage['receiverSignature'].length > 0 ) {
+          let temporaryIndex = this.claimRegisterElectronicSignatureMessage['receiverSignature'].findIndex((item) => { return item.eventIndex == this.claimRegisterElectronicSignatureMessage['receiverIndex']});
+          if (temporaryIndex != -1) {
+              temporaryClaimRegisterElectronicSignatureMessage['receiverSignature'][temporaryIndex]['signature'] = signatureValue
+          } else {
             temporaryClaimRegisterElectronicSignatureMessage['receiverSignature'].push(
-                {
-                    signature: signatureValue,
-                    eventIndex: this.claimRegisterElectronicSignatureMessage['receiverIndex']
-                }
+              {
+                signature: signatureValue,
+                eventIndex: this.claimRegisterElectronicSignatureMessage['receiverIndex']
+              }
             )
-        }
+          }
+        } else {
+          temporaryClaimRegisterElectronicSignatureMessage['receiverSignature'].push(
+            {
+                signature: signatureValue,
+                eventIndex: this.claimRegisterElectronicSignatureMessage['receiverIndex']
+            }
+          )
+      }
     };
     this.changeClaimRegisterElectronicSignatureMessage(temporaryClaimRegisterElectronicSignatureMessage);
     console.log('领取人签名信息',this.claimRegisterElectronicSignatureMessage);

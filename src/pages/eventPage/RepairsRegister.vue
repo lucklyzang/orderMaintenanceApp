@@ -35,6 +35,23 @@
         <div class="photo-cancel" @click="photoCancel">取消</div>
       </div>
     </transition>
+     <!-- 退出提示框   -->
+    <div class="quit-info-box">
+       <van-dialog v-model="quitInfoShow"  show-cancel-button width="85%"
+          @confirm="quitSure" @cancel="quitCancel" confirm-button-text="退出"
+          cancel-button-text="暂存"
+        >
+          <div class="delete-icon">
+            <van-icon name="cross" size="24" @click="quitInfoShow = false" />
+          </div>
+          <div class="dialog-title">
+            是否退出
+          </div>
+          <div class="dialog-center">
+            退出后表单内容将清空,暂存还是退出?
+          </div>
+      </van-dialog>
+    </div>
     <van-dialog v-model="deleteInfoDialogShow" title="确定删除此图片?" 
       confirm-button-color="#218FFF" show-cancel-button
       @confirm="sureDeleteEvent"
@@ -113,7 +130,7 @@
               <span>区域</span>
             </div>
             <div class="select-box-right" @click="goalDepartmentClickEvent">
-              <span>{{ currentGoalDepartment }}</span>
+              <span :class="{'spanStyle':enterEventRegisterPageMessage['patrolItemName'] != ''}">{{ currentGoalDepartment }}</span>
               <van-icon name="arrow" color="#989999" size="20" />
             </div>
           </div>
@@ -183,9 +200,9 @@
               <van-field
                 v-model="problemOverview"
                 rows="2"
-                maxlength="200"
                 autosize
                 type="textarea"
+                maxlength="200"
                 show-word-limit
                 placeholder="请输入对应的问题描述"
               />
@@ -223,6 +240,7 @@ import {userSignOut,getAliyunSign} from '@/api/login.js'
 import { eventregister, querySpace, queryDepartment, queryStructure} from '@/api/escortManagement.js'
 import { setStore,removeAllLocalStorage,compress,deepClone, base64ImgtoFile } from '@/common/js/utils'
 import _ from 'lodash'
+import { v4 as uuidv4 } from 'uuid'
 import axios from 'axios'
 import ScrollSelection from "@/components/ScrollSelection";
 import BottomSelect from "@/components/BottomSelect";
@@ -237,6 +255,7 @@ export default {
     return {
       materialShow: false,
       loadingShow: false,
+      quitInfoShow: false,
       eventType: '工程报修',
       showFindTime: false,
       problemPicturesList: [],
@@ -288,11 +307,26 @@ export default {
       })
     };
     console.log('页面信息',this.enterEventRegisterPageMessage);
-    this.parallelFunction();
-    //判断是否回显暂存的数据
-    if (JSON.stringify(this.temporaryStorageRepairsRegisterMessage) != '{}' && this.temporaryStorageRepairsRegisterMessage['isTemporaryStorage']) {
-      this.echoTemporaryStorageMessage()
-    }
+    // 如果是从异常巡查项从处进来的，则回显区域名称
+    if (this.enterEventRegisterPageMessage['patrolItemName'] != '') {
+      this.currentGoalDepartment = this.enterEventRegisterPageMessage['depName'];
+      // 查询该回显科室下对应的房间信息
+      this.getSpacesByDepartmentId(this.enterEventRegisterPageMessage['depId'],this.enterEventRegisterPageMessage['structId'],false)
+    };
+    this.parallelFunction()
+  },
+
+  beforeRouteEnter(to, from, next) {
+    next(vm=>{
+      if (from.path == '/eventList') {
+        // 判断是否回显暂存数据
+        let temporaryIndex = vm.temporaryStorageRepairsRegisterMessage.findIndex((item) => { return item.id == vm.$route.query.eventId});
+        if (temporaryIndex != -1) {
+          vm.echoTemporaryStorageMessage(temporaryIndex)
+        }
+      }
+	  });
+    next() 
   },
 
   watch: {
@@ -388,13 +422,16 @@ export default {
     },
 
     // 回显暂存的信息
-    async echoTemporaryStorageMessage () {
-      let casuallyTemporaryStorageCreateRepairsTaskMessage = this.temporaryStorageRepairsRegisterMessage;
-      this.currentStructure = casuallyTemporaryStorageCreateRepairsTaskMessage['currentStructure'];
-      this.currentGoalDepartment = casuallyTemporaryStorageCreateRepairsTaskMessage['currentGoalDepartment'];
-      this.currentGoalSpaces = casuallyTemporaryStorageCreateRepairsTaskMessage['currentGoalSpaces'];
-      this.problemOverview = casuallyTemporaryStorageCreateRepairsTaskMessage['problemOverview'];
-      this.taskDescribe = casuallyTemporaryStorageCreateRepairsTaskMessage['taskDescribe']
+    echoTemporaryStorageMessage (temporaryIndex) {
+      let casuallyTemporaryStorageRepairsRegisterMessage = this.temporaryStorageRepairsRegisterMessage;
+      this.currentFindTime = new Date(casuallyTemporaryStorageRepairsRegisterMessage[temporaryIndex]['createTime']);
+      this.currentStructure = casuallyTemporaryStorageRepairsRegisterMessage[temporaryIndex]['structureName']  == '' ? '请选择' : casuallyTemporaryStorageRepairsRegisterMessage[temporaryIndex]['structureName'];
+      this.currentGoalDepartment = casuallyTemporaryStorageRepairsRegisterMessage[temporaryIndex]['depName']  == '' ? '请选择' : casuallyTemporaryStorageRepairsRegisterMessage[temporaryIndex]['depName'];
+      this.currentGoalSpaces = casuallyTemporaryStorageRepairsRegisterMessage[temporaryIndex]['roomName']  == '' ? '请选择' : casuallyTemporaryStorageRepairsRegisterMessage[temporaryIndex]['roomName'];
+      this.detailsSite = casuallyTemporaryStorageRepairsRegisterMessage[temporaryIndex]['address'];
+      this.problemOverview = casuallyTemporaryStorageRepairsRegisterMessage[temporaryIndex]['description'];
+      this.taskDescribe = casuallyTemporaryStorageRepairsRegisterMessage[temporaryIndex]['remark'];
+      this.problemPicturesList = casuallyTemporaryStorageRepairsRegisterMessage[temporaryIndex]['images']
     },
 
     // 公共修改是否暂存的方法
@@ -564,6 +601,11 @@ export default {
       this.overlayShow = false
     },
 
+    // 退出事件
+    quitEvent () {
+      this.quitInfoShow = true
+    },
+
     // 格式化时间
     getNowFormatDate(currentDate) {
       let currentdate;
@@ -611,7 +653,7 @@ export default {
             };
             if (isInitial) {
               if (this.currentGoalDepartment != '请选择') {
-                this.getSpacesByDepartmentId(this.goalDepartmentOption.filter((item) => { return item['text'] == this.currentGoalDepartment})[0]['value'],false)
+                this.getSpacesByDepartmentId(this.goalDepartmentOption.filter((item) => { return item['text'] == this.currentGoalDepartment})[0]['value'],this.structureOption.filter((item) => { return item['text'] == this.currentStructure})[0]['value'],false)
               }
             }  
           };
@@ -632,12 +674,12 @@ export default {
     },
 
     // 根据科室查询房间信息
-    getSpacesByDepartmentId (depId,flag) {
+    getSpacesByDepartmentId (depId,struId,flag) {
       this.loadingText = '查询中...';
       this.loadingShow = true;
       this.overlayShow = true;
       this.goalSpacesOption = [];
-      querySpace({hospitalId:this.proId,struId:this.structureOption.filter((item) => { return item['text'] == this.currentStructure})[0]['value'],depId:depId})
+      querySpace({hospitalId:this.proId, struId:struId ,depId:depId})
       .then((res) => {
         this.loadingText = '';
         this.loadingShow = false;
@@ -687,6 +729,10 @@ export default {
                   value: item1[i].id,
                   id: i
                 })
+              };
+              // 如果是从异常巡查项从处进来的，则回显建筑名称
+              if (this.enterEventRegisterPageMessage['patrolItemName'] != '') {
+                this.currentStructure = this.structureOption.filter((innerItem) => { return innerItem.value == this.enterEventRegisterPageMessage['structId']})[0]['text'];
               };
               if (this.currentStructure != '请选择') {
                 this.getDepartmentByStructureId(this.structureOption.filter((item) => { return item['text'] == this.currentStructure})[0]['value'],false,true)
@@ -749,7 +795,7 @@ export default {
       if (val) {
         this.currentGoalDepartment =  val;
         this.currentGoalSpaces = '请选择';
-        this.getSpacesByDepartmentId(this.goalDepartmentOption.filter((item) => { return item['text'] == this.currentGoalDepartment})[0]['value'],false)
+        this.getSpacesByDepartmentId(this.goalDepartmentOption.filter((item) => { return item['text'] == this.currentGoalDepartment})[0]['value'],this.structureOption.filter((item) => { return item['text'] == this.currentStructure})[0]['value'],false)
       } else {
         this.currentGoalDepartment = '请选择'
       };
@@ -783,11 +829,10 @@ export default {
     
     // 目的房间列点击事件
     goalSpacesClickEvent () {
-      if (this.enterEventRegisterPageMessage['patrolItemName'] != '') {return};
       if (this.currentGoalDepartment == '请选择') {
         this.$toast('请选择科室')
       } else {
-        this.getSpacesByDepartmentId(this.goalDepartmentOption.filter((item) => { return item['text'] == this.currentGoalDepartment})[0]['value'],true)
+        this.getSpacesByDepartmentId(this.goalDepartmentOption.filter((item) => { return item['text'] == this.currentGoalDepartment})[0]['value'],this.structureOption.filter((item) => { return item['text'] == this.currentStructure})[0]['value'],true)
       }
     },
 
@@ -849,10 +894,70 @@ export default {
         })
       },
 
-    // 退出事件
-    quitEvent () {
-      this.commonIsTemporaryStorageMethods();
+    // 确定退出
+    quitSure () {
       this.$router.push({ path: "/eventList"})
+    },
+
+    // 取消退出(暂存)
+    quitCancel () {
+      this.temporaryStorageEvent()
+    },
+
+    // 暂存事件
+    temporaryStorageEvent () {
+      let casuallyTemporaryStorageRepairsRegisterMessage = this.temporaryStorageRepairsRegisterMessage;
+      if (this.temporaryStorageRepairsRegisterMessage.length > 0 ) {
+          let temporaryIndex = this.temporaryStorageRepairsRegisterMessage.findIndex((item) => { return item.id == this.$route.query.eventId});
+          if (temporaryIndex != -1) {
+            casuallyTemporaryStorageRepairsRegisterMessage[temporaryIndex]['createTime'] = this.getNowFormatDate(this.currentFindTime);
+            casuallyTemporaryStorageRepairsRegisterMessage[temporaryIndex]['roomName'] = this.currentGoalSpaces == '请选择' ? '' : this.currentGoalSpaces;
+            casuallyTemporaryStorageRepairsRegisterMessage[temporaryIndex]['address'] = this.detailsSite;
+            casuallyTemporaryStorageRepairsRegisterMessage[temporaryIndex]['description'] = this.problemOverview;
+            casuallyTemporaryStorageRepairsRegisterMessage[temporaryIndex]['remark'] = this.taskDescribe;
+            casuallyTemporaryStorageRepairsRegisterMessage[temporaryIndex]['images'] = this.problemPicturesList;
+            casuallyTemporaryStorageRepairsRegisterMessage[temporaryIndex]['structureName'] = this.currentStructure == '请选择' ? '' : this.currentStructure;
+            casuallyTemporaryStorageRepairsRegisterMessage[temporaryIndex]['depName'] = this.currentGoalDepartment == '请选择' ? '' : this.currentGoalDepartment;
+            casuallyTemporaryStorageRepairsRegisterMessage[temporaryIndex]['roomName'] = this.currentGoalSpaces == '请选择' ? '' : this.currentGoalSpaces
+          } else {
+            casuallyTemporaryStorageRepairsRegisterMessage.push({
+              id: uuidv4(),
+              eventType: this.eventTypeTransform(this.eventType),
+              registerType: this.registerTypeTransform(this.enterEventRegisterPageMessage['registerType']),
+              createTime: this.getNowFormatDate(this.currentFindTime),
+              createName: this.userName,
+              structureName: this.currentStructure == '请选择' ? '' : this.currentStructure,
+              depName: this.currentGoalDepartment == '请选择' ? '' : this.currentGoalDepartment,
+              roomName: this.currentGoalSpaces == '请选择' ? '' : this.currentGoalSpaces,
+              address: this.detailsSite,
+              description: this.problemOverview,
+              remark: this.taskDescribe,
+              images: this.problemPicturesList,
+              state: -1,
+              itemName: this.enterEventRegisterPageMessage['patrolItemName']
+            })
+          }
+        } else {
+          casuallyTemporaryStorageRepairsRegisterMessage.push({
+            id: uuidv4(),
+            eventType: this.eventTypeTransform(this.eventType),
+            registerType: this.registerTypeTransform(this.enterEventRegisterPageMessage['registerType']),
+            createTime: this.getNowFormatDate(this.currentFindTime),
+            createName: this.userName,
+            structureName: this.currentStructure == '请选择' ? '' : this.currentStructure,
+            depName: this.currentGoalDepartment == '请选择' ? '' : this.currentGoalDepartment,
+            roomName: this.currentGoalSpaces == '请选择' ? '' : this.currentGoalSpaces,
+            address: this.detailsSite,
+            description: this.problemOverview,
+            remark: this.taskDescribe,
+            images: this.problemPicturesList,
+            state: -1,
+            itemName: this.enterEventRegisterPageMessage['patrolItemName']
+          })
+      };
+      this.changeTemporaryStorageRepairsRegisterMessage(casuallyTemporaryStorageRepairsRegisterMessage);
+      this.$toast('暂存成功');
+      this.$router.push({path: '/eventList'})
     },
 
     // 报修事件
@@ -951,6 +1056,9 @@ export default {
             tempraryMessage['checkItemList'][this.enterProblemRecordMessage[index]]['isHaveEventRegister'] = 1;
             this.changeDepartmentCheckList(tempraryMessage)
           };
+          //登记成功后清除该列表暂存信息
+          let casuallyTemporaryStorageRepairsRegisterMessage = this.temporaryStorageRepairsRegisterMessage.filter((item) => { return item.id != this.$route.query.eventId});
+          this.changeTemporaryStorageRepairsRegisterMessage(casuallyTemporaryStorageRepairsRegisterMessage);
           this.$router.push({path:'/eventList'});
         } else {
           this.imgOnlinePathArr = [];
@@ -975,20 +1083,6 @@ export default {
         this.loadingShow = false;
         this.overlayShow = false
       })
-    },
-
-    // 暂存事件
-    temporaryStorageEvent () {
-      let casuallyTemporaryStorageCreateRepairsTaskMessage = this.temporaryStorageRepairsRegisterMessage;
-      casuallyTemporaryStorageCreateRepairsTaskMessage['currentStructure'] = this.currentStructure;
-      casuallyTemporaryStorageCreateRepairsTaskMessage['currentGoalDepartment'] = this.currentGoalDepartment;
-      casuallyTemporaryStorageCreateRepairsTaskMessage['currentGoalSpaces'] = this.currentGoalSpaces;
-      casuallyTemporaryStorageCreateRepairsTaskMessage['problemOverview'] = this.problemOverview;
-      casuallyTemporaryStorageCreateRepairsTaskMessage['taskDescribe'] = this.taskDescribe;
-      casuallyTemporaryStorageCreateRepairsTaskMessage['isTemporaryStorage'] = true;
-      this.changeTemporaryStorageRepairsRegisterMessage(casuallyTemporaryStorageCreateRepairsTaskMessage);
-      this.$toast('暂存成功');
-      this.$router.push({path: '/eventList'})
     }
   }
 };
@@ -999,6 +1093,58 @@ export default {
 @import "~@/common/stylus/modifyUi.less";
 .page-box {
   .content-wrapper();
+   .quit-info-box {
+    /deep/ .van-dialog {
+      .van-dialog__content {
+          padding: 20px 16px 0 16px !important;
+          box-sizing: border-box;
+          display: flex;
+          flex-direction: column;
+          .delete-icon {
+            text-align: right
+          };
+          .dialog-title {
+            padding: 10px 0;
+            box-sizing: border-box;
+            text-align: center;
+            color: #101010;
+            font-size: 16px;
+          };
+          .dialog-center {
+            line-height: 20px;
+            padding: 20px 0;
+            text-align: center;
+            box-sizing: border-box;
+            color: #101010;
+            font-size: 12px
+          }
+        };
+        .van-dialog__footer {
+          padding: 10px 40px 20px 40px !important;
+          box-sizing: border-box;
+          justify-content: space-between;
+          ::after {
+            content: none
+          };
+        .van-dialog__cancel {
+          height: 40px;
+          background: #3B9DF9;
+          color: #fff !important;
+          border-radius: 8px;
+          margin-right: 20px
+        };
+        .van-dialog__confirm {
+           height: 40px;
+            color: #3B9DF9;
+            border: 1px solid #3B9DF9;
+            border-radius: 8px
+        }
+        };
+        .van-hairline--top::after {
+          border-top-width: 0 !important
+        }
+    }
+  };
   .choose-photo-box {
     position: fixed;
     margin: auto;

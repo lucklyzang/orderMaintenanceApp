@@ -242,7 +242,7 @@ export default {
   watch: {},
 
   computed: {
-    ...mapGetters(["userInfo","patrolTaskListMessage","departmentCheckList","enterEventRegisterPageMessage"]),
+    ...mapGetters(["userInfo","patrolTaskListMessage","departmentCheckList","enterEventRegisterPageMessage","temporaryStorageRepairsRegisterMessage","temporaryStorageOtherRegisterMessage"]),
     proId () {
       return this.userInfo.proIds[0]
     },
@@ -267,6 +267,12 @@ export default {
       this.fullBacklogTaskList = [];
       this.isShowBacklogTaskNoMoreData = false;
       if (checked) {
+        this.fullBacklogTaskList = [].concat(this.temporaryStorageOtherRegisterMessage,this.temporaryStorageRepairsRegisterMessage)
+        if (this.fullBacklogTaskList.length == 0) {
+          this.backlogEmptyShow = true
+        } else {
+          this.backlogEmptyShow = false
+        }
       } else {
         this.currentPage = 1;
         if (this.isOnlyMe) {
@@ -404,6 +410,8 @@ export default {
 
     // 事件列表加载事件
     eventListLoadMore () {
+      // 暂存的数据不进行上拉加载
+      if (this.storageRadio) {return};
       let boxBackScroll = this.$refs['scrollBacklogTask'];
       if (Math.ceil(boxBackScroll.scrollTop) + boxBackScroll.offsetHeight >= boxBackScroll.scrollHeight) {
         if (this.eventTime) {return};
@@ -500,21 +508,21 @@ export default {
       // 1-工程报修,2-拾金不昧,3-其他
       if (item.eventType == 1) {
         if (item.state == -1) {
-          this.$router.push({path: '/repairsRegister'})
+          this.$router.push({path: '/repairsRegister',query:{eventId: item.id}})
           //已报修
         } else if (item.state == 0 || item.state == 3) {
           this.$router.push({path: '/historyRepairsRegister',query:{eventId: item.id}})
         }
       } else if (item.eventType == 2) {
         if (item.state == -1) {
-          this.$router.push({path: '/claimRegister'})
+          this.$router.push({path: '/claimRegister',query:{eventId: item.id}})
           //已登记
         } else if (item.state == 0 || item.state == 1 || item.state == 2 || item.state == 3) {
           this.$router.push({path: '/historyClaimRegister',query:{eventId: item.id}})
         }
       } else if (item.eventType == 3) {
         if (item.state == -1) {
-          this.$router.push({path: '/otherRegister'})
+          this.$router.push({path: '/otherRegister',query:{eventId: item.id}})
           //已登记
         } else if (item.state == 0 || item.state == 3) {
           this.$router.push({path: '/historyOtherRegister',query:{eventId: item.id}})
@@ -545,6 +553,7 @@ export default {
       temporaryEnterEventRegisterPageMessage['registerType'] = '其他';
       temporaryEnterEventRegisterPageMessage['patrolItemName'] = '';
       temporaryEnterEventRegisterPageMessage['resultId'] = '';
+      temporaryEnterEventRegisterPageMessage['structId'] = '';
       temporaryEnterEventRegisterPageMessage['depId'] = '';
       temporaryEnterEventRegisterPageMessage['depName'] = '';
       this.changeEnterEventRegisterPageMessage(temporaryEnterEventRegisterPageMessage)

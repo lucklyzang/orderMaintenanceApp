@@ -204,6 +204,7 @@ export default {
       temporaryEnterEventRegisterPageMessage['resultId'] = '';
       temporaryEnterEventRegisterPageMessage['depId'] = '';
       temporaryEnterEventRegisterPageMessage['depName'] = '';
+      temporaryEnterEventRegisterPageMessage['structId'] = '';
       this.changeEnterEventRegisterPageMessage(temporaryEnterEventRegisterPageMessage)
     },
 

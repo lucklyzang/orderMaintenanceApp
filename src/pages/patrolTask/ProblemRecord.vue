@@ -219,6 +219,7 @@ export default {
       temporaryEnterEventRegisterPageMessage['patrolItemName'] = this.enterProblemRecordMessage['issueInfo']['name'];
       temporaryEnterEventRegisterPageMessage['resultId'] = this.enterProblemRecordMessage['issueInfo']['resultId'];
       temporaryEnterEventRegisterPageMessage['depId'] = this.departmentCheckList['depId'];
+      temporaryEnterEventRegisterPageMessage['structId'] = this.enterProblemRecordMessage['issueInfo']['structId'];
       temporaryEnterEventRegisterPageMessage['depName'] = this.patrolTaskListMessage.needSpaces.filter((item)=> { return item.id == this.departmentCheckList['depId'] })[0]['name'];
       this.changeEnterEventRegisterPageMessage(temporaryEnterEventRegisterPageMessage)
     },

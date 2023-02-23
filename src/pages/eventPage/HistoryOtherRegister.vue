@@ -4,7 +4,21 @@
         <van-dialog v-model="imgBoxShow" width="98%" :close-on-click-overlay="true" confirm-button-text="关闭">
             <img :src="currentImgUrl" />
         </van-dialog> 
-    </div>  
+    </div>
+    <!-- 删除提示框   -->
+    <div class="quit-info-box">
+       <van-dialog v-model="quitInfoShow"  show-cancel-button width="85%"
+          @confirm="deleteSure" @cancel="deleteCancel" confirm-button-text="确定"
+          cancel-button-text="取消"
+        >
+          <div class="dialog-title">
+            <img :src="exclamationPointPng">
+          </div>
+          <div class="dialog-center">
+            您确定要删除拾金不昧整个事件？
+          </div>
+      </van-dialog>
+    </div>    
     <van-loading size="35px" vertical color="#e6e6e6" v-show="loadingShow">{{loadingText}}</van-loading>
     <van-overlay :show="overlayShow" z-index="100000" />
     <div class="nav">
@@ -106,7 +120,7 @@
         </div>
         <div class="btn-box">
           <span class="operate-two" @click="closeEvent">关闭</span>
-          <span class="operate-three" @click="delelteEvent($route.query.eventId)">
+          <span class="operate-three" @click="quitInfoShow = true">
             <van-icon name="delete" color="#fff" size="25" />
           </span>
         </div>
@@ -134,6 +148,7 @@ export default {
       eventType: '',
       problemPicturesList: [require("@/common/images/home/status-background.png"),require("@/common/images/home/status-background.png"),require("@/common/images/home/status-background.png"),require("@/common/images/home/status-background.png")],
       currentImgUrl: '',
+      quitInfoShow: false,
       photoBox: false,
       imgBoxShow: false,
       imgIndex: '',
@@ -147,6 +162,7 @@ export default {
       detailsSite: '',
       taskDescribe: '飒飒水水水水水水水水水水水水',
       overlayShow: false,
+      exclamationPointPng: require("@/common/images/home/exclamation-point.png"),
       statusBackgroundPng: require("@/common/images/home/status-background.png")
     }
   },
@@ -293,12 +309,21 @@ export default {
       }
     },
 
+    // 删除确定
+    deleteSure () {
+      this.deleteEvent()
+    },
+
+    // 删除取消
+    deleteCancel () {
+    },
+
     //删除事件
-    delelteEvent (id) {
+    deleteEvent () {
       this.loadingText = '删除中...';
       this.loadingShow = true;
       this.overlayShow = true;
-      eventDelete(id).then((res) => {
+      eventDelete(this.$route.query.eventId).then((res) => {
         if (res && res.data.code == 200) {
           this.$toast(`${res.data.msg}`);
           this.$router.push({path:'/eventList'});
@@ -339,6 +364,55 @@ export default {
             >img {
                 width: 100%
             }
+        }
+    }
+  };
+   .quit-info-box {
+    /deep/ .van-dialog {
+      .van-dialog__content {
+          padding: 20px 16px 0 16px !important;
+          box-sizing: border-box;
+          display: flex;
+          flex-direction: column;
+          .dialog-title {
+            text-align: center;
+            img {
+              width: 24px;
+              height: 24px
+            }
+          };
+          .dialog-center {
+            line-height: 20px;
+            padding: 20px 0;
+            text-align: center;
+            box-sizing: border-box;
+            color: #101010;
+            font-size: 16px
+          }
+        };
+        .van-dialog__footer {
+          padding: 10px 40px 20px 40px !important;
+          box-sizing: border-box;
+          justify-content: space-between;
+          ::after {
+            content: none
+          };
+          .van-dialog__cancel {
+            height: 40px;
+            color: #3B9DF9;
+            border: 1px solid #3B9DF9;
+            border-radius: 8px;
+            margin-right: 20px
+          };
+          .van-dialog__confirm {
+            height: 40px;
+            background: #3B9DF9;
+            color: #fff !important;
+            border-radius: 8px
+          }
+        };
+        .van-hairline--top::after {
+          border-top-width: 0 !important
         }
     }
   };

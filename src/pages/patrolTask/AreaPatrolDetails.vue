@@ -480,6 +480,9 @@ export default {
         }
     }
   };
+  /deep/ .van-loading {
+    z-index: 10000 !important
+  };
   /deep/ .van-overlay {
     z-index: 1000 !important
   };

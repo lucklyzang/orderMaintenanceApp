@@ -688,10 +688,14 @@ export default {
               };
               // 如果是从异常巡查项从处进来的，则回显建筑名称
               if (this.enterEventRegisterPageMessage['patrolItemName'] != '') {
-                this.currentStructure = this.structureOption.fliter((innerItem) => { return innerItem.value == this.enterEventRegisterPageMessage['structId']})[0]['text']
+                this.currentStructure = this.structureOption.filter((innerItem) => { return innerItem.value == this.enterEventRegisterPageMessage['structId']})[0]['text']
               };
-              if (this.currentStructure != '请选择' && this.enterEventRegisterPageMessage['patrolItemName'] == '') {
-                this.getDepartmentByStructureId(this.structureOption.filter((item) => { return item['text'] == this.currentStructure})[0]['value'],false,true)
+              if (this.currentStructure != '请选择') {
+                if (this.enterEventRegisterPageMessage['patrolItemName'] == '') {
+                  this.getDepartmentByStructureId(this.structureOption.filter((item) => { return item['text'] == this.currentStructure})[0]['value'],false,false)
+                } else {
+                  this.getDepartmentByStructureId('',false,false)
+                }
               }
             }
           }
@@ -788,7 +792,11 @@ export default {
       if (this.currentGoalDepartment == '请选择') {
         this.$toast('请选择科室')
       } else {
-        this.getSpacesByDepartmentId(this.goalDepartmentOption.filter((item) => { return item['text'] == this.currentGoalDepartment})[0]['value'],this.structureOption.filter((item) => { return item['text'] == this.currentStructure})[0]['value'],true)
+        try {
+          this.getSpacesByDepartmentId(this.goalDepartmentOption.filter((item) => { return item['text'] == this.currentGoalDepartment})[0]['value'],this.structureOption.filter((item) => { return item['text'] == this.currentStructure})[0]['value'],true)
+        } catch (err) {
+          this.$toast(`${err}`)
+        }
       }
     },
 
@@ -981,7 +989,7 @@ export default {
           //登记成功后清除该列表暂存信息
           let casuallyTemporaryStorageOtherRegisterMessage = this.temporaryStorageOtherRegisterMessage.filter((item) => { return item.id != this.$route.query.eventId});
           this.changeTemporaryStorageOtherRegisterMessage(casuallyTemporaryStorageOtherRegisterMessage)
-          this.$router.push({path:'/eventList'});
+          this.$router.push({path:'/eventList'})
         } else {
           this.imgOnlinePathArr = [];
           this.$dialog.alert({

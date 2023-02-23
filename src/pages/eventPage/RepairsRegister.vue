@@ -632,7 +632,7 @@ export default {
     },
 
     // 根据建筑查询科室信息
-    getDepartmentByStructureId (structureId,flag,isInitial) {
+    getDepartmentByStructureId (structureId = '',flag,isInitial) {
       this.loadingText = '查询中...';
       this.loadingShow = true;
       this.overlayShow = true;
@@ -735,7 +735,11 @@ export default {
                 this.currentStructure = this.structureOption.filter((innerItem) => { return innerItem.value == this.enterEventRegisterPageMessage['structId']})[0]['text'];
               };
               if (this.currentStructure != '请选择') {
-                this.getDepartmentByStructureId(this.structureOption.filter((item) => { return item['text'] == this.currentStructure})[0]['value'],false,true)
+                if (this.enterEventRegisterPageMessage['patrolItemName'] == '') {
+                  this.getDepartmentByStructureId(this.structureOption.filter((item) => { return item['text'] == this.currentStructure})[0]['value'],false,false)
+                } else {
+                  this.getDepartmentByStructureId('',false,false)
+                }
               }
             }
           }
@@ -832,7 +836,11 @@ export default {
       if (this.currentGoalDepartment == '请选择') {
         this.$toast('请选择科室')
       } else {
-        this.getSpacesByDepartmentId(this.goalDepartmentOption.filter((item) => { return item['text'] == this.currentGoalDepartment})[0]['value'],this.structureOption.filter((item) => { return item['text'] == this.currentStructure})[0]['value'],true)
+        try {
+          this.getSpacesByDepartmentId(this.goalDepartmentOption.filter((item) => { return item['text'] == this.currentGoalDepartment})[0]['value'],this.structureOption.filter((item) => { return item['text'] == this.currentStructure})[0]['value'],true)
+        } catch (err) {
+          this.$toast(`${err}`)
+        }
       }
     },
 

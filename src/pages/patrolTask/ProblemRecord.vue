@@ -114,7 +114,7 @@ export default {
       questionListTimer: 0,
       timeOne: null,
       checkResultValue: '1',
-      eventTypeList: ['工程报修','拾金不昧','其它'],
+      eventTypeList: ['工程报修','拾金不昧','其他'],
       loadingShow: false,
       backlogTaskList: [
         {

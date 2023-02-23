@@ -242,7 +242,7 @@ export default {
   watch: {},
 
   computed: {
-    ...mapGetters(["userInfo","patrolTaskListMessage","departmentCheckList","enterEventRegisterPageMessage","temporaryStorageRepairsRegisterMessage","temporaryStorageOtherRegisterMessage"]),
+    ...mapGetters(["userInfo","patrolTaskListMessage","departmentCheckList","enterEventRegisterPageMessage","temporaryStorageRepairsRegisterMessage","temporaryStorageOtherRegisterMessage","temporaryStorageClaimRegisterMessage"]),
     proId () {
       return this.userInfo.proIds[0]
     },
@@ -267,7 +267,7 @@ export default {
       this.fullBacklogTaskList = [];
       this.isShowBacklogTaskNoMoreData = false;
       if (checked) {
-        this.fullBacklogTaskList = [].concat(this.temporaryStorageOtherRegisterMessage,this.temporaryStorageRepairsRegisterMessage)
+        this.fullBacklogTaskList = [].concat(this.temporaryStorageOtherRegisterMessage,this.temporaryStorageRepairsRegisterMessage,this.temporaryStorageClaimRegisterMessage)
         if (this.fullBacklogTaskList.length == 0) {
           this.backlogEmptyShow = true
         } else {

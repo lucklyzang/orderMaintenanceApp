@@ -70,6 +70,20 @@
         <van-dialog v-model="imgBoxShow" width="98%" :close-on-click-overlay="true" confirm-button-text="关闭">
             <img :src="currentImgUrl" />
         </van-dialog> 
+    </div>
+    <!-- 删除提示框   -->
+    <div class="quit-info-box">
+       <van-dialog v-model="quitInfoShow"  show-cancel-button width="85%"
+          @confirm="deleteSure" @cancel="deleteCancel" confirm-button-text="确定"
+          cancel-button-text="取消"
+        >
+          <div class="dialog-title">
+            <img :src="exclamationPointPng">
+          </div>
+          <div class="dialog-center">
+            您确定要删除拾金不昧整个事件？
+          </div>
+      </van-dialog>
     </div>  
     <van-loading size="35px" vertical color="#e6e6e6" v-show="loadingShow">{{loadingText}}</van-loading>
     <van-overlay :show="overlayShow" z-index="100000" />
@@ -77,7 +91,7 @@
        <van-nav-bar
         title="事件详情"
         left-text="返回"
-        :right-text="currentStepIndex == 0 ? '更多信息' : ''"
+        right-text="更多信息"
         :left-arrow="true"
         :placeholder="true"
         :border="false"
@@ -95,18 +109,18 @@
 		</div>
       <div class="content-box">
         <div class="step-box">
-          <div v-for="(item,index) in stepData" :key="index">
-            <span :class="{'currentSpanStyle': currentStepIndex == index,'spanStyle': index < currentStepIndex}">{{ item.stepName }}</span>
-            <img :src="index < currentStepIndex && currentStepIndex != 0 ? stepActivePng : stepStaticPng" alt="" v-show="index != 3">
+          <div v-for="(item,index) in stepData" :key="index" @click="stepClickEvent(item,index)">
+            <span :class="{'checkSpanStyle': checkedStepIndex == index,'completeSpanStyle': index <= currentStepIndex}">{{ item.stepName }}</span>
+            <img :src="index <= currentStepIndex ? stepActivePng : stepStaticPng" alt="" v-show="index != 3">
           </div>
         </div>
-        <div class="message-box-one" v-if="currentStepIndex == 0">
+        <div class="message-box-one" v-if="checkedStepIndex == 0">
          <div class="select-box-one">
             <div class="select-box-left">
               <span>事件类型</span>
             </div>
             <div class="select-box-right">
-              <span>{{ eventType }}</span>
+              <span>{{ eventTypeTransform(eventType) }}</span>
             </div>
           </div>
           <div class="select-box-one">
@@ -168,13 +182,13 @@
                 </div>
           </div>
         </div>
-        <div class="message-box" v-if="currentStepIndex == 1">
+        <div class="message-box" v-if="checkedStepIndex == 1">
           <div class="select-box end-select-box">
             <div class="select-box-left">
               <span>*</span>
               <span>交接时间</span>
             </div>
-            <div class="select-box-right" @click="showHandoverTime = true">
+            <div class="select-box-right" @click="checkedStepIndex <= currentStepIndex ? showHandoverTime = false : showHandoverTime = true">
               <span>{{ getNowFormatDate(handoverTime) }}</span>
               <van-icon name="arrow" color="#989999" size="20" />
             </div>
@@ -188,6 +202,9 @@
               <van-field
                 v-model="connectSite"
                 rows="1"
+                :disabled="checkedStepIndex <= currentStepIndex"
+                maxlength="100"
+                show-word-limit
                 autosize
                 type="textarea"
                 placeholder="请输入"
@@ -200,9 +217,9 @@
               <span>交接人签字</span>
             </div>
             <div class="signature-right" @click="connectSignatureEvent('交接')">
-              <span v-if="!claimRegisterElectronicSignatureMessage.connectSignature" class="span-one">请签字</span>
+              <span v-if="!claimRegisterElectronicSignatureMessage.connectSignature && !connectSignature" class="span-one">请签字</span>
               <span v-else class="span-two">
-                <img :src="claimRegisterElectronicSignatureMessage.connectSignature" alt="">
+                <img :src="claimRegisterElectronicSignatureMessage.connectSignature || connectSignature" alt="">
               </span>
             </div>
           </div>
@@ -212,20 +229,20 @@
               <span>保管人签字</span>
             </div>
             <div class="signature-right" @click="connectSignatureEvent('保管')">
-              <span v-if="!claimRegisterElectronicSignatureMessage.keeperSignature" class="span-one">请签字</span>
+              <span v-if="!claimRegisterElectronicSignatureMessage.keeperSignature && !keeperSignature" class="span-one">请签字</span>
               <span v-else class="span-two">
-                <img :src="claimRegisterElectronicSignatureMessage.keeperSignature" alt="">
+                <img :src="claimRegisterElectronicSignatureMessage.keeperSignature || keeperSignature" alt="">
               </span>
             </div>
           </div>
         </div>
-        <div class="message-box" v-if="currentStepIndex == 2">
+        <div class="message-box" v-if="checkedStepIndex == 2">
           <div class="select-box end-select-box">
             <div class="select-box-left">
               <span>*</span>
               <span>联系时间</span>
             </div>
-            <div class="select-box-right" @click="showRelationTime = true">
+            <div class="select-box-right" @click="checkedStepIndex <= currentStepIndex ? showRelationTime = false : showRelationTime = true">
               <span>{{ getNowFormatDate(relationTime) }}</span>
               <van-icon name="arrow" color="#989999" size="20" />
             </div>
@@ -239,6 +256,9 @@
               <van-field
                 v-model="contactDepartment"
                 rows="1"
+                :disabled="checkedStepIndex <= currentStepIndex"
+                maxlength="100"
+                show-word-limit
                 autosize
                 type="textarea"
                 placeholder="请输入"
@@ -254,6 +274,9 @@
               <van-field
                 v-model="linkman"
                 rows="1"
+                :disabled="checkedStepIndex <= currentStepIndex"
+                maxlength="100"
+                show-word-limit
                 autosize
                 type="textarea"
                 placeholder="请输入"
@@ -269,6 +292,9 @@
               <van-field
                 v-model="contactInformation"
                 rows="3"
+                :disabled="checkedStepIndex <= currentStepIndex"
+                maxlength="500"
+                show-word-limit
                 autosize
                 type="textarea"
                 placeholder="可联系失主,告知联系电话"
@@ -276,13 +302,13 @@
             </div>
           </div>
         </div>
-        <div class="message-box" v-if="currentStepIndex == 3">
+        <div class="message-box" v-if="checkedStepIndex == 3">
           <div class="select-box end-select-box">
             <div class="select-box-left">
               <span>*</span>
               <span>领取时间</span>
             </div>
-            <div class="select-box-right" @click="showGetTime = true">
+            <div class="select-box-right" @click="checkedStepIndex <= currentStepIndex ? showGetTime = false : showGetTime = true">
               <span>{{ getNowFormatDate(getTime) }}</span>
               <van-icon name="arrow" color="#989999" size="20" />
             </div>
@@ -296,6 +322,7 @@
               <van-field
                 v-model="getSite"
                 rows="1"
+                :disabled="checkedStepIndex <= currentStepIndex"
                 autosize
                 type="textarea"
                 placeholder="请输入"
@@ -312,6 +339,7 @@
                 <van-field
                   v-model="item.finalLinkman"
                   rows="1"
+                  :disabled="checkedStepIndex <= currentStepIndex"
                   autosize
                   type="textarea"
                   placeholder="请输入"
@@ -327,6 +355,7 @@
                 <van-field
                   v-model="item.getPersonIdNumber"
                   rows="1"
+                  :disabled="checkedStepIndex <= currentStepIndex"
                   autosize
                   type="textarea"
                   placeholder="请输入"
@@ -341,6 +370,7 @@
                 <van-field
                   v-model="item.getContentDescribe"
                   rows="3"
+                  :disabled="checkedStepIndex <= currentStepIndex"
                   autosize
                   type="textarea"
                   placeholder="可联系失主,告知联系电话"
@@ -359,105 +389,18 @@
                 </span>
               </div>
             </div>
-            <img :src="addIconPng" alt="" @click="addLinkmanMessage" v-if="index == 0">
-            <img :src="subtractIconPng" alt="" @click="subtractLinkmanMessage(index)" v-if="index != 0">
+            <img :src="addIconPng" alt="" @click="addLinkmanMessage" v-if="index == 0 && checkedStepIndex > currentStepIndex">
+            <img :src="subtractIconPng" alt="" @click="subtractLinkmanMessage(index)" v-if="index != 0 && checkedStepIndex > currentStepIndex">
           </div>
         </div>
-        <div class="message-box" v-if="currentStepIndex - 1 == 3">
-          <div class="select-box end-select-box">
-            <div class="select-box-left">
-              <span>*</span>
-              <span>领取时间</span>
-            </div>
-            <div class="select-box-right" @click="showGetTime = true">
-              <span>{{ getNowFormatDate(getTime) }}</span>
-              <van-icon name="arrow" color="#989999" size="20" />
-            </div>
-          </div>
-          <div class="details-site problem-overview">
-            <div class="transport-type-left">
-              <span>*</span>
-              <span>领取地点</span>
-            </div>
-            <div class="transport-type-right">
-              <van-field
-                v-model="getSite"
-                rows="1"
-                autosize
-                type="textarea"
-                placeholder="请输入"
-              />
-            </div>
-          </div>
-          <div class="linkman-message-box" v-for="(item,index) in getMessage" :key="index">
-            <div class="details-site problem-overview">
-              <div class="transport-type-left">
-                <span>*</span>
-                <span>联系人</span>
-              </div>
-              <div class="transport-type-right">
-                <van-field
-                  v-model="item.finalLinkman"
-                  rows="1"
-                  autosize
-                  type="textarea"
-                  placeholder="请输入"
-                />
-              </div>
-            </div>
-            <div class="details-site problem-overview">
-              <div class="transport-type-left">
-                <span>*</span>
-                <span>领取人身份证号</span>
-              </div>
-              <div class="transport-type-right">
-                <van-field
-                  v-model="item.getPersonIdNumber"
-                  rows="1"
-                  autosize
-                  type="textarea"
-                  placeholder="请输入"
-                />
-              </div>
-            </div>
-            <div class="transport-type get-content-describe">
-              <div class="transport-type-left">
-                <span>领取内容描述</span>
-              </div>
-              <div class="transport-type-right">
-                <van-field
-                  v-model="item.getContentDescribe"
-                  rows="3"
-                  autosize
-                  type="textarea"
-                  placeholder="可联系失主,告知联系电话"
-                />
-              </div>
-            </div>
-            <div class="signature-box">
-              <div class="signature-left">
-                <span>*</span>
-                <span>领取人签字</span>
-              </div>
-              <div class="signature-right" @click="connectSignatureEvent('领取',index)">
-                <span class="span-one" v-if="!item.getPersonSignature">请签字</span>
-                <span class="span-two" v-else>
-                  <img :src="item.getPersonSignature" alt="">
-                </span>
-              </div>
-            </div>
-            <img :src="addIconPng" alt="" @click="addLinkmanMessage" v-if="index == 0">
-            <img :src="subtractIconPng" alt="" @click="subtractLinkmanMessage(index)" v-if="index != 0">
-          </div>
-        </div>
-        <div class="btn-box" v-if="currentStepIndex==0">
+        <div class="btn-box" v-if="checkedStepIndex <= currentStepIndex">
           <span class="operate-two" @click="closeEvent">关闭</span>
-          <span class="operate-three" @click="delelteEvent($route.query.eventId)">
+          <span class="operate-three" @click="quitInfoShow = true">
             <van-icon name="delete" color="#fff" size="25" />
           </span>
         </div>
         <div class="btn-box-other" v-else>
-          <span class="operate-one" @click="delelteEvent($route.query.eventId)">
+          <span class="operate-one" @click="quitInfoShow = true">
             <van-icon name="delete" color="#fff" size="25" />
           </span>
          <span class="operate-two" @click="temporaryStorageEvent">
@@ -491,9 +434,11 @@ export default {
   data() {
     return {
       currentStepIndex: 0,
+      checkedStepIndex: 0,
       loadingShow: false,
       eventId: '',
-      eventType: '拾金不昧',
+      quitInfoShow: false,
+      eventType: '',
       problemPicturesList: [require("@/common/images/home/status-background.png"),require("@/common/images/home/status-background.png"),require("@/common/images/home/status-background.png"),require("@/common/images/home/status-background.png")],
       currentImgUrl: '',
       photoBox: false,
@@ -509,6 +454,7 @@ export default {
       imgOnlinePathArr: [],
       linkmanImgOnlinePathArr: [],
       showHandoverTime: false,
+
       handoverTime: new Date(),
       connectSite: '',
       connectSignature: '',
@@ -561,6 +507,7 @@ export default {
       stepStaticPng: require("@/common/images/home/step-static.png"),
       stepActivePng: require("@/common/images/home/step-active.png"),
       addIconPng: require("@/common/images/home/add-icon.png"),
+      exclamationPointPng: require("@/common/images/home/exclamation-point.png"),
       subtractIconPng: require("@/common/images/home/subtract-icon.png")
     }
   },
@@ -581,11 +528,11 @@ export default {
 
   beforeRouteEnter(to, from, next) {
     next(vm=>{
-      if (from.path == '/eventList') {
+      if (from.path != '/eventRegisterElectronicSignaturePage') {
         vm.queryEventDetails(vm.$route.query.eventId,false)
-      } else if (from.path == '/eventRegisterElectronicSignaturePage') {
+      } else {
         vm.queryEventDetails(vm.claimRegisterElectronicSignatureMessage.eventId,true)
-      }
+      };
 	});
     next() 
   },
@@ -618,6 +565,57 @@ export default {
     onClickRight() {
       this.$router.push({ path: "/moreHistoryClaimRegister"})
     },
+
+    // 顶部流程点击事件
+    stepClickEvent (item,index) {
+      // 当前流程未保存成功时，不能点击进入到下一流程
+      if (index > this.currentStepIndex + 1) {
+        return
+      };
+      this.checkedStepIndex = index
+    },
+
+    // 删除确定
+    deleteSure () {
+      this.deleteEvent()
+    },
+
+    // 删除取消
+    deleteCancel () {
+    },
+
+    // 删除事件
+    deleteEvent () {
+      this.loadingText = '删除中...';
+      this.loadingShow = true;
+      this.overlayShow = true;
+      eventDelete(this.$route.query.eventId).then((res) => {
+        if (res && res.data.code == 200) {
+          this.$toast(`${res.data.msg}`);
+          this.$router.push({path:'/eventList'});
+        } else {
+          this.$dialog.alert({
+            message: `${res.data.msg}`,
+            closeOnPopstate: true
+          }).then(() => {
+          });
+        };
+        this.loadingText = '';
+        this.loadingShow = false;
+        this.overlayShow = false
+      })
+      .catch((err) => {
+        this.$dialog.alert({
+          message: `${err.message}`,
+          closeOnPopstate: true
+        }).then(() => {
+        });
+        this.loadingText = '';
+        this.loadingShow = false;
+        this.overlayShow = false
+      })
+    },
+
 
 
     // 图片放大事件
@@ -674,6 +672,8 @@ export default {
 
     // 交接环节签字事件
     connectSignatureEvent (text,index = '') {
+      // 已经保存的表单不允许签字
+      if (this.checkedStepIndex <= this.currentStepIndex) { return };
       let temporaryClaimRegisterElectronicSignatureMessage = this.claimRegisterElectronicSignatureMessage;
       temporaryClaimRegisterElectronicSignatureMessage['step'] = text;
       if (text == '交接' || text == '保管') {
@@ -736,19 +736,24 @@ export default {
     },
 
     // 回显暂存的信息
-    async echoTemporaryStorageMessage () {
-      let casuallyTemporaryStorageCreateRepairsTaskMessage = this.temporaryStorageClaimRegisterMessage;
-      this.currentStructure = casuallyTemporaryStorageCreateRepairsTaskMessage['currentStructure'];
-      this.currentGoalDepartment = casuallyTemporaryStorageCreateRepairsTaskMessage['currentGoalDepartment'];
-      this.currentGoalSpaces = casuallyTemporaryStorageCreateRepairsTaskMessage['currentGoalSpaces'];
-      this.taskDescribe = casuallyTemporaryStorageCreateRepairsTaskMessage['taskDescribe']
-    },
-
-    // 公共修改是否暂存的方法
-    commonIsTemporaryStorageMethods () {
-      let casuallyTemporaryStorageCreateRepairsTaskMessage = this.temporaryStorageClaimRegisterMessage;
-      casuallyTemporaryStorageCreateRepairsTaskMessage['isTemporaryStorage'] = false;
-      this.changeTemporaryStorageClaimRegisterMessage(casuallyTemporaryStorageCreateRepairsTaskMessage)
+    async echoTemporaryStorageMessage (temporaryIndex) {
+      let casuallyTemporaryStorageClaimRegisterMessage = this.temporaryStorageClaimRegisterMessage;
+      this.checkedStepIndex = casuallyTemporaryStorageClaimRegisterMessage[temporaryIndex]['checkedStepIndex'];
+      if (this.checkedStepIndex == 1) {
+        this.handoverTime = casuallyTemporaryStorageClaimRegisterMessage[temporaryIndex]['handoverTime'];
+        this.connectSite = casuallyTemporaryStorageClaimRegisterMessage[temporaryIndex]['connectSite'];
+        this.claimRegisterElectronicSignatureMessage.connectSignature = casuallyTemporaryStorageClaimRegisterMessage[temporaryIndex]['connectSignature'];
+        this.claimRegisterElectronicSignatureMessage.keeperSignature = casuallyTemporaryStorageClaimRegisterMessage[temporaryIndex]['keeperSignature']
+      } else if (this.checkedStepIndex == 2) {
+        this.relationTime = casuallyTemporaryStorageClaimRegisterMessage[temporaryIndex]['relationTime'];
+        this.contactDepartment = casuallyTemporaryStorageClaimRegisterMessage[temporaryIndex]['contactDepartment'];
+        this.linkman = casuallyTemporaryStorageClaimRegisterMessage[temporaryIndex]['linkman'];
+        this.contactInformation = casuallyTemporaryStorageClaimRegisterMessage[temporaryIndex]['contactInformation']
+      } else if (this.checkedStepIndex == 3) {
+        this.getTime = casuallyTemporaryStorageClaimRegisterMessage[temporaryIndex]['getTime'];
+        this.getSite = casuallyTemporaryStorageClaimRegisterMessage[temporaryIndex]['getSite'];
+        this.getMessage = casuallyTemporaryStorageClaimRegisterMessage[temporaryIndex]['getMessage']
+      }
     },
 
     // 查询事件详情
@@ -760,10 +765,11 @@ export default {
       getEventDetails(id).then((res) => {
         if (res && res.data.code == 200) {
           this.changeMoreEventMessage(res.data.data);
-          this.currentStepIndex = res.data.data['state'] + 1;
+          this.currentStepIndex = res.data.data['state'];
+          this.checkedStepIndex = res.data.data['state']
           this.eventId = res.data.data['id'];
-          // 展示登记信息
-          if (this.currentStepIndex - 1 == 0) {
+          if (this.currentStepIndex == 0) {
+            // 展示登记信息
             this.eventType = res.data.data['eventType'];
             this.currentStructure = res.data.data['structureName'];
             this.currentGoalDepartment = res.data.data['depName'];
@@ -775,17 +781,45 @@ export default {
             this.taskDescribe = res.data.data['remark'];
             // 保存进入签名页之前的交接时间和交接地点信息
             if (flag) {
-            this.handoverTime = this.claimRegisterElectronicSignatureMessage['handoverTime'];
-            this.connectSite = this.claimRegisterElectronicSignatureMessage['connectSite']
+              this.handoverTime = this.claimRegisterElectronicSignatureMessage['handoverTime'];
+              this.connectSite = this.claimRegisterElectronicSignatureMessage['connectSite']
+            }
+          } else if (this.currentStepIndex == 1) {
+            // 展示登记信息
+            this.eventType = res.data.data['eventType'];
+            this.currentStructure = res.data.data['structureName'];
+            this.currentGoalDepartment = res.data.data['depName'];
+            this.currentGoalSpaces = res.data.data['roomName'];
+            this.detailsSite = res.data.data['address'];
+            this.currentFindTime = res.data.data['findTime'];
+            this.problemPicturesList = res.data.data['images'];
+            this.problemOverview = res.data.data['description'];
+            this.taskDescribe = res.data.data['remark'];
+
             // 展示交接信息
-          } else if (this.currentStepIndex - 1 == 1) {
             this.handoverTime = new Date(res.data.data['extendData']['handover']['time']);
             this.connectSite = res.data.data['extendData']['handover']['address'];
             this.connectSignature = res.data.data['extendData']['handover']['from'];
-            this.keeperSignature =  res.data.data['extendData']['handover']['to']
-            };
+            this.keeperSignature =  res.data.data['extendData']['handover']['to'];
+          } else if (this.currentStepIndex == 2) {
+            // 展示登记信息
+            this.eventType = res.data.data['eventType'];
+            this.currentStructure = res.data.data['structureName'];
+            this.currentGoalDepartment = res.data.data['depName'];
+            this.currentGoalSpaces = res.data.data['roomName'];
+            this.detailsSite = res.data.data['address'];
+            this.currentFindTime = res.data.data['findTime'];
+            this.problemPicturesList = res.data.data['images'];
+            this.problemOverview = res.data.data['description'];
+            this.taskDescribe = res.data.data['remark'];
+
+            // 展示交接信息
+            this.handoverTime = new Date(res.data.data['extendData']['handover']['time']);
+            this.connectSite = res.data.data['extendData']['handover']['address'];
+            this.connectSignature = res.data.data['extendData']['handover']['from'];
+            this.keeperSignature =  res.data.data['extendData']['handover']['to'];
+
             // 展示联系信息
-          } else if (this.currentStepIndex - 1 == 2) {
             this.relationTime = new Date(res.data.data['extendData']['time']);
             this.contactDepartment = res.data.data['extendData']['department'];
             this.linkman = res.data.data['extendData']['name'];
@@ -803,8 +837,31 @@ export default {
                 }
               }
             }
+          } else if (this.currentStepIndex == 3) {
+            // 展示登记信息
+            this.eventType = res.data.data['eventType'];
+            this.currentStructure = res.data.data['structureName'];
+            this.currentGoalDepartment = res.data.data['depName'];
+            this.currentGoalSpaces = res.data.data['roomName'];
+            this.detailsSite = res.data.data['address'];
+            this.currentFindTime = res.data.data['findTime'];
+            this.problemPicturesList = res.data.data['images'];
+            this.problemOverview = res.data.data['description'];
+            this.taskDescribe = res.data.data['remark'];
+
+            // 展示交接信息
+            this.handoverTime = new Date(res.data.data['extendData']['handover']['time']);
+            this.connectSite = res.data.data['extendData']['handover']['address'];
+            this.connectSignature = res.data.data['extendData']['handover']['from'];
+            this.keeperSignature =  res.data.data['extendData']['handover']['to'];
+            
+            // 展示联系信息
+            this.relationTime = new Date(res.data.data['extendData']['contact']['time']);
+            this.contactDepartment = res.data.data['extendData']['contact']['department'];
+            this.linkman = res.data.data['extendData']['contact']['name'];
+            this.contactInformation = res.data.data['extendData']['']['situation'];
+
             // 展示领取信息
-          } else if (this.currentStepIndex - 1 == 3) {
             this.getMessage = [];
             this.getTime = new Date(res.data.data['extendData']['receive']['time']);
             this.getSite = res.data.data['extendData']['receive']['address'];
@@ -818,6 +875,11 @@ export default {
                 })
               }
             }
+          };
+          // 判断是否回显暂存数据
+          let temporaryIndex = this.temporaryStorageClaimRegisterMessage.findIndex((item) => { return item.id == this.$route.query.eventId});
+          if (temporaryIndex != -1) {
+            this.echoTemporaryStorageMessage(temporaryIndex)
           }
         } else {
           this.$dialog.alert({
@@ -931,7 +993,7 @@ export default {
 
     // 拾金不昧事件
     async repairsEvent () {
-      if (this.currentStepIndex == 1) {
+      if (this.checkedStepIndex == 1) {
         if (!this.handoverTime) {
           this.$toast('交接时间不能为空');
           return
@@ -977,7 +1039,7 @@ export default {
           modifyName: this.userName
         };
         this.postEventHandover(temporaryMessage)
-      } else if (this.currentStepIndex == 2) {
+      } else if (this.checkedStepIndex == 2) {
         if (!this.relationTime) {
           this.$toast('联系时间不能为空');
           return
@@ -1007,7 +1069,7 @@ export default {
           modifyName: this.userName
         };
         this.postEventContact(temporaryMessage)
-      } else if (this.currentStepIndex == 3) {
+      } else if (this.checkedStepIndex == 3) {
         if (!this.getTime) {
           this.$toast('领取时间不能为空');
           return
@@ -1177,11 +1239,11 @@ export default {
 
 
     // 删除事件
-    delelteEvent (id) {
+    delelteEvent () {
       this.loadingText = '删除中...';
       this.loadingShow = true;
       this.overlayShow = true;
-      eventDelete(id).then((res) => {
+      eventDelete($route.query.eventId).then((res) => {
         if (res && res.data.code == 200) {
           this.$toast(`${res.data.msg}`);
           this.$router.push({path:'/eventList'});
@@ -1214,55 +1276,81 @@ export default {
       if (this.temporaryStorageClaimRegisterMessage.length > 0 ) {
           let temporaryIndex = this.temporaryStorageClaimRegisterMessage.findIndex((item) => { return item.id == this.$route.query.eventId});
           if (temporaryIndex != -1) {
-            casuallyTemporaryStorageClaimRegisterMessage[temporaryIndex]['signature'] = ''
+            if (this.checkedStepIndex == 1){
+              casuallyTemporaryStorageClaimRegisterMessage[temporaryIndex]['checkedStepIndex'] = this.checkedStepIndex,
+              casuallyTemporaryStorageClaimRegisterMessage[temporaryIndex]['handoverTime'] = new Date(this.handoverTime),
+              casuallyTemporaryStorageClaimRegisterMessage[temporaryIndex]['connectSite'] = this.connectSite,
+              casuallyTemporaryStorageClaimRegisterMessage[temporaryIndex]['connectSignature'] = this.claimRegisterElectronicSignatureMessage.connectSignature,
+              casuallyTemporaryStorageClaimRegisterMessage[temporaryIndex]['keeperSignature'] = this.claimRegisterElectronicSignatureMessage.keeperSignature
+            } else if (this.checkedStepIndex == 2) {
+              casuallyTemporaryStorageClaimRegisterMessage[temporaryIndex]['checkedStepIndex'] = this.checkedStepIndex,
+              casuallyTemporaryStorageClaimRegisterMessage[temporaryIndex]['relationTime'] = new Date(this.relationTime),
+              casuallyTemporaryStorageClaimRegisterMessage[temporaryIndex]['contactDepartment'] = this.contactDepartment,
+              casuallyTemporaryStorageClaimRegisterMessage[temporaryIndex]['linkman'] = this.linkman,
+              casuallyTemporaryStorageClaimRegisterMessage[temporaryIndex]['contactInformation'] = this.contactInformation
+            } else if (this.checkedStepIndex == 3) {
+              casuallyTemporaryStorageClaimRegisterMessage[temporaryIndex]['checkedStepIndex'] = this.checkedStepIndex,
+              casuallyTemporaryStorageClaimRegisterMessage[temporaryIndex]['getTime'] = new Date(this.getTime),
+              casuallyTemporaryStorageClaimRegisterMessage[temporaryIndex]['getSite'] = this.getSite,
+              casuallyTemporaryStorageClaimRegisterMessage[temporaryIndex]['getMessage'] = this.getMessage
+            }
           } else {
-            casuallyTemporaryStorageClaimRegisterMessage.push({
-              id: this.$route.query.eventId,
-              eventType: '',
-              registerType: '',
-              findTime: '',
-              structureName: '',
-              depName: '',
-              roomName: '',
-              address: '',
-              description: '',
-              remark: '',
-              images: [],
-              state: 0,
-              createName: '',
-              createTime: '',
-              createId: '',
-              modifyName: '',
-              extendData:{
-                receive:{
-                  address: '',
-                  time: '',
-                  people:[]
-                },
-                handover:{
-                  address: '',
-                  from: '',
-                  to: '',
-                  time: ''
-                },
-                contact:{
-                  name: '',
-                  time: '',
-                  department: '',
-                  situation: ''
-                }
-              },
-              taskNumber: '',
-              itemName: '',
-              taskState: '',
-              collectName: '',
-              taskType: ''
-            })
+            if (this.checkedStepIndex == 1) {
+              casuallyTemporaryStorageClaimRegisterMessage.push({
+                id: this.$route.query.eventId,
+                checkedStepIndex: this.checkedStepIndex,
+                handoverTime: new Date(this.handoverTime),
+                connectSite: this.connectSite,
+                connectSignature: this.claimRegisterElectronicSignatureMessage.connectSignature,
+                keeperSignature: this.claimRegisterElectronicSignatureMessage.keeperSignature
+              })
+            } else if (this.checkedStepIndex == 2) {
+              casuallyTemporaryStorageClaimRegisterMessage.push({
+                id: this.$route.query.eventId,
+                checkedStepIndex: this.checkedStepIndex,
+                relationTime: new Date(this.relationTime),
+                contactDepartment: this.contactDepartment,
+                linkman: this.linkman,
+                contactInformation: this.contactInformation
+              })
+            } else if (this.checkedStepIndex == 3) {
+              casuallyTemporaryStorageClaimRegisterMessage.push({
+                id: this.$route.query.eventId,
+                checkedStepIndex: this.checkedStepIndex,
+                getTime: new Date(this.getTime),
+                getSite: this.getSite,
+                getMessage: this.getMessage
+              })
+            }
           }
         } else {
-          casuallyTemporaryStorageClaimRegisterMessage.push({
-
-          })
+          if (this.checkedStepIndex == 1) {
+              casuallyTemporaryStorageClaimRegisterMessage.push({
+                id: this.$route.query.eventId,
+                checkedStepIndex: this.checkedStepIndex,
+                handoverTime: new Date(this.handoverTime),
+                connectSite: this.connectSite,
+                connectSignature: this.claimRegisterElectronicSignatureMessage.connectSignature,
+                keeperSignature: this.claimRegisterElectronicSignatureMessage.keeperSignature
+              })
+            } else if (this.checkedStepIndex == 2) {
+              casuallyTemporaryStorageClaimRegisterMessage.push({
+                id: this.$route.query.eventId,
+                checkedStepIndex: this.checkedStepIndex,
+                relationTime: new Date(this.relationTime),
+                contactDepartment: this.contactDepartment,
+                linkman: this.linkman,
+                contactInformation: this.contactInformation
+              })
+            } else if (this.checkedStepIndex == 3) {
+              casuallyTemporaryStorageClaimRegisterMessage.push({
+                id: this.$route.query.eventId,
+                checkedStepIndex: this.checkedStepIndex,
+                getTime: new Date(this.getTime),
+                getSite: this.getSite,
+                getMessage: this.getMessage
+              })
+            }
       };
       this.changeTemporaryStorageClaimRegisterMessage(casuallyTemporaryStorageClaimRegisterMessage);
       this.$toast('暂存成功');
@@ -1277,6 +1365,55 @@ export default {
 @import "~@/common/stylus/modifyUi.less";
 .page-box {
   .content-wrapper();
+  .quit-info-box {
+    /deep/ .van-dialog {
+      .van-dialog__content {
+          padding: 20px 16px 0 16px !important;
+          box-sizing: border-box;
+          display: flex;
+          flex-direction: column;
+          .dialog-title {
+            text-align: center;
+            img {
+              width: 24px;
+              height: 24px
+            }
+          };
+          .dialog-center {
+            line-height: 20px;
+            padding: 20px 0;
+            text-align: center;
+            box-sizing: border-box;
+            color: #101010;
+            font-size: 16px
+          }
+        };
+        .van-dialog__footer {
+          padding: 10px 40px 20px 40px !important;
+          box-sizing: border-box;
+          justify-content: space-between;
+          ::after {
+            content: none
+          };
+          .van-dialog__cancel {
+            height: 40px;
+            color: #3B9DF9;
+            border: 1px solid #3B9DF9;
+            border-radius: 8px;
+            margin-right: 20px
+          };
+          .van-dialog__confirm {
+            height: 40px;
+            background: #3B9DF9;
+            color: #fff !important;
+            border-radius: 8px
+          }
+        };
+        .van-hairline--top::after {
+          border-top-width: 0 !important
+        }
+    }
+  };
    .find-time-box {
     /deep/ .van-popup {
       border-top-left-radius: 20px;
@@ -1472,15 +1609,13 @@ export default {
               line-height: 46px;
               color: #8E9397
             };
-            .currentSpanStyle {
-              color: #289E8E !important;
+            .checkSpanStyle {
               font-size: 16px !important;
               font-weight: bold;
               .bottom-border-1px(#3B9DF9,6px)
             };
-            .spanStyle {
+            .completeSpanStyle {
               color: #289E8E !important;
-              font-size: 14px !important;
               border-bottom: none !important
             };
             img {

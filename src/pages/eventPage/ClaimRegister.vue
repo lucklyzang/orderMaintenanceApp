@@ -101,6 +101,23 @@
         <div class="photo-cancel" @click="photoCancel">取消</div>
       </div>
     </transition>
+    <!-- 退出提示框   -->
+    <div class="quit-info-box">
+       <van-dialog v-model="quitInfoShow"  show-cancel-button width="85%"
+          @confirm="quitSure" @cancel="quitCancel" confirm-button-text="退出"
+          cancel-button-text="暂存"
+        >
+          <div class="delete-icon">
+            <van-icon name="cross" size="24" @click="quitInfoShow = false" />
+          </div>
+          <div class="dialog-title">
+            是否退出
+          </div>
+          <div class="dialog-center">
+            退出后表单内容将清空,暂存还是退出?
+          </div>
+      </van-dialog>
+    </div>
     <van-dialog v-model="deleteInfoDialogShow" title="确定删除此图片?" 
       confirm-button-color="#218FFF" show-cancel-button
       @confirm="sureDeleteEvent"
@@ -208,6 +225,8 @@
               <van-field
                 v-model="detailsSite"
                 rows="1"
+                maxlength="100"
+                show-word-limit
                 autosize
                 type="textarea"
                 placeholder="请输入"
@@ -233,6 +252,8 @@
               <van-field
                 v-model="taskDescribe"
                 rows="3"
+                maxlength="500"
+                show-word-limit
                 autosize
                 type="textarea"
                 placeholder="请输入内容"
@@ -458,7 +479,7 @@
         <div class="btn-box">
           <span class="operate-one" @click="quitEvent">退出</span>
           <span class="operate-two" @click="temporaryStorageEvent">暂存</span>
-          <span class="operate-three" @click="repairsRegisterEvent">保存</span>
+          <span class="operate-three" @click="repairsRegisterEvent" v-if="currentStepIndex == 0">保存</span>
           <span class="operate-three" @click="repairsEvent" v-if="currentStepIndex != 0">保存</span>
         </div>
       </div>
@@ -472,6 +493,7 @@ import {userSignOut,getAliyunSign} from '@/api/login.js'
 import { eventregister, querySpace, queryDepartment, queryStructure, eventHandover, eventContact, eventReceive} from '@/api/escortManagement.js'
 import { setStore,removeAllLocalStorage,compress,deepClone, base64ImgtoFile } from '@/common/js/utils'
 import axios from 'axios'
+import { v4 as uuidv4 } from 'uuid'
 import _ from 'lodash'
 import ScrollSelection from "@/components/ScrollSelection";
 import BottomSelect from "@/components/BottomSelect";
@@ -486,6 +508,7 @@ export default {
     return {
       currentStepIndex: 0,
       materialShow: false,
+      quitInfoShow: false,
       loadingShow: false,
       eventType: '拾金不昧',
       showFindTime: false,
@@ -575,7 +598,6 @@ export default {
       let that = this;
       pushHistory();
       that.gotoURL(() => {
-        that.commonIsTemporaryStorageMethods();
         pushHistory();
         //清除拾金不昧签名相关信息
         this.changeClaimRegisterElectronicSignatureMessage({});
@@ -588,11 +610,20 @@ export default {
       // 查询该回显科室下对应的房间信息
       this.getSpacesByDepartmentId(this.enterEventRegisterPageMessage['depId'],this.enterEventRegisterPageMessage['structId'],false)
     };
-    this.parallelFunction();
-    //判断是否回显暂存的数据
-    if (JSON.stringify(this.temporaryStorageClaimRegisterMessage) != '{}' && this.temporaryStorageClaimRegisterMessage['isTemporaryStorage']) {
-      this.echoTemporaryStorageMessage()
-    }
+    this.parallelFunction()
+  },
+
+  beforeRouteEnter(to, from, next) {
+    next(vm=>{
+      if (from.path == '/eventList') {
+        // 判断是否回显暂存数据
+        let temporaryIndex = vm.temporaryStorageClaimRegisterMessage.findIndex((item) => { return item.id == vm.$route.query.eventId});
+        if (temporaryIndex != -1) {
+          vm.echoTemporaryStorageMessage(temporaryIndex)
+        }
+      }
+	  });
+    next() 
   },
 
   watch: {
@@ -615,7 +646,6 @@ export default {
     ...mapMutations(["changeCatchComponent","changeOverDueWay","changeClaimRegisterElectronicSignatureMessage","changeTimeMessage","changeOssMessage","changeDepartmentCheckList","changetransportTypeMessage","changeTemporaryStorageClaimRegisterMessage"]),
 
     onClickLeft() {
-      this.commonIsTemporaryStorageMethods();
       //清除拾金不昧签名相关信息
       this.changeClaimRegisterElectronicSignatureMessage({});
       this.$router.push({ path: "/eventList"})
@@ -714,19 +744,17 @@ export default {
     },
 
     // 回显暂存的信息
-    async echoTemporaryStorageMessage () {
-      let casuallyTemporaryStorageCreateRepairsTaskMessage = this.temporaryStorageClaimRegisterMessage;
-      this.currentStructure = casuallyTemporaryStorageCreateRepairsTaskMessage['currentStructure'];
-      this.currentGoalDepartment = casuallyTemporaryStorageCreateRepairsTaskMessage['currentGoalDepartment'];
-      this.currentGoalSpaces = casuallyTemporaryStorageCreateRepairsTaskMessage['currentGoalSpaces'];
-      this.taskDescribe = casuallyTemporaryStorageCreateRepairsTaskMessage['taskDescribe']
-    },
-
-    // 公共修改是否暂存的方法
-    commonIsTemporaryStorageMethods () {
-      let casuallyTemporaryStorageCreateRepairsTaskMessage = this.temporaryStorageClaimRegisterMessage;
-      casuallyTemporaryStorageCreateRepairsTaskMessage['isTemporaryStorage'] = false;
-      this.changeTemporaryStorageClaimRegisterMessage(casuallyTemporaryStorageCreateRepairsTaskMessage)
+    async echoTemporaryStorageMessage (temporaryIndex) {
+      console.log('index',temporaryIndex);
+      let casuallyTemporaryStorageClaimRegisterMessage = this.temporaryStorageClaimRegisterMessage;
+      this.currentFindTime = new Date(casuallyTemporaryStorageClaimRegisterMessage[temporaryIndex]['createTime']);
+      this.currentStructure = casuallyTemporaryStorageClaimRegisterMessage[temporaryIndex]['structureName']  == '' ? '请选择' : casuallyTemporaryStorageClaimRegisterMessage[temporaryIndex]['structureName'];
+      this.currentGoalDepartment = casuallyTemporaryStorageClaimRegisterMessage[temporaryIndex]['depName']  == '' ? '请选择' : casuallyTemporaryStorageClaimRegisterMessage[temporaryIndex]['depName'];
+      this.currentGoalSpaces = casuallyTemporaryStorageClaimRegisterMessage[temporaryIndex]['roomName']  == '' ? '请选择' : casuallyTemporaryStorageClaimRegisterMessage[temporaryIndex]['roomName'];
+      this.detailsSite = casuallyTemporaryStorageClaimRegisterMessage[temporaryIndex]['address'];
+      this.problemOverview = casuallyTemporaryStorageClaimRegisterMessage[temporaryIndex]['description'];
+      this.taskDescribe = casuallyTemporaryStorageClaimRegisterMessage[temporaryIndex]['remark'];
+      this.problemPicturesList = casuallyTemporaryStorageClaimRegisterMessage[temporaryIndex]['images']
     },
 
     // 处理维修任务参与者
@@ -1022,10 +1050,14 @@ export default {
               };
               // 如果是从异常巡查项从处进来的，则回显建筑名称
               if (this.enterEventRegisterPageMessage['patrolItemName'] != '') {
-                this.currentStructure = this.structureOption.fliter((innerItem) => { return innerItem.value == this.enterEventRegisterPageMessage['structId']})[0]['text']
+                this.currentStructure = this.structureOption.filter((innerItem) => { return innerItem.value == this.enterEventRegisterPageMessage['structId']})[0]['text']
               };
-              if (this.currentStructure != '请选择' && this.enterEventRegisterPageMessage['patrolItemName'] == '') {
-                this.getDepartmentByStructureId(this.structureOption.filter((item) => { return item['text'] == this.currentStructure})[0]['value'],false,true)
+              if (this.currentStructure != '请选择') {
+                if (this.enterEventRegisterPageMessage['patrolItemName'] == '') {
+                  this.getDepartmentByStructureId(this.structureOption.filter((item) => { return item['text'] == this.currentStructure})[0]['value'],false,false)
+                } else {
+                  this.getDepartmentByStructureId('',false,false)
+                }
               }
             }
           }
@@ -1121,7 +1153,11 @@ export default {
       if (this.currentGoalDepartment == '请选择') {
         this.$toast('请选择科室')
       } else {
-        this.getSpacesByDepartmentId(this.goalDepartmentOption.filter((item) => { return item['text'] == this.currentGoalDepartment})[0]['value'],this.structureOption.filter((item) => { return item['text'] == this.currentStructure})[0]['value'],true)
+        try {
+          this.getSpacesByDepartmentId(this.goalDepartmentOption.filter((item) => { return item['text'] == this.currentGoalDepartment})[0]['value'],this.structureOption.filter((item) => { return item['text'] == this.currentStructure})[0]['value'],true)
+        } catch (err) {
+          this.$toast(`${err}`)
+        }
       }
     },
 
@@ -1152,6 +1188,17 @@ export default {
         .catch(() => {
         })
     },
+
+    // 确定退出
+    quitSure () {
+      this.$router.push({ path: "/eventList"})
+    },
+
+    // 取消退出(暂存)
+    quitCancel () {
+      this.temporaryStorageEvent()
+    },
+
 
     // 用户签退
     userLoginOut (proId,workerId) {
@@ -1185,8 +1232,7 @@ export default {
 
     // 退出事件
     quitEvent () {
-      this.commonIsTemporaryStorageMethods();
-      this.$router.push({ path: "/eventList"})
+      this.quitInfoShow = true
     },
 
     // 事件类型转换
@@ -1308,6 +1354,9 @@ export default {
             tempraryMessage['checkItemList'][this.enterProblemRecordMessage[index]]['isHaveEventRegister'] = 1;
             this.changeDepartmentCheckList(tempraryMessage)
           };
+          // 提交成功后清除该列表暂存信息
+          let casuallyTemporaryStorageClaimRegisterMessage = this.temporaryStorageClaimRegisterMessage.filter((item) => { return item.id != this.$route.query.eventId});
+          this.changeTemporaryStorageClaimRegisterMessage(casuallyTemporaryStorageClaimRegisterMessage);
           this.$router.push({path:'/eventList'});
         } else {
           this.imgOnlinePathArr = [];
@@ -1582,13 +1631,56 @@ export default {
 
     // 暂存事件
     temporaryStorageEvent () {
-      let casuallyTemporaryStorageCreateRepairsTaskMessage = this.temporaryStorageClaimRegisterMessage;
-      casuallyTemporaryStorageCreateRepairsTaskMessage['currentStructure'] = this.currentStructure;
-      casuallyTemporaryStorageCreateRepairsTaskMessage['currentGoalDepartment'] = this.currentGoalDepartment;
-      casuallyTemporaryStorageCreateRepairsTaskMessage['currentGoalSpaces'] = this.currentGoalSpaces;
-      casuallyTemporaryStorageCreateRepairsTaskMessage['taskDescribe'] = this.taskDescribe;
-      casuallyTemporaryStorageCreateRepairsTaskMessage['isTemporaryStorage'] = true;
-      this.changeTemporaryStorageClaimRegisterMessage(casuallyTemporaryStorageCreateRepairsTaskMessage);
+      let casuallyTemporaryStorageClaimRegisterMessage = this.temporaryStorageClaimRegisterMessage;
+      if (this.temporaryStorageClaimRegisterMessage.length > 0 ) {
+          let temporaryIndex = this.temporaryStorageClaimRegisterMessage.findIndex((item) => { return item.id == this.$route.query.eventId});
+          if (temporaryIndex != -1) {
+            casuallyTemporaryStorageClaimRegisterMessage[temporaryIndex]['createTime'] = this.getNowFormatDate(this.currentFindTime);
+            casuallyTemporaryStorageClaimRegisterMessage[temporaryIndex]['roomName'] = this.currentGoalSpaces == '请选择' ? '' : this.currentGoalSpaces;
+            casuallyTemporaryStorageClaimRegisterMessage[temporaryIndex]['address'] = this.detailsSite;
+            casuallyTemporaryStorageClaimRegisterMessage[temporaryIndex]['description'] = this.problemOverview;
+            casuallyTemporaryStorageClaimRegisterMessage[temporaryIndex]['remark'] = this.taskDescribe;
+            casuallyTemporaryStorageClaimRegisterMessage[temporaryIndex]['images'] = this.problemPicturesList;
+            casuallyTemporaryStorageClaimRegisterMessage[temporaryIndex]['structureName'] = this.currentStructure == '请选择' ? '' : this.currentStructure;
+            casuallyTemporaryStorageClaimRegisterMessage[temporaryIndex]['depName'] = this.currentGoalDepartment == '请选择' ? '' : this.currentGoalDepartment;
+            casuallyTemporaryStorageClaimRegisterMessage[temporaryIndex]['roomName'] = this.currentGoalSpaces == '请选择' ? '' : this.currentGoalSpaces
+          } else {
+            casuallyTemporaryStorageClaimRegisterMessage.push({
+              id: uuidv4(),
+              eventType: this.eventTypeTransform(this.eventType),
+              registerType: this.registerTypeTransform(this.enterEventRegisterPageMessage['registerType']),
+              createTime: this.getNowFormatDate(this.currentFindTime),
+              createName: this.userName,
+              structureName: this.currentStructure == '请选择' ? '' : this.currentStructure,
+              depName: this.currentGoalDepartment == '请选择' ? '' : this.currentGoalDepartment,
+              roomName: this.currentGoalSpaces == '请选择' ? '' : this.currentGoalSpaces,
+              address: this.detailsSite,
+              description: this.problemOverview,
+              remark: this.taskDescribe,
+              images: this.problemPicturesList,
+              state: -1,
+              itemName: this.enterEventRegisterPageMessage['patrolItemName']
+            })
+          }
+        } else {
+          casuallyTemporaryStorageClaimRegisterMessage.push({
+            id: uuidv4(),
+            eventType: this.eventTypeTransform(this.eventType),
+            registerType: this.registerTypeTransform(this.enterEventRegisterPageMessage['registerType']),
+            createTime: this.getNowFormatDate(this.currentFindTime),
+            createName: this.userName,
+            structureName: this.currentStructure == '请选择' ? '' : this.currentStructure,
+            depName: this.currentGoalDepartment == '请选择' ? '' : this.currentGoalDepartment,
+            roomName: this.currentGoalSpaces == '请选择' ? '' : this.currentGoalSpaces,
+            address: this.detailsSite,
+            description: this.problemOverview,
+            remark: this.taskDescribe,
+            images: this.problemPicturesList,
+            state: -1,
+            itemName: this.enterEventRegisterPageMessage['patrolItemName']
+          })
+      };
+      this.changeTemporaryStorageClaimRegisterMessage(casuallyTemporaryStorageClaimRegisterMessage);
       this.$toast('暂存成功');
       this.$router.push({path: '/eventList'})
     }
@@ -1601,6 +1693,58 @@ export default {
 @import "~@/common/stylus/modifyUi.less";
 .page-box {
   .content-wrapper();
+  .quit-info-box {
+    /deep/ .van-dialog {
+      .van-dialog__content {
+          padding: 20px 16px 0 16px !important;
+          box-sizing: border-box;
+          display: flex;
+          flex-direction: column;
+          .delete-icon {
+            text-align: right
+          };
+          .dialog-title {
+            padding: 10px 0;
+            box-sizing: border-box;
+            text-align: center;
+            color: #101010;
+            font-size: 16px;
+          };
+          .dialog-center {
+            line-height: 20px;
+            padding: 20px 0;
+            text-align: center;
+            box-sizing: border-box;
+            color: #101010;
+            font-size: 12px
+          }
+        };
+        .van-dialog__footer {
+          padding: 10px 40px 20px 40px !important;
+          box-sizing: border-box;
+          justify-content: space-between;
+          ::after {
+            content: none
+          };
+        .van-dialog__cancel {
+          height: 40px;
+          background: #3B9DF9;
+          color: #fff !important;
+          border-radius: 8px;
+          margin-right: 20px
+        };
+        .van-dialog__confirm {
+           height: 40px;
+            color: #3B9DF9;
+            border: 1px solid #3B9DF9;
+            border-radius: 8px
+        }
+        };
+        .van-hairline--top::after {
+          border-top-width: 0 !important
+        }
+    }
+  };
   .choose-photo-box {
     position: fixed;
     margin: auto;
@@ -1910,6 +2054,11 @@ export default {
                   padding-right: 6px;
                   box-sizing: border-box
                 }
+              }
+            };
+            .event-type-right {
+              span {
+                color: #3B9DF9 !important
               }
             }
           };

@@ -20,6 +20,11 @@ export default {
             return state.temporaryStorageClaimRegisterMessage
         },
 
+        temporaryStorageHistoryClaimRegisterMessage: (state) => {
+            state.temporaryStorageHistoryClaimRegisterMessage = JSON.parse(getStore('temporaryStorageHistoryClaimRegisterMessage')) ? JSON.parse(getStore('temporaryStorageHistoryClaimRegisterMessage')) : [];
+            return state.temporaryStorageHistoryClaimRegisterMessage
+        },
+
         claimRegisterElectronicSignatureMessage: (state) => {
             return state.claimRegisterElectronicSignatureMessage
         },
@@ -64,6 +69,14 @@ export default {
             if (playLoad && playLoad != 'null') {
                 setStore('temporaryStorageClaimRegisterMessage', playLoad);
                 state.temporaryStorageClaimRegisterMessage = playLoad
+            }
+        },
+
+        // 保存历史事件登记(拾金不昧)信息
+        changeTemporaryStorageHistoryClaimRegisterMessage(state, playLoad) {
+            if (playLoad && playLoad != 'null') {
+                setStore('temporaryStorageHistoryClaimRegisterMessage', playLoad);
+                state.temporaryStorageHistoryClaimRegisterMessage = playLoad
             }
         },
 

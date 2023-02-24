@@ -520,7 +520,7 @@ export default {
       that.gotoURL(() => {
         pushHistory();
         //清除拾金不昧签名相关信息
-        this.changeClaimRegisterElectronicSignatureMessage({});
+        this.changeClaimRegisterElectronicSignatureMessage({receiverSignature:[]});
         that.$router.push({path: '/eventList'})
       })
     }
@@ -528,7 +528,7 @@ export default {
 
   beforeRouteEnter(to, from, next) {
     next(vm=>{
-      if (from.path != '/eventRegisterElectronicSignaturePage') {
+      if (from.path != '/eventRegisterElectronicSignaturePage' && from.path != '/moreHistoryClaimRegister') {
         vm.queryEventDetails(vm.$route.query.eventId,false)
       } else {
         vm.queryEventDetails(vm.claimRegisterElectronicSignatureMessage.eventId,true)
@@ -541,7 +541,7 @@ export default {
   },
 
   computed: {
-    ...mapGetters(["userInfo","transportantTaskMessage","ossMessage","timeMessage","claimRegisterElectronicSignatureMessage","temporaryStorageClaimRegisterMessage","moreEventMessage"]),
+    ...mapGetters(["userInfo","transportantTaskMessage","ossMessage","timeMessage","claimRegisterElectronicSignatureMessage","temporaryStorageHistoryClaimRegisterMessage","moreEventMessage"]),
     proId () {
       return this.userInfo.proIds[0]
     },
@@ -554,15 +554,35 @@ export default {
   },
 
   methods: {
-    ...mapMutations(["changeCatchComponent","changeOverDueWay","changeTimeMessage","changeOssMessage","changeClaimRegisterElectronicSignatureMessage","changetransportTypeMessage","changeTemporaryStorageClaimRegisterMessage","changeMoreEventMessage"]),
+    ...mapMutations(["changeCatchComponent","changeOverDueWay","changeTimeMessage","changeOssMessage","changeClaimRegisterElectronicSignatureMessage","changetransportTypeMessage","changeTemporaryStorageHistoryClaimRegisterMessage","changeMoreEventMessage"]),
 
     onClickLeft() {
       //清除拾金不昧签名相关信息
-      this.changeClaimRegisterElectronicSignatureMessage({});
+      this.changeClaimRegisterElectronicSignatureMessage({receiverSignature:[]});
       this.$router.push({ path: "/eventList"})
     },
 
     onClickRight() {
+      let temporaryClaimRegisterElectronicSignatureMessage = this.claimRegisterElectronicSignatureMessage;
+      temporaryClaimRegisterElectronicSignatureMessage['checkedStepIndex'] = this.checkedStepIndex;
+      temporaryClaimRegisterElectronicSignatureMessage['eventId'] = this.eventId;
+      // 交接信息
+      // if (this.checkedStepIndex == 1) {
+        temporaryClaimRegisterElectronicSignatureMessage['handoverTime'] = new Date(this.handoverTime);
+        temporaryClaimRegisterElectronicSignatureMessage['connectSite'] = this.connectSite;
+      // 联系信息
+      // } else if (this.checkedStepIndex == 2) {
+        temporaryClaimRegisterElectronicSignatureMessage['relationTime'] = new Date(this.relationTime);
+        temporaryClaimRegisterElectronicSignatureMessage['contactDepartment'] = this.contactDepartment;
+        temporaryClaimRegisterElectronicSignatureMessage['linkman'] = this.linkman;
+        temporaryClaimRegisterElectronicSignatureMessage['contactInformation'] = this.contactInformation
+      // } else if (this.checkedStepIndex == 3) {
+        // 领取信息
+        temporaryClaimRegisterElectronicSignatureMessage['getTime'] = new Date(this.getTime);
+        temporaryClaimRegisterElectronicSignatureMessage['getSite'] = this.getSite;
+        temporaryClaimRegisterElectronicSignatureMessage['getMessage'] = this.getMessage
+      // }
+      this.changeClaimRegisterElectronicSignatureMessage(temporaryClaimRegisterElectronicSignatureMessage);
       this.$router.push({ path: "/moreHistoryClaimRegister"})
     },
 
@@ -589,7 +609,7 @@ export default {
       this.loadingText = '删除中...';
       this.loadingShow = true;
       this.overlayShow = true;
-      eventDelete(this.$route.query.eventId).then((res) => {
+      eventDelete(this.eventId).then((res) => {
         if (res && res.data.code == 200) {
           this.$toast(`${res.data.msg}`);
           this.$router.push({path:'/eventList'});
@@ -654,6 +674,7 @@ export default {
       this.getMessage.splice(index,1);
       // 删除该联系人中对应的签名base64字符串
       let temporaryClaimRegisterElectronicSignatureMessage = this.claimRegisterElectronicSignatureMessage;
+      console.log('签字信息',this.claimRegisterElectronicSignatureMessage);
       temporaryClaimRegisterElectronicSignatureMessage['receiverSignature'] = temporaryClaimRegisterElectronicSignatureMessage['receiverSignature'].filter((item) => { return item['eventIndex'] != index});
       this.changeClaimRegisterElectronicSignatureMessage(temporaryClaimRegisterElectronicSignatureMessage);
     },
@@ -676,6 +697,7 @@ export default {
       if (this.checkedStepIndex <= this.currentStepIndex) { return };
       let temporaryClaimRegisterElectronicSignatureMessage = this.claimRegisterElectronicSignatureMessage;
       temporaryClaimRegisterElectronicSignatureMessage['step'] = text;
+      temporaryClaimRegisterElectronicSignatureMessage['checkedStepIndex'] = this.checkedStepIndex;
       if (text == '交接' || text == '保管') {
         temporaryClaimRegisterElectronicSignatureMessage['handoverTime'] = new Date(this.handoverTime);
         temporaryClaimRegisterElectronicSignatureMessage['connectSite'] = this.connectSite
@@ -737,22 +759,22 @@ export default {
 
     // 回显暂存的信息
     async echoTemporaryStorageMessage (temporaryIndex) {
-      let casuallyTemporaryStorageClaimRegisterMessage = this.temporaryStorageClaimRegisterMessage;
-      this.checkedStepIndex = casuallyTemporaryStorageClaimRegisterMessage[temporaryIndex]['checkedStepIndex'];
+      let casuallyTemporaryStorageHistoryClaimRegisterMessage = this.temporaryStorageHistoryClaimRegisterMessage;
+      this.checkedStepIndex = casuallyTemporaryStorageHistoryClaimRegisterMessage[temporaryIndex]['checkedStepIndex'];
       if (this.checkedStepIndex == 1) {
-        this.handoverTime = casuallyTemporaryStorageClaimRegisterMessage[temporaryIndex]['handoverTime'];
-        this.connectSite = casuallyTemporaryStorageClaimRegisterMessage[temporaryIndex]['connectSite'];
-        this.claimRegisterElectronicSignatureMessage.connectSignature = casuallyTemporaryStorageClaimRegisterMessage[temporaryIndex]['connectSignature'];
-        this.claimRegisterElectronicSignatureMessage.keeperSignature = casuallyTemporaryStorageClaimRegisterMessage[temporaryIndex]['keeperSignature']
+        this.handoverTime = new Date(casuallyTemporaryStorageHistoryClaimRegisterMessage[temporaryIndex]['handoverTime']);
+        this.connectSite = casuallyTemporaryStorageHistoryClaimRegisterMessage[temporaryIndex]['connectSite'];
+        this.connectSignature = casuallyTemporaryStorageHistoryClaimRegisterMessage[temporaryIndex]['connectSignature'];
+        this.keeperSignature = casuallyTemporaryStorageHistoryClaimRegisterMessage[temporaryIndex]['keeperSignature']
       } else if (this.checkedStepIndex == 2) {
-        this.relationTime = casuallyTemporaryStorageClaimRegisterMessage[temporaryIndex]['relationTime'];
-        this.contactDepartment = casuallyTemporaryStorageClaimRegisterMessage[temporaryIndex]['contactDepartment'];
-        this.linkman = casuallyTemporaryStorageClaimRegisterMessage[temporaryIndex]['linkman'];
-        this.contactInformation = casuallyTemporaryStorageClaimRegisterMessage[temporaryIndex]['contactInformation']
+        this.relationTime = new Date(casuallyTemporaryStorageHistoryClaimRegisterMessage[temporaryIndex]['relationTime']);
+        this.contactDepartment = casuallyTemporaryStorageHistoryClaimRegisterMessage[temporaryIndex]['contactDepartment'];
+        this.linkman = casuallyTemporaryStorageHistoryClaimRegisterMessage[temporaryIndex]['linkman'];
+        this.contactInformation = casuallyTemporaryStorageHistoryClaimRegisterMessage[temporaryIndex]['contactInformation']
       } else if (this.checkedStepIndex == 3) {
-        this.getTime = casuallyTemporaryStorageClaimRegisterMessage[temporaryIndex]['getTime'];
-        this.getSite = casuallyTemporaryStorageClaimRegisterMessage[temporaryIndex]['getSite'];
-        this.getMessage = casuallyTemporaryStorageClaimRegisterMessage[temporaryIndex]['getMessage']
+        this.getTime = new Date(casuallyTemporaryStorageHistoryClaimRegisterMessage[temporaryIndex]['getTime']);
+        this.getSite = casuallyTemporaryStorageHistoryClaimRegisterMessage[temporaryIndex]['getSite'];
+        this.getMessage = casuallyTemporaryStorageHistoryClaimRegisterMessage[temporaryIndex]['getMessage']
       }
     },
 
@@ -766,7 +788,7 @@ export default {
         if (res && res.data.code == 200) {
           this.changeMoreEventMessage(res.data.data);
           this.currentStepIndex = res.data.data['state'];
-          this.checkedStepIndex = res.data.data['state']
+          this.checkedStepIndex = res.data.data['state'];
           this.eventId = res.data.data['id'];
           if (this.currentStepIndex == 0) {
             // 展示登记信息
@@ -780,7 +802,12 @@ export default {
             this.problemOverview = res.data.data['description'];
             this.taskDescribe = res.data.data['remark'];
             // 保存进入签名页之前的交接时间和交接地点信息
+            if (this.claimRegisterElectronicSignatureMessage['checkedStepIndex']) {
+              this.checkedStepIndex = this.claimRegisterElectronicSignatureMessage['checkedStepIndex']
+            };
             if (flag) {
+              // 回显交接信息
+              this.checkedStepIndex = this.claimRegisterElectronicSignatureMessage['checkedStepIndex'];
               this.handoverTime = this.claimRegisterElectronicSignatureMessage['handoverTime'];
               this.connectSite = this.claimRegisterElectronicSignatureMessage['connectSite']
             }
@@ -795,12 +822,21 @@ export default {
             this.problemPicturesList = res.data.data['images'];
             this.problemOverview = res.data.data['description'];
             this.taskDescribe = res.data.data['remark'];
-
+            if (this.claimRegisterElectronicSignatureMessage['checkedStepIndex']) {
+              this.checkedStepIndex = this.claimRegisterElectronicSignatureMessage['checkedStepIndex']
+            };
             // 展示交接信息
             this.handoverTime = new Date(res.data.data['extendData']['handover']['time']);
             this.connectSite = res.data.data['extendData']['handover']['address'];
             this.connectSignature = res.data.data['extendData']['handover']['from'];
             this.keeperSignature =  res.data.data['extendData']['handover']['to'];
+            // 回显联系信息
+            if (flag) {
+              this.relationTime = this.claimRegisterElectronicSignatureMessage['relationTime'];
+              this.contactDepartment = this.claimRegisterElectronicSignatureMessage['contactDepartment'];
+              this.linkman = this.claimRegisterElectronicSignatureMessage['linkman'];
+              this.contactInformation = this.claimRegisterElectronicSignatureMessage['contactInformation']
+            }
           } else if (this.currentStepIndex == 2) {
             // 展示登记信息
             this.eventType = res.data.data['eventType'];
@@ -812,7 +848,9 @@ export default {
             this.problemPicturesList = res.data.data['images'];
             this.problemOverview = res.data.data['description'];
             this.taskDescribe = res.data.data['remark'];
-
+            if (this.claimRegisterElectronicSignatureMessage['checkedStepIndex']) {
+              this.checkedStepIndex = this.claimRegisterElectronicSignatureMessage['checkedStepIndex']
+            };
             // 展示交接信息
             this.handoverTime = new Date(res.data.data['extendData']['handover']['time']);
             this.connectSite = res.data.data['extendData']['handover']['address'];
@@ -820,12 +858,13 @@ export default {
             this.keeperSignature =  res.data.data['extendData']['handover']['to'];
 
             // 展示联系信息
-            this.relationTime = new Date(res.data.data['extendData']['time']);
-            this.contactDepartment = res.data.data['extendData']['department'];
-            this.linkman = res.data.data['extendData']['name'];
-            this.contactInformation = res.data.data['extendData']['situation'];
+            this.relationTime = new Date(res.data.data['extendData']['contact']['time']);
+            this.contactDepartment = res.data.data['extendData']['contact']['department'];
+            this.linkman = res.data.data['extendData']['contact']['name'];
+            this.contactInformation = res.data.data['extendData']['contact']['situation'];
             // 保存进入签名页之前领取的相关信息
             if (flag) {
+              this.checkedStepIndex = this.claimRegisterElectronicSignatureMessage['checkedStepIndex'];
               this.getTime = this.claimRegisterElectronicSignatureMessage['getTime'];
               this.getSite = this.claimRegisterElectronicSignatureMessage['getSite'];
               this.getMessage = this.claimRegisterElectronicSignatureMessage['getMessage'];
@@ -848,7 +887,9 @@ export default {
             this.problemPicturesList = res.data.data['images'];
             this.problemOverview = res.data.data['description'];
             this.taskDescribe = res.data.data['remark'];
-
+            if (this.claimRegisterElectronicSignatureMessage['checkedStepIndex']) {
+              this.checkedStepIndex = this.claimRegisterElectronicSignatureMessage['checkedStepIndex']
+            };
             // 展示交接信息
             this.handoverTime = new Date(res.data.data['extendData']['handover']['time']);
             this.connectSite = res.data.data['extendData']['handover']['address'];
@@ -859,7 +900,7 @@ export default {
             this.relationTime = new Date(res.data.data['extendData']['contact']['time']);
             this.contactDepartment = res.data.data['extendData']['contact']['department'];
             this.linkman = res.data.data['extendData']['contact']['name'];
-            this.contactInformation = res.data.data['extendData']['']['situation'];
+            this.contactInformation = res.data.data['extendData']['contact']['situation'];
 
             // 展示领取信息
             this.getMessage = [];
@@ -877,9 +918,11 @@ export default {
             }
           };
           // 判断是否回显暂存数据
-          let temporaryIndex = this.temporaryStorageClaimRegisterMessage.findIndex((item) => { return item.id == this.$route.query.eventId});
+          let temporaryIndex = this.temporaryStorageHistoryClaimRegisterMessage.findIndex((item) => { return item.id == this.eventId});
           if (temporaryIndex != -1) {
-            this.echoTemporaryStorageMessage(temporaryIndex)
+            if (!flag) {
+              this.echoTemporaryStorageMessage(temporaryIndex)
+            }
           }
         } else {
           this.$dialog.alert({
@@ -894,7 +937,7 @@ export default {
       })
       .catch((err) => {
         this.$dialog.alert({
-          message: `${err.message}`,
+          message: `${err}`,
           closeOnPopstate: true
         }).then(() => {
         });
@@ -976,8 +1019,7 @@ export default {
               eventIndex: itemIndex
             })
           };
-          resolve();
-          console.log('当前图片',this.imgOnlinePathArr);
+          resolve()
         })
         .catch((err) => {
           this.overlayShow = false;
@@ -1002,11 +1044,11 @@ export default {
           this.$toast('交接地点不能为空');
           return
         };
-        if (!this.claimRegisterElectronicSignatureMessage.connectSignature) {
+        if (!this.claimRegisterElectronicSignatureMessage.connectSignature && !this.connectSignature) {
           this.$toast('交接人签字不能为空');
           return
         };
-        if (!this.claimRegisterElectronicSignatureMessage.keeperSignature) {
+        if (!this.claimRegisterElectronicSignatureMessage.keeperSignature && !this.keeperSignature) {
           this.$toast('保管人签字不能为空');
           return
         };
@@ -1211,6 +1253,9 @@ export default {
       eventReceive(data).then((res) => {
         if (res && res.data.code == 200) {
           this.$toast(`${res.data.msg}`);
+          // 提交成功后清除该历史拾金不昧列表暂存信息
+          let casuallyTemporaryStorageHistoryClaimRegisterMessage = this.temporaryStorageHistoryClaimRegisterMessage.filter((item) => { return item.id != this.eventId});
+          this.changeTemporaryStorageHistoryClaimRegisterMessage(casuallyTemporaryStorageHistoryClaimRegisterMessage);
           this.$router.push({path:'/eventList'});
         } else {
           this.imgOnlinePathArr = [];
@@ -1243,7 +1288,7 @@ export default {
       this.loadingText = '删除中...';
       this.loadingShow = true;
       this.overlayShow = true;
-      eventDelete($route.query.eventId).then((res) => {
+      eventDelete(this.eventId).then((res) => {
         if (res && res.data.code == 200) {
           this.$toast(`${res.data.msg}`);
           this.$router.push({path:'/eventList'});
@@ -1272,52 +1317,52 @@ export default {
 
     // 暂存事件
     temporaryStorageEvent () {
-      let casuallyTemporaryStorageClaimRegisterMessage = this.temporaryStorageClaimRegisterMessage;
-      if (this.temporaryStorageClaimRegisterMessage.length > 0 ) {
-          let temporaryIndex = this.temporaryStorageClaimRegisterMessage.findIndex((item) => { return item.id == this.$route.query.eventId});
+      let casuallyTemporaryStorageHistoryClaimRegisterMessage = this.temporaryStorageHistoryClaimRegisterMessage;
+      if (this.temporaryStorageHistoryClaimRegisterMessage.length > 0 ) {
+          let temporaryIndex = this.temporaryStorageHistoryClaimRegisterMessage.findIndex((item) => { return item.id == this.eventId});
           if (temporaryIndex != -1) {
             if (this.checkedStepIndex == 1){
-              casuallyTemporaryStorageClaimRegisterMessage[temporaryIndex]['checkedStepIndex'] = this.checkedStepIndex,
-              casuallyTemporaryStorageClaimRegisterMessage[temporaryIndex]['handoverTime'] = new Date(this.handoverTime),
-              casuallyTemporaryStorageClaimRegisterMessage[temporaryIndex]['connectSite'] = this.connectSite,
-              casuallyTemporaryStorageClaimRegisterMessage[temporaryIndex]['connectSignature'] = this.claimRegisterElectronicSignatureMessage.connectSignature,
-              casuallyTemporaryStorageClaimRegisterMessage[temporaryIndex]['keeperSignature'] = this.claimRegisterElectronicSignatureMessage.keeperSignature
+              casuallyTemporaryStorageHistoryClaimRegisterMessage[temporaryIndex]['checkedStepIndex'] = this.checkedStepIndex,
+              casuallyTemporaryStorageHistoryClaimRegisterMessage[temporaryIndex]['handoverTime'] = this.getNowFormatDate(this.handoverTime),
+              casuallyTemporaryStorageHistoryClaimRegisterMessage[temporaryIndex]['connectSite'] = this.connectSite,
+              casuallyTemporaryStorageHistoryClaimRegisterMessage[temporaryIndex]['connectSignature'] = this.claimRegisterElectronicSignatureMessage.connectSignature,
+              casuallyTemporaryStorageHistoryClaimRegisterMessage[temporaryIndex]['keeperSignature'] = this.claimRegisterElectronicSignatureMessage.keeperSignature
             } else if (this.checkedStepIndex == 2) {
-              casuallyTemporaryStorageClaimRegisterMessage[temporaryIndex]['checkedStepIndex'] = this.checkedStepIndex,
-              casuallyTemporaryStorageClaimRegisterMessage[temporaryIndex]['relationTime'] = new Date(this.relationTime),
-              casuallyTemporaryStorageClaimRegisterMessage[temporaryIndex]['contactDepartment'] = this.contactDepartment,
-              casuallyTemporaryStorageClaimRegisterMessage[temporaryIndex]['linkman'] = this.linkman,
-              casuallyTemporaryStorageClaimRegisterMessage[temporaryIndex]['contactInformation'] = this.contactInformation
+              casuallyTemporaryStorageHistoryClaimRegisterMessage[temporaryIndex]['checkedStepIndex'] = this.checkedStepIndex,
+              casuallyTemporaryStorageHistoryClaimRegisterMessage[temporaryIndex]['relationTime'] = this.getNowFormatDate(this.relationTime),
+              casuallyTemporaryStorageHistoryClaimRegisterMessage[temporaryIndex]['contactDepartment'] = this.contactDepartment,
+              casuallyTemporaryStorageHistoryClaimRegisterMessage[temporaryIndex]['linkman'] = this.linkman,
+              casuallyTemporaryStorageHistoryClaimRegisterMessage[temporaryIndex]['contactInformation'] = this.contactInformation
             } else if (this.checkedStepIndex == 3) {
-              casuallyTemporaryStorageClaimRegisterMessage[temporaryIndex]['checkedStepIndex'] = this.checkedStepIndex,
-              casuallyTemporaryStorageClaimRegisterMessage[temporaryIndex]['getTime'] = new Date(this.getTime),
-              casuallyTemporaryStorageClaimRegisterMessage[temporaryIndex]['getSite'] = this.getSite,
-              casuallyTemporaryStorageClaimRegisterMessage[temporaryIndex]['getMessage'] = this.getMessage
+              casuallyTemporaryStorageHistoryClaimRegisterMessage[temporaryIndex]['checkedStepIndex'] = this.checkedStepIndex,
+              casuallyTemporaryStorageHistoryClaimRegisterMessage[temporaryIndex]['getTime'] = this.getNowFormatDate(this.getTime),
+              casuallyTemporaryStorageHistoryClaimRegisterMessage[temporaryIndex]['getSite'] = this.getSite,
+              casuallyTemporaryStorageHistoryClaimRegisterMessage[temporaryIndex]['getMessage'] = this.getMessage
             }
           } else {
             if (this.checkedStepIndex == 1) {
-              casuallyTemporaryStorageClaimRegisterMessage.push({
-                id: this.$route.query.eventId,
+              casuallyTemporaryStorageHistoryClaimRegisterMessage.push({
+                id: this.eventId,
                 checkedStepIndex: this.checkedStepIndex,
-                handoverTime: new Date(this.handoverTime),
+                handoverTime: this.getNowFormatDate(this.handoverTime),
                 connectSite: this.connectSite,
                 connectSignature: this.claimRegisterElectronicSignatureMessage.connectSignature,
                 keeperSignature: this.claimRegisterElectronicSignatureMessage.keeperSignature
               })
             } else if (this.checkedStepIndex == 2) {
-              casuallyTemporaryStorageClaimRegisterMessage.push({
-                id: this.$route.query.eventId,
+              casuallyTemporaryStorageHistoryClaimRegisterMessage.push({
+                id: this.eventId,
                 checkedStepIndex: this.checkedStepIndex,
-                relationTime: new Date(this.relationTime),
+                relationTime: this.getNowFormatDate(this.relationTime),
                 contactDepartment: this.contactDepartment,
                 linkman: this.linkman,
                 contactInformation: this.contactInformation
               })
             } else if (this.checkedStepIndex == 3) {
-              casuallyTemporaryStorageClaimRegisterMessage.push({
-                id: this.$route.query.eventId,
+              casuallyTemporaryStorageHistoryClaimRegisterMessage.push({
+                id: this.eventId,
                 checkedStepIndex: this.checkedStepIndex,
-                getTime: new Date(this.getTime),
+                getTime: this.getNowFormatDate(this.getTime),
                 getSite: this.getSite,
                 getMessage: this.getMessage
               })
@@ -1325,34 +1370,34 @@ export default {
           }
         } else {
           if (this.checkedStepIndex == 1) {
-              casuallyTemporaryStorageClaimRegisterMessage.push({
-                id: this.$route.query.eventId,
+              casuallyTemporaryStorageHistoryClaimRegisterMessage.push({
+                id: this.eventId,
                 checkedStepIndex: this.checkedStepIndex,
-                handoverTime: new Date(this.handoverTime),
+                handoverTime: this.getNowFormatDate(this.handoverTime),
                 connectSite: this.connectSite,
                 connectSignature: this.claimRegisterElectronicSignatureMessage.connectSignature,
                 keeperSignature: this.claimRegisterElectronicSignatureMessage.keeperSignature
               })
             } else if (this.checkedStepIndex == 2) {
-              casuallyTemporaryStorageClaimRegisterMessage.push({
-                id: this.$route.query.eventId,
+              casuallyTemporaryStorageHistoryClaimRegisterMessage.push({
+                id: this.eventId,
                 checkedStepIndex: this.checkedStepIndex,
-                relationTime: new Date(this.relationTime),
+                relationTime: this.getNowFormatDate(this.relationTime),
                 contactDepartment: this.contactDepartment,
                 linkman: this.linkman,
                 contactInformation: this.contactInformation
               })
             } else if (this.checkedStepIndex == 3) {
-              casuallyTemporaryStorageClaimRegisterMessage.push({
-                id: this.$route.query.eventId,
+              casuallyTemporaryStorageHistoryClaimRegisterMessage.push({
+                id: this.eventId,
                 checkedStepIndex: this.checkedStepIndex,
-                getTime: new Date(this.getTime),
+                getTime: this.getNowFormatDate(this.getTime),
                 getSite: this.getSite,
                 getMessage: this.getMessage
               })
             }
       };
-      this.changeTemporaryStorageClaimRegisterMessage(casuallyTemporaryStorageClaimRegisterMessage);
+      this.changeTemporaryStorageHistoryClaimRegisterMessage(casuallyTemporaryStorageHistoryClaimRegisterMessage);
       this.$toast('暂存成功');
       this.$router.push({path: '/eventList'})
     }

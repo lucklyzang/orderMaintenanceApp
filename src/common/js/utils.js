@@ -652,7 +652,9 @@ export const removeAllLocalStorage = () => {
     removeStore('timeMessage');
     removeStore('ossMessage');
     removeStore('temporaryStorageClaimRegisterMessage');
-    removeStore('temporaryStorageOtherRegisterMessage')
+    removeStore('temporaryStorageRepairsRegisterMessage');
+    removeStore('temporaryStorageOtherRegisterMessage');
+    removeStore('temporaryStorageHistoryClaimRegisterMessage')
 }
 
 /*

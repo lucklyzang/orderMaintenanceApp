@@ -168,13 +168,13 @@
           </div>
         </div>
         <div class="message-box" v-if="currentStepIndex == 0">
-        <div class="select-box event-type" v-if="enterEventRegisterPageMessage['patrolItemName'] != ''">
+        <div class="select-box event-type" v-if="enterEventRegisterPageMessage['patrolItemName'] != '' || registerType == 1">
             <div class="select-box-left">
               <span>*</span>
               <span>巡查项</span>
             </div>
             <div class="select-box-right event-type-right">
-              <span>{{ enterEventRegisterPageMessage['patrolItemName'] }}</span>
+              <span>{{ itemName }}</span>
             </div>
         </div>
          <div class="select-box event-type">
@@ -191,8 +191,8 @@
               <span>*</span>
               <span>建筑</span>
             </div>
-            <div class="select-box-right" @click="enterEventRegisterPageMessage['patrolItemName'] != '' ? showStructure = false : showStructure = true">
-              <span :class="{'spanStyle':enterEventRegisterPageMessage['patrolItemName'] != ''}">{{ currentStructure }}</span>
+            <div class="select-box-right" @click="enterEventRegisterPageMessage['patrolItemName'] != '' || registerType == 1 ? showStructure = false : showStructure = true">
+              <span :class="{'spanStyle':enterEventRegisterPageMessage['patrolItemName'] != '' || registerType == 1}">{{ currentStructure }}</span>
               <van-icon name="arrow" color="#989999" size="20" />
             </div>
           </div>
@@ -202,7 +202,7 @@
               <span>区域</span>
             </div>
             <div class="select-box-right" @click="goalDepartmentClickEvent">
-              <span :class="{'spanStyle':enterEventRegisterPageMessage['patrolItemName'] != ''}">{{ currentGoalDepartment }}</span>
+              <span :class="{'spanStyle':enterEventRegisterPageMessage['patrolItemName'] != '' || registerType == 1}">{{ currentGoalDepartment }}</span>
               <van-icon name="arrow" color="#989999" size="20" />
             </div>
           </div>
@@ -508,6 +508,8 @@ export default {
     return {
       currentStepIndex: 0,
       materialShow: false,
+      registerType: null,
+      itemName: '',
       quitInfoShow: false,
       loadingShow: false,
       eventType: '拾金不昧',
@@ -593,6 +595,7 @@ export default {
   },
 
   mounted() {
+    console.log('qs',this.enterEventRegisterPageMessage);
     // 控制设备物理返回按键
     if (!IsPC()) {
       let that = this;
@@ -600,21 +603,21 @@ export default {
       that.gotoURL(() => {
         pushHistory();
         //清除拾金不昧签名相关信息
-        this.changeClaimRegisterElectronicSignatureMessage({});
+        this.changeClaimRegisterElectronicSignatureMessage({receiverSignature:[]});
         that.$router.push({path: '/eventList'})
       })
     };
     // 如果是从异常巡查项从处进来的，则回显区域名称
     if (this.enterEventRegisterPageMessage['patrolItemName'] != '') {
       this.currentGoalDepartment = this.enterEventRegisterPageMessage['depName'];
-      // 查询该回显科室下对应的房间信息
-      this.getSpacesByDepartmentId(this.enterEventRegisterPageMessage['depId'],this.enterEventRegisterPageMessage['structId'],false)
+      this.itemName = this.enterEventRegisterPageMessage['patrolItemName'];
     };
     this.parallelFunction()
   },
 
   beforeRouteEnter(to, from, next) {
     next(vm=>{
+      console.log('eventId',vm.$route.query.eventId);
       if (from.path == '/eventList') {
         // 判断是否回显暂存数据
         let temporaryIndex = vm.temporaryStorageClaimRegisterMessage.findIndex((item) => { return item.id == vm.$route.query.eventId});
@@ -745,7 +748,6 @@ export default {
 
     // 回显暂存的信息
     async echoTemporaryStorageMessage (temporaryIndex) {
-      console.log('index',temporaryIndex);
       let casuallyTemporaryStorageClaimRegisterMessage = this.temporaryStorageClaimRegisterMessage;
       this.currentFindTime = new Date(casuallyTemporaryStorageClaimRegisterMessage[temporaryIndex]['createTime']);
       this.currentStructure = casuallyTemporaryStorageClaimRegisterMessage[temporaryIndex]['structureName']  == '' ? '请选择' : casuallyTemporaryStorageClaimRegisterMessage[temporaryIndex]['structureName'];
@@ -754,7 +756,9 @@ export default {
       this.detailsSite = casuallyTemporaryStorageClaimRegisterMessage[temporaryIndex]['address'];
       this.problemOverview = casuallyTemporaryStorageClaimRegisterMessage[temporaryIndex]['description'];
       this.taskDescribe = casuallyTemporaryStorageClaimRegisterMessage[temporaryIndex]['remark'];
-      this.problemPicturesList = casuallyTemporaryStorageClaimRegisterMessage[temporaryIndex]['images']
+      this.problemPicturesList = casuallyTemporaryStorageClaimRegisterMessage[temporaryIndex]['images'];
+      this.itemName = casuallyTemporaryStorageClaimRegisterMessage[temporaryIndex]['itemName'];
+      this.registerType = casuallyTemporaryStorageClaimRegisterMessage[temporaryIndex]['registerType']
     },
 
     // 处理维修任务参与者
@@ -1053,10 +1057,10 @@ export default {
                 this.currentStructure = this.structureOption.filter((innerItem) => { return innerItem.value == this.enterEventRegisterPageMessage['structId']})[0]['text']
               };
               if (this.currentStructure != '请选择') {
-                if (this.enterEventRegisterPageMessage['patrolItemName'] == '') {
-                  this.getDepartmentByStructureId(this.structureOption.filter((item) => { return item['text'] == this.currentStructure})[0]['value'],false,false)
+                if (this.enterEventRegisterPageMessage['patrolItemName'] == '' || this.registerType == 2) {
+                  this.getDepartmentByStructureId(this.structureOption.filter((item) => { return item['text'] == this.currentStructure})[0]['value'],false,true)
                 } else {
-                  this.getDepartmentByStructureId('',false,false)
+                  this.getDepartmentByStructureId('',false,true)
                 }
               }
             }
@@ -1125,7 +1129,7 @@ export default {
 
     // 目的科室列点击事件
     goalDepartmentClickEvent () {
-      if (this.enterEventRegisterPageMessage['patrolItemName'] != '') {return};
+      if (this.enterEventRegisterPageMessage['patrolItemName'] != '' || this.registerType == 1) {return};
       if (this.currentStructure == '请选择') {
         this.$toast('请选择建筑')
       } else {

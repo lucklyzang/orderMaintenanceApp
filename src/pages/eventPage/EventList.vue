@@ -161,14 +161,16 @@ export default {
         },
         {
             text: '巡查',
-            value: 1
+            value: 1,
+            selected: true
         },
         {
             text: '其他',
-            value: 2
+            value: 2,
+            selected: true
         }
       ],
-      currentEventType: null,
+      currentEventType: [1,2,3],
       eventTypeOption: [
         {
             text: '请选择',
@@ -176,15 +178,18 @@ export default {
         },
         {
             text: '工程报修',
-            value: 1
+            value: 1,
+            selected: true
         },
         {
             text: '拾金不昧',
-            value: 2
+            value: 2,
+            selected: true
         },
         {
             text: '其他',
-            value: 3
+            value: 3,
+            selected: true
         }
       ],
 
@@ -383,7 +388,8 @@ export default {
 
     // 事件类型下拉框值改变事件
     eventTypeOptionChange (val) {
-      this.currentEventType = val
+      this.currentEventType = val;
+      console.log('变化',this.currentEventType)
     },
 
     // 登记类型下拉框值改变事件
@@ -485,6 +491,11 @@ export default {
 
     // 筛选弹框确定事件
     screenDialogSure () {
+      if (!this.storageRadio) {
+        this.currentPage = 1;
+        this.isOnlyMe = false;
+        this.queryEventList(this.currentPage,this.pageSize,this.userName,startDate='',endDate='',eventType='',registerType='')
+      }  
     },
 
     // 筛选弹框取消事件
@@ -531,6 +542,7 @@ export default {
       let temporaryEnterEventRegisterPageMessage = this.enterEventRegisterPageMessage;
       temporaryEnterEventRegisterPageMessage['isOnlyMe'] = this.isOnlyMe;
       temporaryEnterEventRegisterPageMessage['storageRadio'] = this.storageRadio;
+      temporaryEnterEventRegisterPageMessage['patrolItemName'] = '';
       this.changeEnterEventRegisterPageMessage(temporaryEnterEventRegisterPageMessage)
     },
 
@@ -560,13 +572,16 @@ export default {
     },
 
     // 获取事件列表
-    queryEventList (page,pageSize,name='') {
+    queryEventList (page,pageSize,name='',startDate='',endDate='',eventType='',registerType='') {
       this.loadingShow = true;
       this.overlayShow = true;
       this.loadText = '加载中';
       this.backlogEmptyShow = false;
       this.isShowBacklogTaskNoMoreData = false;
-      getEventList({proId:this.userInfo.proIds[0], system: 6, workerId: this.userInfo.id,page, limit:pageSize, name})
+      getEventList({proId:this.userInfo.proIds[0], system: 6, 
+        workerId: this.userInfo.id,page, limit:pageSize, name,
+        startDate,endDate,eventType,registerType
+      })
         .then((res) => {
             this.loadingShow = false;
             this.overlayShow = false;

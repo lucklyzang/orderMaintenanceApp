@@ -137,7 +137,7 @@ export default {
       temporaryClaimRegisterElectronicSignatureMessage['keeperSignature'] = signatureValue
     } else if (temporaryClaimRegisterElectronicSignatureMessage['step'] == '领取') {
       // 存储和更新领取人签名信息
-      if (this.claimRegisterElectronicSignatureMessage['receiverSignature'].length > 0 ) {
+      if (this.claimRegisterElectronicSignatureMessage.hasOwnProperty('receiverSignature') && this.claimRegisterElectronicSignatureMessage['receiverSignature'].length > 0 ) {
           let temporaryIndex = this.claimRegisterElectronicSignatureMessage['receiverSignature'].findIndex((item) => { return item.eventIndex == this.claimRegisterElectronicSignatureMessage['receiverIndex']});
           if (temporaryIndex != -1) {
               temporaryClaimRegisterElectronicSignatureMessage['receiverSignature'][temporaryIndex]['signature'] = signatureValue

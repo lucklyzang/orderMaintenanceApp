@@ -70,7 +70,6 @@
   watch: {
     curData: {
         handler: function(newVal, oldVal) {
-			console.log('监听',newVal);
 		   //单选
 		   if (!this.multiple) {
 			 if (newVal == null) {
@@ -85,7 +84,7 @@
 					this.current = this.datalist.length > 0 ? this.datalist.filter((item) => { return item.value == newVal})[0]['text'] : '';
 				} else {
 					let temporaryArray = [];
-					for (let it of this.datalist) {
+					for (let it of this.itemData) {
 						if (it['selected']) {
 							temporaryArray.push(it['text'])
 						}
@@ -99,7 +98,7 @@
     },
 	itemData: {
         handler: function(newVal, oldVal) {
-           this.datalist = newVal
+           this.datalist = newVal;
         },
         deep: true,
 		immediate: true
@@ -119,8 +118,28 @@
   
   created(){
 		this.datalist = this.itemData;
-		this.current = this.datalist.filter((item) => { return item.value == this.curData})[0]['text'];
-		this.currentFullValue = this.datalist.filter((item) => { return item.value == this.curData})[0];
+		//单选
+		if (!this.multiple) {
+			if (this.curData == null) {
+				this.current = this.datalist.length > 0 ? this.datalist.filter((item) => { return item.value == this.curData})[0]['text'] : '';
+				this.currentFullValue = this.datalist.length > 0 ? this.datalist.filter((item) => { return item.value == this.curData})[0] : null
+			} else {
+				this.current = this.datalist.length > 0 ? this.datalist.filter((item) => { return item.value == this.curData['value']})[0]['text'] : '';
+				this.currentFullValue = this.datalist.length > 0 ? this.datalist.filter((item) => { return item.value == this.curData['value']})[0] : null
+			}
+		} else {
+			if (this.curData == null) {
+					this.current = this.datalist.length > 0 ? this.datalist.filter((item) => { return item.value == this.curData})[0]['text'] : '';
+				} else {
+					let temporaryArray = [];
+					for (let it of this.itemData) {
+						if (it['selected']) {
+							temporaryArray.push(it['text'])
+						}
+					};
+					this.current = this.curData.length > 0 ? temporaryArray.join(',') : '请选择'
+				}
+		};
 		//点击组件以外的地方，收起
 		document.addEventListener('click', (e) => {
 			if (!this.$el.contains(e.target)){

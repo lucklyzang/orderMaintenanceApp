@@ -139,6 +139,7 @@ export default {
       eventType: '拾金不昧',
       problemPicturesList: [require("@/common/images/home/status-background.png"),require("@/common/images/home/status-background.png"),require("@/common/images/home/status-background.png"),require("@/common/images/home/status-background.png")],
       currentImgUrl: '',
+      eventId: '',
       photoBox: false,
       imgBoxShow: false,
       imgIndex: '',
@@ -167,14 +168,24 @@ export default {
         that.$router.push({path: '/eventList'})
       })
     };
-    this.queryEventDetails(this.$route.query.eventId)
+  },
+
+  beforeRouteEnter(to, from, next) {
+    next(vm=>{
+      if (from.path != '/moreHistoryRepairsRegister') {
+        vm.queryEventDetails(vm.$route.query.eventId)
+      } else {
+        vm.queryEventDetails(vm.claimRegisterElectronicSignatureMessage.eventId)
+      };
+	});
+    next() 
   },
 
   watch: {
   },
 
   computed: {
-    ...mapGetters(["userInfo","transportantTaskMessage","temporaryStorageRepairsRegisterMessage","moreEventMessage"]),
+    ...mapGetters(["userInfo","transportantTaskMessage","temporaryStorageRepairsRegisterMessage","claimRegisterElectronicSignatureMessage","moreEventMessage"]),
     proId () {
       return this.userInfo.proIds[0]
     },
@@ -187,13 +198,16 @@ export default {
   },
 
   methods: {
-    ...mapMutations(["changeCatchComponent","changeOverDueWay","changetransportTypeMessage","changeTemporaryStorageRepairsRegisterMessage","changeMoreEventMessage"]),
+    ...mapMutations(["changeCatchComponent","changeOverDueWay","changetransportTypeMessage","changeClaimRegisterElectronicSignatureMessage","changeTemporaryStorageRepairsRegisterMessage","changeMoreEventMessage"]),
 
     onClickLeft() {
       this.$router.push({ path: "/eventList"})
     },
 
     onClickRight() {
+      let temporaryClaimRegisterElectronicSignatureMessage = this.claimRegisterElectronicSignatureMessage;
+      temporaryClaimRegisterElectronicSignatureMessage['eventId'] = this.eventId;
+      this.changeClaimRegisterElectronicSignatureMessage(temporaryClaimRegisterElectronicSignatureMessage);
       this.$router.push({ path: "/moreHistoryRepairsRegister"})
     },
 
@@ -227,6 +241,7 @@ export default {
       getEventDetails(id).then((res) => {
         if (res && res.data.code == 200) {
           this.changeMoreEventMessage(res.data.data);
+          this.eventId = res.data.data['id'];
           this.eventType = res.data.data['eventType'];
           this.currentStructure = res.data.data['structureName'];
           this.currentGoalDepartment = res.data.data['depName'];
@@ -249,7 +264,7 @@ export default {
       })
       .catch((err) => {
         this.$dialog.alert({
-          message: `${err.message}`,
+          message: `${err}`,
           closeOnPopstate: true
         }).then(() => {
         });

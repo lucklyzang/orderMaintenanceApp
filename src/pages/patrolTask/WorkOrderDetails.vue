@@ -355,6 +355,8 @@ export default {
           let temporaryMessage = this.departmentCheckList;
           temporaryMessage['depId'] = depId;
           temporaryMessage['checkItemList'] = res.data.data;
+          temporaryMessage['punchCardType'] = punchCardType;
+          temporaryMessage['punchCardReason'] = punchCardReason;
           temporaryMessage['checkItemList'].forEach(item => {
             item['checkResult'] = item['checkResult'].toString()
           });
@@ -394,6 +396,8 @@ export default {
           this.overlayShow = false;
           let temporaryMessage = this.departmentCheckList;
           temporaryMessage['depId'] = depId;
+          temporaryMessage['punchCardType'] = punchCardType;
+          temporaryMessage['punchCardReason'] = punchCardReason;
           temporaryMessage['checkItemList'] = res.data.data;
           temporaryMessage['checkItemList'].forEach(item => {
             item['checkResult'] = item['checkResult'].toString()

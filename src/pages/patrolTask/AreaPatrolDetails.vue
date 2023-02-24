@@ -115,6 +115,7 @@ export default {
   },
 
   mounted() {
+    console.log('大飒',this.patrolTaskListMessage);
     // 控制设备物理返回按键
     this.deviceReturn('/workOrderDetails');
     // 判断该区域是否存在检查项
@@ -323,7 +324,9 @@ export default {
       this.loadText = '提交中';
       submitCheckItem({
         taskId: this.patrolTaskListMessage.id,
-        depId: this.departmentCheckList.depId
+        depId: this.departmentCheckList.depId,
+        punchCardType: this.departmentCheckList['punchCardType'],
+        punchCardReason: this.departmentCheckList['punchCardReason']
       }).then((res) => {
         if (res && res.data.code == 200) {
           this.$router.push({path: '/workOrderDetails'});

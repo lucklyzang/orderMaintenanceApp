@@ -36,9 +36,10 @@ export function getDefaultEventRegisterState() {
         temporaryStorageRepairsRegisterMessage: [], //暂存事件登记(工程报修)信息
         temporaryStorageOtherRegisterMessage: [], //暂存事件登记(其他)信息
         temporaryStorageClaimRegisterMessage: [], //暂存事件登记(拾金不昧)信息
+        temporaryStorageHistoryClaimRegisterMessage: [], //暂存历史事件登记(拾金不昧)信息
         enterEventRegisterPageMessage: {}, // 进入事件登记页的信息
         moreEventMessage: {}, // 更多信息
-        claimRegisterElectronicSignatureMessage: {} //拾金不昧签名相关信息
+        claimRegisterElectronicSignatureMessage: {receiverSignature:[]} //拾金不昧签名相关信息
     }
 };
 

@@ -150,6 +150,7 @@ export default {
       currentImgUrl: '',
       quitInfoShow: false,
       photoBox: false,
+      eventId: '',
       imgBoxShow: false,
       imgIndex: '',
       problemOverview: '',
@@ -176,15 +177,25 @@ export default {
         pushHistory();
         that.$router.push({path: '/eventList'})
       })
-    };
-    this.queryEventDetails(this.$route.query.eventId)
+    }
+  },
+
+  beforeRouteEnter(to, from, next) {
+    next(vm=>{
+      if (from.path != '/moreHistoryOtherRegister') {
+        vm.queryEventDetails(vm.$route.query.eventId)
+      } else {
+        vm.queryEventDetails(vm.claimRegisterElectronicSignatureMessage.eventId)
+      };
+	});
+    next() 
   },
 
   watch: {
   },
 
   computed: {
-    ...mapGetters(["userInfo","transportantTaskMessage","temporaryStorageRepairsRegisterMessage","moreEventMessage"]),
+    ...mapGetters(["userInfo","transportantTaskMessage","temporaryStorageRepairsRegisterMessage","moreEventMessage","claimRegisterElectronicSignatureMessage"]),
     proId () {
       return this.userInfo.proIds[0]
     },
@@ -197,13 +208,16 @@ export default {
   },
 
   methods: {
-    ...mapMutations(["changeCatchComponent","changeOverDueWay","changetransportTypeMessage","changeTemporaryStorageRepairsRegisterMessage","changeMoreEventMessage"]),
+    ...mapMutations(["changeCatchComponent","changeOverDueWay","changetransportTypeMessage","changeTemporaryStorageRepairsRegisterMessage","changeClaimRegisterElectronicSignatureMessage","changeMoreEventMessage"]),
 
     onClickLeft() {
       this.$router.push({ path: "/eventList"})
     },
 
     onClickRight() {
+      let temporaryClaimRegisterElectronicSignatureMessage = this.claimRegisterElectronicSignatureMessage;
+      temporaryClaimRegisterElectronicSignatureMessage['eventId'] = this.eventId;
+      this.changeClaimRegisterElectronicSignatureMessage(temporaryClaimRegisterElectronicSignatureMessage);
       this.$router.push({ path: "/moreHistoryOtherRegister"})
     },
 
@@ -222,6 +236,7 @@ export default {
       getEventDetails(id).then((res) => {
         if (res && res.data.code == 200) {
           this.changeMoreEventMessage(res.data.data);
+          this.eventId = res.data.data['id'];
           this.eventType = res.data.data['eventType'];
           this.currentStructure = res.data.data['structureName'];
           this.currentGoalDepartment = res.data.data['depName'];
@@ -244,7 +259,7 @@ export default {
       })
       .catch((err) => {
         this.$dialog.alert({
-          message: `${err.message}`,
+          message: `${err}`,
           closeOnPopstate: true
         }).then(() => {
         });
@@ -323,7 +338,7 @@ export default {
       this.loadingText = '删除中...';
       this.loadingShow = true;
       this.overlayShow = true;
-      eventDelete(this.$route.query.eventId).then((res) => {
+      eventDelete(this.eventId).then((res) => {
         if (res && res.data.code == 200) {
           this.$toast(`${res.data.msg}`);
           this.$router.push({path:'/eventList'});

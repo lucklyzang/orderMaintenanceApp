@@ -493,8 +493,10 @@ export default {
                   return (new Date(item['createTime']).getTime() >= new Date(this.currentStartDate).getTime() && new Date(item['createTime']).getTime() <= new Date(this.currentEndDate).getTime()) && registerType.indexOf(item['registerType']) != -1
                 } else if (this.currentDateRange && (!this.currentRegistrant || !this.currentRegistrant['value']) && this.currentEventType.length > 0 && this.registerType.length == 0) {
                   return (new Date(item['createTime']).getTime() >= new Date(this.currentStartDate).getTime() && new Date(item['createTime']).getTime() <= new Date(this.currentEndDate).getTime()) && eventType.indexOf(item['eventType']) != -1
-                } else if (!this.currentDateRange && this.currentRegistrant && eventType.length == 0 && this.registerType.length > 0) {
+                } else if (!this.currentDateRange && this.currentRegistrant && this.currentEventType.length == 0 && this.registerType.length > 0) {
                   return item['createName'] == this.currentRegistrant['text'] && registerType.indexOf(item['registerType']) != -1
+                } else if (this.currentDateRange && (!this.currentRegistrant || !this.currentRegistrant['value']) && this.currentEventType.length > 0 && this.registerType.length > 0) {
+                  return (new Date(item['createTime']).getTime() >= new Date(this.currentStartDate).getTime() && new Date(item['createTime']).getTime() <= new Date(this.currentEndDate).getTime()) && eventType.indexOf(item['eventType']) != -1 && registerType.indexOf(item['registerType']) != -1
                 }
               }
           });

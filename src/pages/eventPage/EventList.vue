@@ -105,15 +105,15 @@
           </div>
           <div class="dialog-center-one-line">
             <span>登记人</span>
-            <SelectSearch :isNeedSearch="true" :multiple="true" ref="registrantOption" :itemData="registrantOption" :curData="currentRegistrant" @change="registrantOptionChange" />
+            <SelectSearch ref="registrantOption" :itemData="registrantOption" :curData="currentRegistrant" @change="registrantOptionChange" />
           </div>
           <div class="dialog-center-one-line">
             <span>事件类型</span>
-            <SelectSearch ref="eventTypeOption" :multiple="true" :itemData="eventTypeOption" :curData="currentEventType" @change="eventTypeOptionChange" />
+            <SelectSearch :isNeedSearch="false" ref="eventTypeOption" :multiple="true" :itemData="eventTypeOption" :curData="currentEventType" @change="eventTypeOptionChange" />
           </div>
           <div class="dialog-center-one-line">
             <span>登记类型</span>
-            <SelectSearch ref="registerTypeOption" :multiple="true" :itemData="registerTypeOption" :curData="registerType" @change="registerTypeChange" />
+            <SelectSearch :isNeedSearch="false" ref="registerTypeOption" :multiple="true" :itemData="registerTypeOption" :curData="registerType" @change="registerTypeChange" />
           </div>
         </div>
       </van-dialog>
@@ -128,6 +128,7 @@ import { getEventList, queryRegisterUser } from '@/api/escortManagement.js'
 import {mixinsDeviceReturn} from '@/mixins/deviceReturnFunction';
 import ScrollSelection from "@/components/ScrollSelection";
 import SelectSearch from "@/components/SelectSearch";
+import qs from 'qs'
 export default {
   name: "EventList",
   components: {
@@ -146,9 +147,11 @@ export default {
       isShowBacklogTaskNoMoreData: false,
       storageRadio: false,
       currentDateRange: '',
+      currentStartDate: '',
+      currentEndDate: '',
       minDate: new Date(2010, 0, 1),
       maxDate: new Date(2050, 0, 31),
-      registerType: null,
+      registerType: [1,2],
       eventTime: 0,
       timeOne: null,
       totalCount: '',
@@ -198,6 +201,7 @@ export default {
       eventTypeShow: false,
       eventTypeList: ['工程报修','拾金不昧','其他'],
       fullBacklogTaskList: [],
+      echoFullBacklogTaskList: [],
       backlogTaskList: [],
       loadingShow: false,
       loadText: '加载中',
@@ -272,7 +276,8 @@ export default {
       this.fullBacklogTaskList = [];
       this.isShowBacklogTaskNoMoreData = false;
       if (checked) {
-        this.fullBacklogTaskList = [].concat(this.temporaryStorageOtherRegisterMessage,this.temporaryStorageRepairsRegisterMessage,this.temporaryStorageClaimRegisterMessage)
+        this.fullBacklogTaskList = [].concat(this.temporaryStorageOtherRegisterMessage,this.temporaryStorageRepairsRegisterMessage,this.temporaryStorageClaimRegisterMessage);
+        this.echoFullBacklogTaskList = [].concat(this.temporaryStorageOtherRegisterMessage,this.temporaryStorageRepairsRegisterMessage,this.temporaryStorageClaimRegisterMessage);
         if (this.fullBacklogTaskList.length == 0) {
           this.backlogEmptyShow = true
         } else {
@@ -372,8 +377,8 @@ export default {
     beforeCloseDialogEvent (action, done) {
       if (action == 'cancel') {
         this.$refs['registrantOption'].clearSelectValue();
-        this.$refs['eventTypeOption'].clearSelectValue();
-        this.$refs['registerTypeOption'].clearSelectValue();
+        this.$refs['eventTypeOption'].selectAllValue();
+        this.$refs['registerTypeOption'].selectAllValue();
         done(false);
         return
       } else {
@@ -381,20 +386,156 @@ export default {
       }
     },
 
+    // 筛选弹框确定事件
+    screenDialogSure () {
+      if (!this.storageRadio) {
+        this.currentPage = 1;
+        this.isOnlyMe = false;
+        let register = this.currentRegistrant ? this.currentRegistrant['text'] == '请选择' ? '' : this.currentRegistrant['text'] : '';
+        let eventType = [];
+        let registerType = [];
+        if (this.currentEventType.length > 0){
+          if (this.currentEventType.some((el) => { return Object.prototype.toString.call(el) === '[object Object]'})) {
+            for (let item of this.currentEventType) {
+              eventType.push(item['value'])
+            }
+          }  else {
+            eventType = this.currentEventType
+          }
+        } else {
+          eventType = []
+        };
+        if (this.registerType.length > 0){
+          if (this.registerType.some((el) => { return Object.prototype.toString.call(el) === '[object Object]'})) {
+            for (let item of this.registerType) {
+              registerType.push(item['value'])
+            }
+          }  else {
+            registerType = this.registerType
+          }
+        } else {
+          registerType = []
+        };
+        this.queryEventList(this.currentPage,this.pageSize,register,this.currentStartDate,this.currentEndDate,eventType,registerType)
+      } else {
+        // 筛选本地暂存数据
+        if (!this.currentDateRange && (!this.currentRegistrant || !this.currentRegistrant['value']) && this.currentEventType.length == 0 && this.registerType.length == 0) {
+          this.fullBacklogTaskList = this.echoFullBacklogTaskList;
+          if (this.fullBacklogTaskList.length == 0) {
+            this.backlogEmptyShow = true
+          } else {
+            this.backlogEmptyShow = false
+          }
+        } else {
+          let eventType = [];
+          let registerType = [];
+          if (this.currentEventType.length > 0){
+            if (this.currentEventType.some((el) => { return Object.prototype.toString.call(el) === '[object Object]'})) {
+              for (let item of this.currentEventType) {
+                eventType.push(item['value'])
+              }
+            }  else {
+              eventType = this.currentEventType
+            }
+          } else {
+            eventType = []
+          };
+          if (this.registerType.length > 0){
+            if (this.registerType.some((el) => { return Object.prototype.toString.call(el) === '[object Object]'})) {
+              for (let item of this.registerType) {
+                registerType.push(item['value'])
+              }
+            }  else {
+              registerType = this.registerType
+            }
+          } else {
+            registerType = []
+          };
+          this.fullBacklogTaskList = this.echoFullBacklogTaskList.filter((item) => {
+            if (this.currentDateRange && this.currentRegistrant && this.currentEventType.length > 0 && this.registerType.length > 0) {
+                return item['createName'] == this.currentRegistrant['text'] &&
+                (new Date(item['createTime']).getTime() >= new Date(this.currentStartDate).getTime() && new Date(item['createTime']).getTime() <= new Date(this.currentEndDate).getTime())
+                && eventType.indexOf(item['eventType']) != -1
+                && registerType.indexOf(item['registerType']) != -1
+              } else {
+                // 日期排列
+                if (this.currentDateRange && (!this.currentRegistrant || !this.currentRegistrant['value']) && this.currentEventType.length == 0 && this.registerType.length == 0) {
+                  return new Date(item['createTime']).getTime() >= new Date(this.currentStartDate).getTime() && new Date(item['createTime']).getTime() <= new Date(this.currentEndDate).getTime()
+                } else if (this.currentDateRange && this.currentRegistrant && this.currentEventType.length == 0 && this.registerType.length == 0) {
+                  return item['createName'] == this.currentRegistrant['text'] &&
+                  (new Date(item['createTime']).getTime() >= new Date(this.currentStartDate).getTime() && new Date(item['createTime']).getTime() <= new Date(this.currentEndDate).getTime())
+                } else if (this.currentDateRange && this.currentRegistrant && this.currentEventType.length > 0 && this.registerType.length == 0) {
+                  return item['createName'] == this.currentRegistrant['text'] &&
+                  (new Date(item['createTime']).getTime() >= new Date(this.currentStartDate).getTime() && new Date(item['createTime']).getTime() <= new Date(this.currentEndDate).getTime())
+                  && eventType.indexOf(item['eventType']) != -1
+                } else if (this.currentDateRange && this.currentRegistrant && this.currentEventType.length > 0 && this.registerType.length > 0) {
+                  return item['createName'] == this.currentRegistrant['text'] &&
+                  (new Date(item['createTime']).getTime() >= new Date(this.currentStartDate).getTime() && new Date(item['createTime']).getTime() <= new Date(this.currentEndDate).getTime())
+                  && eventType.indexOf(item['eventType']) != -1 && registerType.indexOf(item['registerType']) != -1
+                // 登记人排列
+                } else if (!this.currentDateRange && this.currentRegistrant && this.currentEventType.length == 0 && this.registerType.length == 0) {
+                  return item['createName'] == this.currentRegistrant['text']
+                } else if (!this.currentDateRange && this.currentRegistrant && this.currentEventType.length > 0 && this.registerType.length == 0) {
+                  return item['createName'] == this.currentRegistrant['text'] && eventType.indexOf(item['eventType']) != -1
+                } else if (!this.currentDateRange && this.currentRegistrant && this.currentEventType.length > 0 && this.registerType.length > 0) {
+                  return item['createName'] == this.currentRegistrant['text'] && eventType.indexOf(item['eventType']) != -1 && registerType.indexOf(item['registerType']) != -1
+                  // 事件类型排列
+                } else if (!this.currentDateRange && (!this.currentRegistrant || !this.currentRegistrant['value']) && this.currentEventType.length > 0 && this.registerType.length == 0) {
+                  return eventType.indexOf(item['eventType']) != -1
+                } else if (!this.currentDateRange && (!this.currentRegistrant || !this.currentRegistrant['value']) && this.currentEventType.length > 0 && this.registerType.length > 0) {
+                  return eventType.indexOf(item['eventType']) != -1 && registerType.indexOf(item['registerType']) != -1
+                }
+                // 登记类型排列
+                else if (!this.currentDateRange && (!this.currentRegistrant || !this.currentRegistrant['value']) && this.currentEventType.length == 0 && this.registerType.length > 0) {
+                  return registerType.indexOf(item['registerType']) != -1
+                // 剩余排列
+                } else if (this.currentDateRange && (!this.currentRegistrant || !this.currentRegistrant['value']) && this.currentEventType.length == 0 && this.registerType.length > 0) {
+                  return (new Date(item['createTime']).getTime() >= new Date(this.currentStartDate).getTime() && new Date(item['createTime']).getTime() <= new Date(this.currentEndDate).getTime()) && registerType.indexOf(item['registerType']) != -1
+                } else if (this.currentDateRange && (!this.currentRegistrant || !this.currentRegistrant['value']) && this.currentEventType.length > 0 && this.registerType.length == 0) {
+                  return (new Date(item['createTime']).getTime() >= new Date(this.currentStartDate).getTime() && new Date(item['createTime']).getTime() <= new Date(this.currentEndDate).getTime()) && eventType.indexOf(item['eventType']) != -1
+                } else if (!this.currentDateRange && this.currentRegistrant && eventType.length == 0 && this.registerType.length > 0) {
+                  return item['createName'] == this.currentRegistrant['text'] && registerType.indexOf(item['registerType']) != -1
+                }
+              }
+          });
+          if (this.fullBacklogTaskList.length == 0) {
+            this.backlogEmptyShow = true
+          } else {
+            this.backlogEmptyShow = false
+          }
+        }  
+      }
+    },
+
+    // 筛选弹框取消事件
+    screenDialogCancel () {
+      this.currentDateRange = '';
+      this.currentStartDate = '';
+      this.currentEndDate = ''
+    },
+
+    // 关闭筛选弹框
+    closeScreenDialogEvent () {
+      this.screenDialogShow = false
+    },
+
+
     // 登记人下拉框值改变事件
     registrantOptionChange (val) {
-      this.currentRegistrant = val
+      this.currentRegistrant = val;
+      console.log('登记人',this.currentRegistrant);
     },
 
     // 事件类型下拉框值改变事件
     eventTypeOptionChange (val) {
       this.currentEventType = val;
-      console.log('变化',this.currentEventType)
+      console.log('事件类型',this.currentEventType)
     },
 
     // 登记类型下拉框值改变事件
     registerTypeChange (val) {
-      this.registerType = val
+      this.registerType = val,
+      console.log('登记类型',this.registerType)
     },
 
     formatDate(date) {
@@ -406,6 +547,8 @@ export default {
       const [start, end] = date;
       this.dateQueryRangeShow = false;
       this.currentDateRange = `${this.formatDate(start)} - ${this.formatDate(end)}`;
+      this.currentStartDate = this.formatDate(start).replaceAll('/','-');
+      this.currentEndDate = this.formatDate(end).replaceAll('/','-')
     },
 
     // 事件列表注册滚动事件
@@ -489,26 +632,6 @@ export default {
       }
     },
 
-    // 筛选弹框确定事件
-    screenDialogSure () {
-      if (!this.storageRadio) {
-        this.currentPage = 1;
-        this.isOnlyMe = false;
-        this.queryEventList(this.currentPage,this.pageSize,this.userName,startDate='',endDate='',eventType='',registerType='')
-      }  
-    },
-
-    // 筛选弹框取消事件
-    screenDialogCancel () {
-
-    },
-
-    // 关闭筛选弹框
-    closeScreenDialogEvent () {
-      this.screenDialogShow = false
-    },
-
-
     // 事件登记事件
     onClickRight () {
       this.eventTypeShow = true
@@ -572,7 +695,7 @@ export default {
     },
 
     // 获取事件列表
-    queryEventList (page,pageSize,name='',startDate='',endDate='',eventType='',registerType='') {
+    queryEventList (page,pageSize,name='',startDate='',endDate='',eventType=[],registerType=[]) {
       this.loadingShow = true;
       this.overlayShow = true;
       this.loadText = '加载中';
@@ -580,7 +703,7 @@ export default {
       this.isShowBacklogTaskNoMoreData = false;
       getEventList({proId:this.userInfo.proIds[0], system: 6, 
         workerId: this.userInfo.id,page, limit:pageSize, name,
-        startDate,endDate,eventType,registerType
+        startDate,endDate,eventType:eventType,registerType
       })
         .then((res) => {
             this.loadingShow = false;
@@ -646,8 +769,8 @@ export default {
             color: #101010;
             text-align: center
           };
-          /deep/ .van-icon {
-            position: absolute;
+          .van-icon {
+            position: absolute !important;
             top: 50%;
             transform: translateY(-50%);
             right: 0
@@ -707,8 +830,8 @@ export default {
             color: #101010;
             text-align: center
           };
-          /deep/ .van-icon {
-            position: absolute;
+          .van-icon {
+            position: absolute !important;
             top: 50%;
             transform: translateY(-50%);
             right: 0
@@ -723,7 +846,7 @@ export default {
             >span {
               display: inline-block;
               &:nth-child(1) {
-                width: 20%;
+                width: 25%;
                 font-size: 14px;
                 color: #101010;
                 font-weight: bold
@@ -742,7 +865,7 @@ export default {
               box-sizing: border-box;
               color: #101010;
               height: 32px;
-              width: 65%;
+              width: 100%;
               border-radius: 6px !important;
               border: 1px solid #BBBBBB;
               position: relative;

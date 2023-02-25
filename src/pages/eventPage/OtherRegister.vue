@@ -401,7 +401,7 @@ export default {
       this.problemOverview = casuallyTemporaryStorageOtherRegisterMessage[temporaryIndex]['description'];
       this.taskDescribe = casuallyTemporaryStorageOtherRegisterMessage[temporaryIndex]['remark'];
       this.problemPicturesList = casuallyTemporaryStorageOtherRegisterMessage[temporaryIndex]['images'];
-      this.registerType = casuallyTemporaryStorageClaimRegisterMessage[temporaryIndex]['registerType']
+      this.registerType = casuallyTemporaryStorageOtherRegisterMessage[temporaryIndex]['registerType']
     },
 
     // 处理维修任务参与者

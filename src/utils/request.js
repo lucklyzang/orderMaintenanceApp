@@ -2,6 +2,7 @@ import axios from 'axios'
 import store from '@/store'
 import router from '../router'
 import Vue from 'vue';
+import qs from 'qs';
 import { removeAllLocalStorage } from "@/common/js/utils";
 import { Dialog, Toast } from 'vant';
 // 全局注册 
@@ -20,6 +21,11 @@ const service = axios.create({
 // request interceptor
 service.interceptors.request.use(
     config => {
+        if (config.method === 'get') {
+            config.paramsSerializer = function(params) {
+                return qs.stringify(params, { arrayFormat: 'repeat' })
+            }
+        };
         config.headers['HTTP_REQUEST_TYPE'] = 'new';
         if (config['url'] == 'auth/login') {
             config.headers['Content-Type'] = 'application/x-www-form-urlencoded'
@@ -27,9 +33,10 @@ service.interceptors.request.use(
         // 请求头添加token
         if (store.getters.token) {
             config.headers['Authorization'] = store.getters.token
-        }; 
+        };
         return config;
-      }, function (error) {
+    },
+    function(error) {
         //处理请求错误
         return Promise.reject(error.response);
     }
@@ -48,7 +55,7 @@ service.interceptors.response.use(
             if (error.response.hasOwnProperty('status')) {
                 if (error.response.status === 401) {
                     removeAllLocalStorage();
-                    if (!store.getters.overDueWay) { 
+                    if (!store.getters.overDueWay) {
                         Toast({
                             message: 'token已过期,请重新登录',
                             duration: 1000
@@ -57,19 +64,19 @@ service.interceptors.response.use(
                             router.push({
                                 path: "/"
                             })
-                        },2000);
-                     } else {
+                        }, 2000);
+                    } else {
                         router.push({
                             path: "/"
                         })
                     }
                 }
             }
-        };		
-      // 处理响应错误
+        };
+        // 处理响应错误
         var config = error.config;
         // 判断是否配置了重试
-        if(!config || !config.retry) {
+        if (!config || !config.retry) {
             if (Object.prototype.toString.call(error.response) === '[object Object]') {
                 if (error.response.hasOwnProperty('data')) {
                     if (error.response.data.hasOwnProperty('msg')) {
@@ -82,11 +89,11 @@ service.interceptors.response.use(
                 } else {
                     return Promise.reject(error.response)
                 }
-            }	else {
+            } else {
                 return Promise.reject(error)
             }
         };
-        if(!config.shouldRetry || typeof config.shouldRetry != 'function') {
+        if (!config.shouldRetry || typeof config.shouldRetry != 'function') {
             if (Object.prototype.toString.call(error.response) === '[object Object]') {
                 if (error.response.hasOwnProperty('data')) {
                     if (error.response.data.hasOwnProperty('msg')) {
@@ -99,12 +106,12 @@ service.interceptors.response.use(
                 } else {
                     return Promise.reject(error.response)
                 }
-            }	else {
+            } else {
                 return Promise.reject(error)
             }
         };
         //判断是否满足重试条件
-        if(!config.shouldRetry(error)) {
+        if (!config.shouldRetry(error)) {
             if (Object.prototype.toString.call(error.response) === '[object Object]') {
                 if (error.response.hasOwnProperty('data')) {
                     if (error.response.data.hasOwnProperty('msg')) {
@@ -117,30 +124,30 @@ service.interceptors.response.use(
                 } else {
                     return Promise.reject(error.response)
                 }
-            }	else {
+            } else {
                 return Promise.reject(error)
             }
         };
         // 设置重置次数，默认为0
         config.__retryCount = config.__retryCount || 0;
         // 判断是否超过了重试次数
-         if(config.__retryCount > config.retry) {
-             if (Object.prototype.toString.call(error.response) === '[object Object]') {
-                 if (error.response.hasOwnProperty('data')) {
-                     if (error.response.data.hasOwnProperty('msg')) {
-                         return Promise.reject(error.response.data.msg)
-                     } else if (error.response.data.hasOwnProperty('message')) {
+        if (config.__retryCount > config.retry) {
+            if (Object.prototype.toString.call(error.response) === '[object Object]') {
+                if (error.response.hasOwnProperty('data')) {
+                    if (error.response.data.hasOwnProperty('msg')) {
+                        return Promise.reject(error.response.data.msg)
+                    } else if (error.response.data.hasOwnProperty('message')) {
                         return Promise.reject(error.response.data.message)
                     } else {
-                         return Promise.reject(error.response.data)
-                     }
-                 } else {
-                     return Promise.reject(error.response)
-                 }
-             }	else {
-                 return Promise.reject(error)
-             }
-         };
+                        return Promise.reject(error.response.data)
+                    }
+                } else {
+                    return Promise.reject(error.response)
+                }
+            } else {
+                return Promise.reject(error)
+            }
+        };
         //重试次数自增
         config.__retryCount += 1;
         //延时处理

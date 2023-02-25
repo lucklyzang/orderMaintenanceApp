@@ -11,7 +11,7 @@
 			</div>
 			<ul class="list-module">
 				<li v-for ="(item,index) in datalist" @click="clickItem(item,index)" :key="index" 
-				:class="{'liStyle': !multiple ? (item.value == currentFullValue['value']) && currentFullValue['value'] : item['selected'],
+				:class="{'liStyle': !multiple ? (item.value == currentFullValue['value']) && currentFullValue['value'] != null : item['selected'],
 					'liSelectItemStyle': item.text.indexOf('请选择')!=-1
 					}
 				">
@@ -72,7 +72,7 @@
         handler: function(newVal, oldVal) {
 		   //单选
 		   if (!this.multiple) {
-			 if (newVal == null) {
+			 if (newVal == null || !isNaN(newVal)) {
 				this.current = this.datalist.length > 0 ? this.datalist.filter((item) => { return item.value == newVal})[0]['text'] : '';
 		   	 	this.currentFullValue = this.datalist.length > 0 ? this.datalist.filter((item) => { return item.value == newVal})[0] : null
 			 } else {
@@ -84,7 +84,8 @@
 					this.current = this.datalist.length > 0 ? this.datalist.filter((item) => { return item.value == newVal})[0]['text'] : '';
 				} else {
 					let temporaryArray = [];
-					for (let it of this.itemData) {
+					this.selectedItem = this.datalist.filter((innerItem) => { return innerItem['selected'] == true });
+					for (let it of this.datalist) {
 						if (it['selected']) {
 							temporaryArray.push(it['text'])
 						}
@@ -120,7 +121,7 @@
 		this.datalist = this.itemData;
 		//单选
 		if (!this.multiple) {
-			if (this.curData == null) {
+			if (this.curData == null || !isNaN(this.curData )) {
 				this.current = this.datalist.length > 0 ? this.datalist.filter((item) => { return item.value == this.curData})[0]['text'] : '';
 				this.currentFullValue = this.datalist.length > 0 ? this.datalist.filter((item) => { return item.value == this.curData})[0] : null
 			} else {
@@ -132,6 +133,7 @@
 					this.current = this.datalist.length > 0 ? this.datalist.filter((item) => { return item.value == this.curData})[0]['text'] : '';
 				} else {
 					let temporaryArray = [];
+					this.selectedItem = this.datalist.filter((innerItem) => { return innerItem['selected'] == true });
 					for (let it of this.itemData) {
 						if (it['selected']) {
 							temporaryArray.push(it['text'])
@@ -146,6 +148,8 @@
 				this.isShow = false;
 				if (this.multiple) {
 					this.$emit('change',this.selectedItem)
+				} else {
+					this.$emit('change',this.curData)
 				}
 			}
 		}, false)
@@ -165,8 +169,19 @@
 
 		search(e){
 			this.searchValue = e.target.value;
+			//单选
+			if (!this.multiple) {
+				this.current = '请选择'
+			} else {
+				this.current = '请选择'
+			};
 			this.datalist = this.itemData.filter((item)=>{
 				return item.text.indexOf(this.searchValue) != -1
+			});
+			this.datalist.forEach(element => {
+				if (element['value']) {
+					element['selected'] = false
+				}
 			})
 		},
         
@@ -181,6 +196,7 @@
 				if (item['value'] == null) { return };
 				this.datalist[index]['selected'] = !this.datalist[index]['selected'];
 				this.selectedItem = this.datalist.filter((innerItem) => { return innerItem['selected'] == true });
+				this.$emit('change',this.selectedItem);
 				let temporaryArray = [];
 				for (let it of this.selectedItem) {
 					temporaryArray.push(it['text'])
@@ -198,9 +214,43 @@
 
 		//供父组件调用的清除选择框值的方法
 		clearSelectValue () {
-			this.current = this.datalist[0]['text'];
-			this.currentFullValue = this.datalist[0];
-			this.$emit('change',{text:this.datalist[0]['text'],value: null})
+			// 单选
+			if (!this.multiple) {
+				this.current = this.datalist[0]['text'];
+				this.currentFullValue = this.datalist[0];
+				this.$emit('change',{text:this.datalist[0]['text'],value: null})
+			} else {
+				this.datalist.forEach((element) => { 
+					if (element['value']) {
+						element['selected'] = false
+					}
+				});
+				this.selectedItem = this.datalist.filter((innerItem) => { return innerItem['selected'] == true });
+				this.$emit('change',this.selectedItem);
+				let temporaryArray = [];
+				for (let it of this.selectedItem) {
+					temporaryArray.push(it['text'])
+				};
+				this.current = temporaryArray.join(',')
+			}
+		},
+
+		//供父组件调用的全选的方法
+		selectAllValue () {
+			if (this.multiple) {
+				this.datalist.forEach(element => { 
+					if (element['value']) {
+						element['selected'] = true
+					}
+				});
+				this.selectedItem = this.datalist.filter((innerItem) => { return innerItem['selected'] == true });
+				this.$emit('change',this.selectedItem);
+				let temporaryArray = [];
+				for (let it of this.selectedItem) {
+					temporaryArray.push(it['text'])
+				};
+				this.current = temporaryArray.join(',')
+			}
 		}
 	}
 }

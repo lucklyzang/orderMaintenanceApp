@@ -433,7 +433,7 @@ export default {
       this.problemOverview = casuallyTemporaryStorageRepairsRegisterMessage[temporaryIndex]['description'];
       this.taskDescribe = casuallyTemporaryStorageRepairsRegisterMessage[temporaryIndex]['remark'];
       this.problemPicturesList = casuallyTemporaryStorageRepairsRegisterMessage[temporaryIndex]['images'];
-      this.registerType = casuallyTemporaryStorageClaimRegisterMessage[temporaryIndex]['registerType']
+      this.registerType = casuallyTemporaryStorageRepairsRegisterMessage[temporaryIndex]['registerType']
     },
 
     // 公共修改是否暂存的方法

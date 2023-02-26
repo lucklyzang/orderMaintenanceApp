@@ -1057,7 +1057,7 @@ export default {
                 this.currentStructure = this.structureOption.filter((innerItem) => { return innerItem.value == this.enterEventRegisterPageMessage['structId']})[0]['text']
               };
               if (this.currentStructure != '请选择') {
-                if (this.enterEventRegisterPageMessage['patrolItemName'] == '' || this.registerType == 2) {
+                if (this.enterEventRegisterPageMessage['patrolItemName'] == '' && this.registerType == 2) {
                   this.getDepartmentByStructureId(this.structureOption.filter((item) => { return item['text'] == this.currentStructure})[0]['value'],false,true)
                 } else {
                   this.getDepartmentByStructureId('',false,true)

@@ -401,7 +401,8 @@ export default {
       this.problemOverview = casuallyTemporaryStorageOtherRegisterMessage[temporaryIndex]['description'];
       this.taskDescribe = casuallyTemporaryStorageOtherRegisterMessage[temporaryIndex]['remark'];
       this.problemPicturesList = casuallyTemporaryStorageOtherRegisterMessage[temporaryIndex]['images'];
-      this.registerType = casuallyTemporaryStorageOtherRegisterMessage[temporaryIndex]['registerType']
+      this.registerType = casuallyTemporaryStorageOtherRegisterMessage[temporaryIndex]['registerType'];
+      this.itemName = casuallyTemporaryStorageOtherRegisterMessage[temporaryIndex]['registerType']
     },
 
     // 处理维修任务参与者
@@ -693,7 +694,7 @@ export default {
                 this.currentStructure = this.structureOption.filter((innerItem) => { return innerItem.value == this.enterEventRegisterPageMessage['structId']})[0]['text']
               };
               if (this.currentStructure != '请选择') {
-                if (this.enterEventRegisterPageMessage['patrolItemName'] == '' || this.registerType == 2) {
+                if (this.enterEventRegisterPageMessage['patrolItemName'] == '' && this.registerType == 2) {
                   this.getDepartmentByStructureId(this.structureOption.filter((item) => { return item['text'] == this.currentStructure})[0]['value'],false,true)
                 } else {
                   this.getDepartmentByStructureId('',false,true)

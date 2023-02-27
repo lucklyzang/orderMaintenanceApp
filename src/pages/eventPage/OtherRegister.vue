@@ -302,7 +302,11 @@ export default {
       pushHistory();
       that.gotoURL(() => {
         pushHistory();
-        that.$router.push({path: '/eventList'})
+        if (that.enterEventRegisterPageMessage['enterRegisterEventPageSource']) {
+          that.$router.push({path: that.enterEventRegisterPageMessage['enterRegisterEventPageSource']})
+        } else {
+          that.$router.push({path: '/eventList'})
+        }
       })
     };
     // 如果是从异常巡查项从处进来的，则回显区域名称
@@ -346,7 +350,11 @@ export default {
     ...mapMutations(["changeCatchComponent","changeOverDueWay","changeTimeMessage","changeOssMessage","changeDepartmentCheckList","changetransportTypeMessage","changeTemporaryStorageOtherRegisterMessage"]),
 
     onClickLeft() {
-      this.$router.push({ path: "/eventList"})
+       if (this.enterEventRegisterPageMessage['enterRegisterEventPageSource']) {
+        this.$router.push({path: this.enterEventRegisterPageMessage['enterRegisterEventPageSource']})
+      } else {
+        this.$router.push({path: '/eventList'})
+      }
     },
 
     // 任务开始事件弹框确认事件
@@ -982,17 +990,15 @@ export default {
       this.overlayShow = true;
       eventregister(data).then((res) => {
         if (res && res.data.code == 200) {
-          this.$toast(`${res.data.msg}`);
-          // 更改该检查项下是否有登记的事件(从异常巡查项处进入该页面创建)
-          if (this.enterEventRegisterPageMessage['patrolItemName']) {
-            let tempraryMessage = this.departmentCheckList;
-            tempraryMessage['checkItemList'][this.enterProblemRecordMessage[index]]['isHaveEventRegister'] = 1;
-            this.changeDepartmentCheckList(tempraryMessage)
-          };
+          this.$Alert({message:"登记成功",duration:3000,type:'success'});
           //登记成功后清除该列表暂存信息
           let casuallyTemporaryStorageOtherRegisterMessage = this.temporaryStorageOtherRegisterMessage.filter((item) => { return item.id != this.$route.query.eventId});
           this.changeTemporaryStorageOtherRegisterMessage(casuallyTemporaryStorageOtherRegisterMessage)
-          this.$router.push({path:'/eventList'})
+          if (this.enterEventRegisterPageMessage['enterRegisterEventPageSource']) {
+            this.$router.push({path: this.enterEventRegisterPageMessage['enterRegisterEventPageSource']})
+          } else {
+            this.$router.push({path: '/eventList'})
+          }
         } else {
           this.imgOnlinePathArr = [];
           this.$dialog.alert({
@@ -1046,6 +1052,8 @@ export default {
           } else {
             casuallyTemporaryStorageOtherRegisterMessage.push({
               id: uuidv4(),
+              checkItemId: this.enterEventRegisterPageMessage['checkItemId'],
+              depId: this.enterEventRegisterPageMessage['depId'],
               eventType: this.eventTypeTransform(this.eventType),
               registerType: this.registerTypeTransform(this.enterEventRegisterPageMessage['registerType']),
               createTime: this.getNowFormatDate(this.currentFindTime),
@@ -1064,6 +1072,8 @@ export default {
         } else {
           casuallyTemporaryStorageOtherRegisterMessage.push({
             id: uuidv4(),
+            checkItemId: this.enterEventRegisterPageMessage['checkItemId'],
+            depId: this.enterEventRegisterPageMessage['depId'],
             eventType: this.eventTypeTransform(this.eventType),
             registerType: this.registerTypeTransform(this.enterEventRegisterPageMessage['registerType']),
             createTime: this.getNowFormatDate(this.currentFindTime),
@@ -1080,9 +1090,12 @@ export default {
           })
       };
       this.changeTemporaryStorageOtherRegisterMessage(casuallyTemporaryStorageOtherRegisterMessage);
-      this.$toast('暂存成功');
-      console.log('暂存的其它数据',this.temporaryStorageOtherRegisterMessage);
-      this.$router.push({path: '/eventList'})
+      this.$Alert({message:"暂存成功",duration:3000,type:'success'});
+      if (this.enterEventRegisterPageMessage['enterRegisterEventPageSource']) {
+        this.$router.push({path: this.enterEventRegisterPageMessage['enterRegisterEventPageSource']})
+      } else {
+        this.$router.push({path: '/eventList'})
+      }
     }
   }
 };

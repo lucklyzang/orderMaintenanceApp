@@ -305,7 +305,11 @@ export default {
       that.gotoURL(() => {
         that.commonIsTemporaryStorageMethods();
         pushHistory();
-        that.$router.push({path: '/eventList'})
+        if (that.enterEventRegisterPageMessage['enterRegisterEventPageSource']) {
+          that.$router.push({path: that.enterEventRegisterPageMessage['enterRegisterEventPageSource']})
+        } else {
+          that.$router.push({path: '/eventList'})
+        }
       })
     };
     console.log('页面信息',this.enterEventRegisterPageMessage);
@@ -350,8 +354,11 @@ export default {
     ...mapMutations(["changeCatchComponent","changeOverDueWay","changeTimeMessage","changeOssMessage","changeDepartmentCheckList","changetransportTypeMessage","changeTemporaryStorageRepairsRegisterMessage"]),
 
     onClickLeft() {
-      this.commonIsTemporaryStorageMethods();
-      this.$router.push({ path: "/eventList"})
+      if (this.enterEventRegisterPageMessage['enterRegisterEventPageSource']) {
+        this.$router.push({path: this.enterEventRegisterPageMessage['enterRegisterEventPageSource']})
+      } else {
+        this.$router.push({path: '/eventList'})
+      }
     },
 
     // 任务开始事件弹框确认事件
@@ -933,6 +940,8 @@ export default {
           } else {
             casuallyTemporaryStorageRepairsRegisterMessage.push({
               id: uuidv4(),
+              checkItemId: this.enterEventRegisterPageMessage['checkItemId'],
+              depId: this.enterEventRegisterPageMessage['depId'],
               eventType: this.eventTypeTransform(this.eventType),
               registerType: this.registerTypeTransform(this.enterEventRegisterPageMessage['registerType']),
               createTime: this.getNowFormatDate(this.currentFindTime),
@@ -951,6 +960,8 @@ export default {
         } else {
           casuallyTemporaryStorageRepairsRegisterMessage.push({
             id: uuidv4(),
+            checkItemId: this.enterEventRegisterPageMessage['checkItemId'],
+            depId: this.enterEventRegisterPageMessage['depId'],
             eventType: this.eventTypeTransform(this.eventType),
             registerType: this.registerTypeTransform(this.enterEventRegisterPageMessage['registerType']),
             createTime: this.getNowFormatDate(this.currentFindTime),
@@ -967,8 +978,12 @@ export default {
           })
       };
       this.changeTemporaryStorageRepairsRegisterMessage(casuallyTemporaryStorageRepairsRegisterMessage);
-      this.$toast('暂存成功');
-      this.$router.push({path: '/eventList'})
+      this.$Alert({message:"暂存成功",duration:3000,type:'success'});
+      if (this.enterEventRegisterPageMessage['enterRegisterEventPageSource']) {
+        this.$router.push({path: this.enterEventRegisterPageMessage['enterRegisterEventPageSource']})
+      } else {
+        this.$router.push({path: '/eventList'})
+      }
     },
 
     // 报修事件
@@ -1060,17 +1075,15 @@ export default {
       this.overlayShow = true;
       eventregister(data).then((res) => {
         if (res && res.data.code == 200) {
-          this.$toast(`${res.data.msg}`);
-          // 更改该检查项下是否有登记的事件(从异常巡查项处进入该页面创建)
-          if (this.enterEventRegisterPageMessage['patrolItemName']) {
-            let tempraryMessage = this.departmentCheckList;
-            tempraryMessage['checkItemList'][this.enterProblemRecordMessage[index]]['isHaveEventRegister'] = 1;
-            this.changeDepartmentCheckList(tempraryMessage)
-          };
+          this.$Alert({message:"报修成功",duration:3000,type:'success'});
           //登记成功后清除该列表暂存信息
           let casuallyTemporaryStorageRepairsRegisterMessage = this.temporaryStorageRepairsRegisterMessage.filter((item) => { return item.id != this.$route.query.eventId});
           this.changeTemporaryStorageRepairsRegisterMessage(casuallyTemporaryStorageRepairsRegisterMessage);
-          this.$router.push({path:'/eventList'});
+          if (this.enterEventRegisterPageMessage['enterRegisterEventPageSource']) {
+            this.$router.push({path: this.enterEventRegisterPageMessage['enterRegisterEventPageSource']})
+          } else {
+            this.$router.push({path: '/eventList'})
+          }
         } else {
           this.imgOnlinePathArr = [];
           this.$dialog.alert({

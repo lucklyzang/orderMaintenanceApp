@@ -479,8 +479,8 @@
         <div class="btn-box">
           <span class="operate-one" @click="quitEvent">退出</span>
           <span class="operate-two" @click="temporaryStorageEvent">暂存</span>
-          <span class="operate-three" @click="repairsRegisterEvent" v-if="currentStepIndex == 0">保存</span>
-          <span class="operate-three" @click="repairsEvent" v-if="currentStepIndex != 0">保存</span>
+          <span class="operate-three" @click="repairsRegisterEvent" v-if="currentStepIndex == 0">提交</span>
+          <span class="operate-three" @click="repairsEvent" v-if="currentStepIndex != 0">提交</span>
         </div>
       </div>
     </div>
@@ -603,8 +603,12 @@ export default {
       that.gotoURL(() => {
         pushHistory();
         //清除拾金不昧签名相关信息
-        this.changeClaimRegisterElectronicSignatureMessage({receiverSignature:[]});
-        that.$router.push({path: '/eventList'})
+        that.changeClaimRegisterElectronicSignatureMessage({receiverSignature:[]});
+        if (that.enterEventRegisterPageMessage['enterRegisterEventPageSource']) {
+          that.$router.push({path: that.enterEventRegisterPageMessage['enterRegisterEventPageSource']})
+        } else {
+          that.$router.push({path: '/eventList'})
+        }
       })
     };
     // 如果是从异常巡查项从处进来的，则回显区域名称
@@ -651,7 +655,11 @@ export default {
     onClickLeft() {
       //清除拾金不昧签名相关信息
       this.changeClaimRegisterElectronicSignatureMessage({});
-      this.$router.push({ path: "/eventList"})
+      if (this.enterEventRegisterPageMessage['enterRegisterEventPageSource']) {
+        this.$router.push({path: this.enterEventRegisterPageMessage['enterRegisterEventPageSource']})
+      } else {
+        this.$router.push({path: '/eventList'})
+      }
     },
 
     // 拾的时间弹框确认事件
@@ -1351,17 +1359,15 @@ export default {
       this.overlayShow = true;
       eventregister(data).then((res) => {
         if (res && res.data.code == 200) {
-          this.$toast(`${res.data.msg}`);
-          // 更改该检查项下是否有登记的事件(从异常巡查项处进入该页面创建)
-          if (this.enterEventRegisterPageMessage['patrolItemName']) {
-            let tempraryMessage = this.departmentCheckList;
-            tempraryMessage['checkItemList'][this.enterProblemRecordMessage[index]]['isHaveEventRegister'] = 1;
-            this.changeDepartmentCheckList(tempraryMessage)
-          };
+          this.$Alert({message:"提交成功!",duration:3000,type:'success'});
           // 提交成功后清除该列表暂存信息
           let casuallyTemporaryStorageClaimRegisterMessage = this.temporaryStorageClaimRegisterMessage.filter((item) => { return item.id != this.$route.query.eventId});
           this.changeTemporaryStorageClaimRegisterMessage(casuallyTemporaryStorageClaimRegisterMessage);
-          this.$router.push({path:'/eventList'});
+          if (this.enterEventRegisterPageMessage['enterRegisterEventPageSource']) {
+            this.$router.push({path: this.enterEventRegisterPageMessage['enterRegisterEventPageSource']})
+          } else {
+            this.$router.push({path: '/eventList'})
+          }
         } else {
           this.imgOnlinePathArr = [];
           this.$dialog.alert({
@@ -1539,7 +1545,7 @@ export default {
       eventHandover(data).then((res) => {
         this.imgOnlinePathArr = [];
         if (res && res.data.code == 200) {
-          this.$toast(`${res.data.msg}`);
+          this.$Alert({message:"保存成功",duration:3000,type:'success'});
           this.$router.push({path:'/eventList'});
         } else {
           this.$dialog.alert({
@@ -1651,6 +1657,8 @@ export default {
           } else {
             casuallyTemporaryStorageClaimRegisterMessage.push({
               id: uuidv4(),
+              checkItemId: this.enterEventRegisterPageMessage['checkItemId'],
+              depId: this.enterEventRegisterPageMessage['depId'],
               eventType: this.eventTypeTransform(this.eventType),
               registerType: this.registerTypeTransform(this.enterEventRegisterPageMessage['registerType']),
               createTime: this.getNowFormatDate(this.currentFindTime),
@@ -1669,6 +1677,8 @@ export default {
         } else {
           casuallyTemporaryStorageClaimRegisterMessage.push({
             id: uuidv4(),
+            checkItemId: this.enterEventRegisterPageMessage['checkItemId'],
+            depId: this.enterEventRegisterPageMessage['depId'],
             eventType: this.eventTypeTransform(this.eventType),
             registerType: this.registerTypeTransform(this.enterEventRegisterPageMessage['registerType']),
             createTime: this.getNowFormatDate(this.currentFindTime),
@@ -1685,8 +1695,12 @@ export default {
           })
       };
       this.changeTemporaryStorageClaimRegisterMessage(casuallyTemporaryStorageClaimRegisterMessage);
-      this.$toast('暂存成功');
-      this.$router.push({path: '/eventList'})
+      this.$Alert({message:"暂存成功",duration:3000,type:'success'});
+      if (this.enterEventRegisterPageMessage['enterRegisterEventPageSource']) {
+        this.$router.push({path: this.enterEventRegisterPageMessage['enterRegisterEventPageSource']})
+      } else {
+        this.$router.push({path: '/eventList'})
+      }
     }
   }
 };

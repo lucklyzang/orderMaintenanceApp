@@ -211,8 +211,10 @@ export default {
     // 发布留言事件
     addMessageEvent () {
       let temporaryEnterPostMessagePageMessage = this.enterPostMessagePageMessage;
+      temporaryEnterPostMessagePageMessage['storageRadio'] = true;
       temporaryEnterPostMessagePageMessage['collect'] = this.patrolTaskListMessage.configName;
       temporaryEnterPostMessagePageMessage['workers'] = this.patrolTaskListMessage.workers;
+      temporaryEnterPostMessagePageMessage['enterPostMessagePageSource'] = '/workOrderDetails';
       this.changeEnterPostMessagePageMessage(temporaryEnterPostMessagePageMessage);
       this.$router.push({path: '/postMessage'})
     },
@@ -379,7 +381,7 @@ export default {
       })
     },
 
-    // 已打卡成功的科室获取寻常项详情
+    // 已打卡成功的科室获取巡查项详情
     departmentFinshClock (depId,text) {
       this.loadingShow = true;
       this.overlayShow = true;

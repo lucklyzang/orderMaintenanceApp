@@ -17,67 +17,52 @@
                 </div>
             </div>
             <div class="backlog-task-list-box" ref="scrollBacklogTask">
-              <div class="backlog-task-list" v-for="(item,index) in backlogTaskList" :key="index">
+              <div class="backlog-task-list" v-for="(item,index) in fullBacklogTaskList" :key="index">
                   <div class="backlog-task-top">
                       <div class="backlog-task-top-left">
-                          <span>事件类型</span>
+                          <span>{{ item.userName }}</span>
                       </div>
-                      <div class="backlog-task-top-right">
-                          <span>{{ item.state }}</span>
+                      <div class="backlog-task-top-right" v-show="item.collect">
+                          <span>{{ item.collect }}</span>
                       </div>
                   </div>
                   <div class="backlog-task-content">
                     <div class="message-content">
-                        一号楼二楼楼梯口不晓得谁倒了一桶油，差点滑倒，后来人注意一下！
+                      {{ item.content }}
                     </div>
                     <div class="image-area">
-                        <img :src="subtractIconPng" alt="" @click="enlareEvent(subtractIconPng)">
-                        <img :src="subtractIconPng" alt="">
-                        <img :src="subtractIconPng" alt="">
-                        <img :src="subtractIconPng" alt="">
+                      <img :src="innerItem" alt=""  v-for="(innerItem,innerIndex) in item['images']" :key="innerIndex" @click="enlareEvent(innerItem)">
                     </div>
                     <div class="message-line-one">
                         <div class="message-line-left">
-                            <span>2023-02-02  16:31</span>
-                            <span @click="deleteGuestbookEvent(item)">删除</span>
+                            <span>{{ item.createTime }}</span>
+                            <span @click="deleteGuestbookEvent(item)" v-show="item.userId == workerId">删除</span>
                         </div>
                         <div class="message-line-right">
-                            <span @click="giveLike(item)">
+                            <span @click="giveLike(item,item.supports)">
                                 <img :src="likeIconPng" alt="">
-                                3
+                                {{ item.supports.length }}
                             </span>
                             <span>
                                 <img :src="messageIconPng" alt="">
-                                3
+                                 {{ item.comments.length }}
                             </span>
                         </div>
                     </div>
                     <div class="like-person">
                         <img :src="haveLikeIconPng" alt="">
-                        <span>张总、王主管、李领班</span>
+                        <span>{{ extractLikePerson(item.supports) }}</span>
                     </div>
                     <div class="comment">
-                       <div class="comment-list">
+                       <div class="comment-list" v-for="(innerItem,innerIndex) in item.comments" :key="innerIndex">
                            <div class="comment-top">
-                               <span>2023-02-02  11:31</span>
-                               <span @click="deleteCommentEvent(item)">删除</span>
+                               <span>{{ innerItem.createTime }}</span>
+                               <span @click="deleteCommentEvent(innerItem)" v-show="innerItem.userId == workerId">删除</span>
                            </div>
                            <div class="comment-bottom">
-                               <span>泰罗奥特曼:</span>
+                               <span>{{ innerItem.userName }}:</span>
                                <span>
-                                   我四点去的时候保洁已经打扫好了
-                               </span>
-                           </div>
-                       </div>
-                       <div class="comment-list">
-                           <div class="comment-top">
-                               <span>2023-02-02  11:31</span>
-                               <span>删除</span>
-                           </div>
-                           <div class="comment-bottom">
-                               <span>泰罗奥特曼:</span>
-                               <span>
-                                   我四点去的时候保洁已经打扫好了
+                                  {{ innerItem.content }}
                                </span>
                            </div>
                        </div>
@@ -87,6 +72,8 @@
                       <van-field
                             v-model="commentContent"
                             rows="1"
+                            @focus="(event) => { commontFocus(item) }"
+                            @blur="commentBlur"
                             autosize
                             type="textarea"
                             placeholder="评论"
@@ -103,7 +90,7 @@
         </div>
         </div>
     </div>
-    <div class="comment-area">
+    <div class="comment-area" v-show="showCommentArea">
       <van-field
         v-model="commentContent"
         rows="1"
@@ -111,7 +98,7 @@
         type="textarea"
         placeholder="说点什么吧..."
       />
-      <span @click="commentEvent">发送</span>
+      <span @click="commentEvent()">发送</span>
     </div>
     <div class="img-dislog-box">
         <van-dialog v-model="imgBoxShow" width="98%" :close-on-click-overlay="true" confirm-button-text="关闭">
@@ -135,7 +122,8 @@ export default {
     return {
       overlayShow: false,
       dateQueryRangeShow: false,
-      isOnlyMe: true,
+      showCommentArea: false,
+      currentMessageId: '',
       backlogEmptyShow: false,
       screenDialogShow: false,
       isShowBacklogTaskNoMoreData: false,
@@ -143,31 +131,17 @@ export default {
       currentImgUrl: '',
       currentDateRange: '',
       commentContent: '',
+      eventTime: 0,
+      timeOne: null,
+      totalCount: '',
+      currentPage: 1,
+      pageSize: 10,
       imgBoxShow: false,
-      backlogTaskList: [
-        {
-          state: 1,
-          eventType: '拾金不昧',
-          problemType: '飒飒飒飒',
-          describe: '飒飒飒飒啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊'
-        },
-         {
-          state: 1,
-          eventType: '拾金不昧',
-          problemType: '飒飒飒飒',
-          describe: '飒飒飒飒啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊'
-        },
-         {
-          state: 1,
-          eventType: '拾金不昧',
-          problemType: '飒飒飒飒',
-          describe: '飒飒飒飒啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊'
-        }
-      ],
+      fullBacklogTaskList: [],
+      backlogTaskList: [],
       loadingShow: false,
       queryDataSuccess: false,
       loadText: '加载中',
-      subtractIconPng: require("@/common/images/home/subtract-icon.png"),
       likeIconPng: require("@/common/images/home/like-icon.png"),
       haveLikeIconPng: require("@/common/images/home/have-like-icon.png"),
       messageIconPng: require("@/common/images/home/message-icon.png"),
@@ -178,12 +152,25 @@ export default {
   mounted() {
     // 控制设备物理返回按键
     this.deviceReturn("/home");
+    this.$nextTick(()=> {
+      this.initScrollChange()
+    });
     // 获取留言列表
     this.getGuestBook({
-      date: '',
+      proId: this.proId,
+      system: 6,
+      date: '2023-02-27',
       userId: this.workerId,
-      collect: ''
-    })
+      collect: '',
+      page: this.currentPage,
+      limit: this.pageSize
+    },false)
+  },
+
+   beforeDestroy () {
+    if (this.timeOne) {
+      clearTimeout(this.timeOne)
+    }
   },
 
   watch: {},
@@ -209,20 +196,59 @@ export default {
       this.$router.push({path: '/home'})
     },
 
+    beforeRouteEnter(to, from, next) {
+      next(vm=>{
+        if (from.path == '/postMessage') {
+          // 判断是否回显暂存数据
+          this.storageRadio == this.enterPostMessagePageMessage['storageRadio']
+        }
+      });
+      next() 
+    },
+
+    // 评论框获得焦点事件
+    commontFocus (item) {
+      this.currentMessageId = item.id;
+      this.showCommentArea = true
+    },
+
+    // 评论框失去焦点事件
+    commentBlur () {
+    },
+
+    // 提取点赞人员
+    extractLikePerson (personArray) {
+      if (personArray.length == 0) { return };
+      let temporaryArray = [];
+      for (let item of personArray) {
+        temporaryArray.push(item['userName'])
+      };
+      return temporaryArray.join('、')
+    },
+
     // 只看我参与的任务复选框值变化事件
     checkboxChangeEvent (checked) {
+      this.currentPage = 1;
       if (checked) {
         this.getGuestBook({
-          date: '',
+          proId: this.proId,
+          system: 6,
+          date: '2023-02-27',
           userId: this.workerId,
-          collect: ''
-        })
+          collect: '',
+          page: 1,
+          limit: this.pageSize
+        },true)
       } else {
         this.getGuestBook({
-          date: '',
+          proId: this.proId,
+          system: 6,
+          date: '2023-02-27',
           userId: '',
-          collect: ''
-        })
+          collect: '',
+          page: 1,
+          limit: this.pageSize
+        },true)
       }
     },
 
@@ -230,7 +256,9 @@ export default {
     postMessageEvent () {
       let temporaryEnterPostMessagePageMessage = this.enterPostMessagePageMessage;
       temporaryEnterPostMessagePageMessage['collect'] = '';
-      temporaryEnterPostMessagePageMessage['workers'] = '';
+      temporaryEnterPostMessagePageMessage['workers'] = [];
+      temporaryEnterPostMessagePageMessage['storageRadio'] = this.storageRadio;
+      temporaryEnterPostMessagePageMessage['enterPostMessagePageSource'] = '/guestBook';
       this.changeEnterPostMessagePageMessage(temporaryEnterPostMessagePageMessage);
       this.$router.push({path: '/postMessage'})
     },
@@ -241,20 +269,73 @@ export default {
       this.imgBoxShow = true
     },
 
+    // 事件列表注册滚动事件
+    initScrollChange () {
+      let boxBackScroll = this.$refs['scrollBacklogTask'];
+      boxBackScroll.addEventListener('scroll',this.eventListLoadMore,true)
+    },
+
+    // 事件列表加载事件
+    eventListLoadMore () {
+      let boxBackScroll = this.$refs['scrollBacklogTask'];
+      if (Math.ceil(boxBackScroll.scrollTop) + boxBackScroll.offsetHeight >= boxBackScroll.scrollHeight) {
+        if (this.eventTime) {return};
+        this.eventTime = 1;
+        this.timeTwo = setTimeout(() => {
+          let totalPage = Math.ceil(this.totalCount/this.pageSize);
+          if (this.currentPage >= totalPage) {
+            this.isShowBacklogTaskNoMoreData = true
+          } else {
+            this.isShowBacklogTaskNoMoreData = false;
+            this.currentPage = this.currentPage + 1;
+            if (this.storageRadio) {
+              this.getGuestBook({
+                proId: this.proId,
+                system: 6,
+                date: '2023-02-27',
+                userId: this.workerId,
+                collect: '',
+                page: this.currentPage,
+                limit: this.pageSize
+              },false)
+            } else {
+              this.getGuestBook({
+                proId: this.proId,
+                system: 6,
+                date: '2023-02-27',
+                userId: '',
+                collect: '',
+                page: this.currentPage,
+                limit: this.pageSize
+              },false)
+            }
+          };
+          this.eventTime = 0;
+          console.log('事件列表滚动了',boxBackScroll.scrollTop, boxBackScroll.offsetHeight, boxBackScroll.scrollHeight)
+        },300)
+      }
+    },
+
     // 获取留言簿列表
-    getGuestBook (data) {
+    getGuestBook (data,flag) {
       this.loadingShow = true;
       this.overlayShow = true;
       this.backlogEmptyShow = false;
+      this.isShowBacklogTaskNoMoreData = false;
       this.loadText = '加载中';
-      this.backlogTaskList = [];
+      if (flag) {
+        this.fullBacklogTaskList = []
+      };
       queryGuestBook(data).then((res) => {
         this.loadingShow = false;
         this.overlayShow = false;
         if (res && res.data.code == 200) {
-          if (res.data.data.length == 0) {
+          this.backlogTaskList = res.data.data.list;
+          this.totalCount = res.data.data.count;
+          this.fullBacklogTaskList = this.fullBacklogTaskList.concat(this.backlogTaskList);
+          if (this.fullBacklogTaskList.length == 0) {
             this.backlogEmptyShow = true
-          };
+          }
           console.log('留言',res.data.data)
         } else {
           this.$toast({
@@ -283,18 +364,26 @@ export default {
         this.overlayShow = false;
         if (res && res.data.code == 200) {
           if (this.storageRadio) {
-            this.getGuestBook({
-              date: '',
-              userId: this.workerId,
-              collect: ''
-            })
-          } else {
-            this.getGuestBook({
-              date: '',
-              userId: '',
-              collect: ''
-            })
-          }
+              this.getGuestBook({
+                proId: this.proId,
+                system: 6,
+                date: '2023-02-27',
+                userId: this.workerId,
+                collect: '',
+                page: 1,
+                limit: this.pageSize
+              },true)
+            } else {
+              this.getGuestBook({
+                proId: this.proId,
+                system: 6,
+                date: '2023-02-27',
+                userId: '',
+                collect: '',
+                page: 1,
+                limit: this.pageSize
+              },true)
+            }
         } else {
           this.$toast({
             type: 'fail',
@@ -322,18 +411,26 @@ export default {
         this.overlayShow = false;
         if (res && res.data.code == 200) {
           if (this.storageRadio) {
-            this.getGuestBook({
-              date: '',
-              userId: this.workerId,
-              collect: ''
-            })
-          } else {
-            this.getGuestBook({
-              date: '',
-              userId: '',
-              collect: ''
-            })
-          }
+              this.getGuestBook({
+                proId: this.proId,
+                system: 6,
+                date: '2023-02-27',
+                userId: this.workerId,
+                collect: '',
+                page: 1,
+                limit: this.pageSize
+              },true)
+            } else {
+              this.getGuestBook({
+                proId: this.proId,
+                system: 6,
+                date: '2023-02-27',
+                userId: '',
+                collect: '',
+                page: 1,
+                limit: this.pageSize
+              },true)
+            }
         } else {
           this.$toast({
             type: 'fail',
@@ -352,11 +449,11 @@ export default {
     },
 
     //点赞事件(可以取消自己的点赞)
-    giveLike (item) {
+    giveLike (item,itemSupports) {
       this.loadingShow = true;
       this.overlayShow = true;
       //点赞
-      if (true) {
+      if (item.supports.filter((innerItem,innerIndex) => {return innerItem['userId'] == this.workerId}).length == 0) {
          this.loadText = '点赞中';
           guestSupport({
             userId: this.workerId,
@@ -369,16 +466,24 @@ export default {
               this.overlayShow = false;
               if (this.storageRadio) {
                 this.getGuestBook({
-                  date: '',
+                  proId: this.proId,
+                  system: 6,
+                  date: '2023-02-27',
                   userId: this.workerId,
-                  collect: ''
-                })
+                  collect: '',
+                  page: 1,
+                  limit: this.pageSize
+                },true)
               } else {
                 this.getGuestBook({
-                  date: '',
+                  proId: this.proId,
+                  system: 6,
+                  date: '2023-02-27',
                   userId: '',
-                  collect: ''
-                })
+                  collect: '',
+                  page: 1,
+                  limit: this.pageSize
+                },true)
               }
             } else {
               this.$toast({
@@ -398,22 +503,30 @@ export default {
       // 取消点赞
       } else {
         this.loadText = '取消中';
-        guestCancel(item.id).then((res) => {
+        guestCancel(itemSupports.filter((innerItem) => { return innerItem['userId'] == this.workerId })[0]['id']).then((res) => {
             this.loadingShow = false;
             this.overlayShow = false;
             if (res && res.data.code == 200) {
               if (this.storageRadio) {
                 this.getGuestBook({
-                  date: '',
+                  proId: this.proId,
+                  system: 6,
+                  date: '2023-02-27',
                   userId: this.workerId,
-                  collect: ''
-                })
+                  collect: '',
+                  page: 1,
+                  limit: this.pageSize
+                },true)
               } else {
                 this.getGuestBook({
-                  date: '',
+                  proId: this.proId,
+                  system: 6,
+                  date: '2023-02-27',
                   userId: '',
-                  collect: ''
-                })
+                  collect: '',
+                  page: 1,
+                  limit: this.pageSize
+                },true)
               }
             } else {
               this.$toast({
@@ -438,10 +551,11 @@ export default {
       this.loadingShow = true;
       this.overlayShow = true;
       this.loadText = '评论中';
+      this.showCommentArea = false;
       guestCommentAdd({
         userId: this.workerId,
         userName: this.userName,
-        guestId: item.id,
+        guestId: this.currentMessageId,
         system: 6,
         proId: this.proId,
         content: this.commentContent
@@ -449,6 +563,28 @@ export default {
         this.loadingShow = false;
         this.overlayShow = false;
         if (res && res.data.code == 200) {
+          if (this.storageRadio) {
+            this.getGuestBook({
+              proId: this.proId,
+              system: 6,
+              date: '2023-02-27',
+              userId: this.workerId,
+              collect: '',
+              page: 1,
+              limit: this.pageSize
+            },true)
+          } else {
+            this.getGuestBook({
+              proId: this.proId,
+              system: 6,
+              date: '2023-02-27',
+              userId: '',
+              collect: '',
+              page: 1,
+              limit: this.pageSize
+            },true)
+          };
+          this.commentContent = ''
         } else {
           this.$toast({
             type: 'fail',
@@ -737,7 +873,7 @@ export default {
     width: 100%;
     position: fixed;
     left: 0;
-    bottom: 10px;
+    bottom: 60px;
     background: #333;
     padding: 6px 4px;
     box-sizing: border-box;
@@ -750,7 +886,10 @@ export default {
       background: #101010;
       color: #fff;
       flex: 1;
-      margin-right: 6px
+      margin-right: 6px;
+      .van-field__control {
+        color: #fff !important
+      }
     };
     /deep/ .van-cell::after {
       display: none

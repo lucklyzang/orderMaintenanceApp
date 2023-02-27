@@ -74,14 +74,17 @@
     <!-- 删除提示框   -->
     <div class="quit-info-box">
        <van-dialog v-model="quitInfoShow"  show-cancel-button width="85%"
-          @confirm="deleteSure" @cancel="deleteCancel" confirm-button-text="确定"
-          cancel-button-text="取消"
+          @confirm="deleteSure" @cancel="deleteCancel" confirm-button-text="取消"
+          cancel-button-text="确定"
         >
           <div class="dialog-title">
             <img :src="exclamationPointPng">
           </div>
+          <div class="dialog-top">
+            您确定要删除该事件？
+          </div>
           <div class="dialog-center">
-            您确定要删除拾金不昧整个事件？
+            删除事件后,所有节点的内容将无法再被查询或恢复。
           </div>
       </van-dialog>
     </div>  
@@ -407,7 +410,7 @@
             暂存
           </span>
           <span class="operate-three" @click="repairsEvent">
-            保存
+            提交
           </span>
         </div>
       </div>
@@ -521,7 +524,11 @@ export default {
         pushHistory();
         //清除拾金不昧签名相关信息
         this.changeClaimRegisterElectronicSignatureMessage({receiverSignature:[]});
-        that.$router.push({path: '/eventList'})
+        if (that.enterEventRegisterPageMessage['enterRegisterEventPageSource']) {
+          that.$router.push({path: that.enterEventRegisterPageMessage['enterRegisterEventPageSource']})
+        } else {
+          that.$router.push({path: '/eventList'})
+        }
       })
     }
   },
@@ -541,7 +548,7 @@ export default {
   },
 
   computed: {
-    ...mapGetters(["userInfo","transportantTaskMessage","ossMessage","timeMessage","claimRegisterElectronicSignatureMessage","temporaryStorageHistoryClaimRegisterMessage","moreEventMessage"]),
+    ...mapGetters(["userInfo","transportantTaskMessage","ossMessage","enterEventRegisterPageMessage","timeMessage","claimRegisterElectronicSignatureMessage","temporaryStorageHistoryClaimRegisterMessage","moreEventMessage"]),
     proId () {
       return this.userInfo.proIds[0]
     },
@@ -559,7 +566,11 @@ export default {
     onClickLeft() {
       //清除拾金不昧签名相关信息
       this.changeClaimRegisterElectronicSignatureMessage({receiverSignature:[]});
-      this.$router.push({ path: "/eventList"})
+      if (this.enterEventRegisterPageMessage['enterRegisterEventPageSource']) {
+        this.$router.push({path: this.enterEventRegisterPageMessage['enterRegisterEventPageSource']})
+      } else {
+        this.$router.push({path: '/eventList'})
+      }
     },
 
     onClickRight() {
@@ -597,11 +608,11 @@ export default {
 
     // 删除确定
     deleteSure () {
-      this.deleteEvent()
     },
 
     // 删除取消
     deleteCancel () {
+      this.deleteEvent()
     },
 
     // 删除事件
@@ -788,7 +799,7 @@ export default {
         if (res && res.data.code == 200) {
           this.changeMoreEventMessage(res.data.data);
           this.currentStepIndex = res.data.data['state'];
-          this.checkedStepIndex = res.data.data['state'];
+          this.checkedStepIndex = res.data.data['state'] + 1;
           this.eventId = res.data.data['id'];
           if (this.currentStepIndex == 0) {
             // 展示登记信息
@@ -1186,7 +1197,7 @@ export default {
         this.imgOnlinePathArr = [];
         if (res && res.data.code == 200) {
           this.$toast(`${res.data.msg}`);
-          this.$router.push({path:'/eventList'});
+          this.$Alert({message:"提交成功!",duration:3000,type:'success'});
         } else {
           this.$dialog.alert({
             message: `${res.data.msg}`,
@@ -1218,7 +1229,7 @@ export default {
       this.overlayShow = true;
       eventContact(data).then((res) => {
         if (res && res.data.code == 200) {
-          this.$toast(`${res.data.msg}`);
+          this.$Alert({message:"提交成功!",duration:3000,type:'success'});
           this.$router.push({path:'/eventList'});
         } else {
           this.linkmanImgOnlinePathArr = [];
@@ -1252,7 +1263,7 @@ export default {
       this.overlayShow = true;
       eventReceive(data).then((res) => {
         if (res && res.data.code == 200) {
-          this.$toast(`${res.data.msg}`);
+          this.$Alert({message:"提交成功!",duration:3000,type:'success'});
           // 提交成功后清除该历史拾金不昧列表暂存信息
           let casuallyTemporaryStorageHistoryClaimRegisterMessage = this.temporaryStorageHistoryClaimRegisterMessage.filter((item) => { return item.id != this.eventId});
           this.changeTemporaryStorageHistoryClaimRegisterMessage(casuallyTemporaryStorageHistoryClaimRegisterMessage);
@@ -1398,7 +1409,7 @@ export default {
             }
       };
       this.changeTemporaryStorageHistoryClaimRegisterMessage(casuallyTemporaryStorageHistoryClaimRegisterMessage);
-      this.$toast('暂存成功');
+      this.$Alert({message:"暂存成功",duration:3000,type:'success'});
       this.$router.push({path: '/eventList'})
     }
   }
@@ -1424,13 +1435,21 @@ export default {
               height: 24px
             }
           };
-          .dialog-center {
+          .dialog-top {
             line-height: 20px;
-            padding: 20px 0;
+            padding: 20px 0 10px 0;
             text-align: center;
             box-sizing: border-box;
             color: #101010;
-            font-size: 16px
+            font-size: 16px;
+            font-weight: bold
+          }
+          .dialog-center {
+            line-height: 20px;
+            padding: 10px 30px;
+            box-sizing: border-box;
+            color: #7a7a7a;
+            font-size: 14px
           }
         };
         .van-dialog__footer {
@@ -1442,15 +1461,15 @@ export default {
           };
           .van-dialog__cancel {
             height: 40px;
-            color: #3B9DF9;
-            border: 1px solid #3B9DF9;
+            background: #3B9DF9;
+            color: #fff !important;
             border-radius: 8px;
             margin-right: 20px
           };
           .van-dialog__confirm {
             height: 40px;
-            background: #3B9DF9;
-            color: #fff !important;
+            color: #3B9DF9;
+            border: 1px solid #3B9DF9;
             border-radius: 8px
           }
         };

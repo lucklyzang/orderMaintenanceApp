@@ -165,7 +165,11 @@ export default {
       pushHistory();
       that.gotoURL(() => {
         pushHistory();
-        that.$router.push({path: '/eventList'})
+        if (that.enterEventRegisterPageMessage['enterRegisterEventPageSource']) {
+          that.$router.push({path: that.enterEventRegisterPageMessage['enterRegisterEventPageSource']})
+        } else {
+          that.$router.push({path: '/eventList'})
+        }
       })
     };
   },
@@ -185,7 +189,7 @@ export default {
   },
 
   computed: {
-    ...mapGetters(["userInfo","transportantTaskMessage","temporaryStorageRepairsRegisterMessage","claimRegisterElectronicSignatureMessage","moreEventMessage"]),
+    ...mapGetters(["userInfo","transportantTaskMessage","enterEventRegisterPageMessage","temporaryStorageRepairsRegisterMessage","claimRegisterElectronicSignatureMessage","moreEventMessage"]),
     proId () {
       return this.userInfo.proIds[0]
     },
@@ -201,7 +205,11 @@ export default {
     ...mapMutations(["changeCatchComponent","changeOverDueWay","changetransportTypeMessage","changeClaimRegisterElectronicSignatureMessage","changeTemporaryStorageRepairsRegisterMessage","changeMoreEventMessage"]),
 
     onClickLeft() {
-      this.$router.push({ path: "/eventList"})
+      if (this.enterEventRegisterPageMessage['enterRegisterEventPageSource']) {
+        this.$router.push({path: this.enterEventRegisterPageMessage['enterRegisterEventPageSource']})
+      } else {
+        this.$router.push({path: '/eventList'})
+      }
     },
 
     onClickRight() {

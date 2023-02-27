@@ -187,7 +187,9 @@ export default {
     onClickRight () {
         let temporaryEnterPostMessagePageMessage = this.enterPostMessagePageMessage;
         temporaryEnterPostMessagePageMessage['collect'] = '';
-        temporaryEnterPostMessagePageMessage['workers'] = '';
+        temporaryEnterPostMessagePageMessage['workers'] = [];
+        temporaryEnterPostMessagePageMessage['storageRadio'] = true;
+        temporaryEnterPostMessagePageMessage['enterPostMessagePageSource'] = '/patrolTasklist';
         this.changeEnterPostMessagePageMessage(temporaryEnterPostMessagePageMessage);
         this.$router.push({path: '/postMessage'})
     },

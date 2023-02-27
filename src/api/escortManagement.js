@@ -109,6 +109,15 @@ export function taskComplete(data) {
     })
 }
 
+// 根据检查项ID判断该检查项下是否有注册事件
+export function getIsHaveEventRegister(proId,system,resultId) {
+    return request({
+        url: `nblink/checkResult/isHaveEventRegister/${proId}/${system}/${resultId}`,
+        method: 'get'
+    })
+}
+
+
 // 事件登记
 
 // 获取事件列表
@@ -213,7 +222,7 @@ export function queryRegisterUser(data) {
 // 留言查询
 export function queryGuestBook(data) {
     return request({
-        url: 'nblink/patrol/guestBook/app/list',
+        url: 'nblink/patrol/guestBook/initAllByPage',
         method: 'get',
         params: data
     })
@@ -238,7 +247,7 @@ export function guestCommentDelete(id) {
 // 评论添加
 export function guestCommentAdd(data) {
     return request({
-        url: 'nblink/patrol/guestComment',
+        url: 'nblink/patrol/guestComment/',
         method: 'post',
         data
     })
@@ -247,7 +256,7 @@ export function guestCommentAdd(data) {
 // 留言添加
 export function guestBookAdd(data) {
     return request({
-        url: 'nblink/patrol/guestBook',
+        url: 'nblink/patrol/guestBook/',
         method: 'post',
         data
     })
@@ -256,9 +265,9 @@ export function guestBookAdd(data) {
 // 点赞
 export function guestSupport(data) {
     return request({
-        url: 'nblink/patrol/guestSupport',
-        method: 'get',
-        params: data
+        url: 'nblink/patrol/guestSupport/',
+        method: 'post',
+        data
     })
 };
 
@@ -266,6 +275,6 @@ export function guestSupport(data) {
 export function guestCancel(id) {
     return request({
         url: `nblink/patrol/guestSupport/${id}`,
-        method: 'get'
+        method: 'delete'
     })
 };

@@ -85,7 +85,7 @@
 <script>
 import NavBar from "@/components/NavBar";
 import { mapGetters, mapMutations } from "vuex";
-import { checkItemPass, checkItemNoPass, submitCheckItem } from '@/api/escortManagement.js'
+import { checkItemPass, checkItemNoPass, submitCheckItem, getIsHaveEventRegister } from '@/api/escortManagement.js'
 import { mixinsDeviceReturn } from '@/mixins/deviceReturnFunction'
 import { deepClone } from '@/common/js/utils'
 export default {
@@ -192,40 +192,62 @@ export default {
       temporaryEnterEventRegisterPageMessage['resultId'] = this.resultId;
       temporaryEnterEventRegisterPageMessage['structId'] = this.enterProblemRecordMessage['issueInfo']['structId'];
       temporaryEnterEventRegisterPageMessage['depId'] = this.departmentCheckList['depId'];
+      temporaryEnterEventRegisterPageMessage['checkItemId'] = this.enterProblemRecordMessage['issueInfo']['id'];
+      temporaryEnterEventRegisterPageMessage['enterRegisterEventPageSource'] = '/areaPatrolDetails';
       temporaryEnterEventRegisterPageMessage['depName'] = this.patrolTaskListMessage.needSpaces.filter((item)=> { return item.id == this.departmentCheckList['depId'] })[0]['name'];
       this.changeEnterEventRegisterPageMessage(temporaryEnterEventRegisterPageMessage)
     },
 
-    // 通过事件
-    passEvent (event,item,index) {
-      // 已完成的任务不可操作
-      if (this.patrolTaskListMessage.state == 4) {
-        return
-      };
+    // 判断该巡查项下是否有登记事件
+    queryIsHaveEventRegister (resultId) {
       this.loadingShow = true;
       this.overlayShow = true;
-      this.loadText = '提交中';
-      // 该巡查项下面有登记事件该巡查项无法再由X改为√。如果把登记的事件全部删除了，那就可以由X改为√。
-      if (item['isHaveEventRegister'] == 1) {
-        this.$toast({
-          type: 'fail',
-          message: '该巡查项下面有登记事件,把该巡查项下登记的事件全部删除后,方能通过'
-        });
-        return
-      };
-      checkItemPass({resultId:item.resultId,workerName: this.userInfo.name}).then((res) => {
+      this.loadText = '查询中';
+      getIsHaveEventRegister(this.userInfo.proIds[0],6,resultId).then((res) => {
+        this.loadingShow = false;
+        this.overlayShow = false;
+        this.loadText = '';
         if (res && res.data.code == 200) {
-          this.loadingShow = false;
-          this.overlayShow = false;
-          this.$toast({
-            type: 'success',
-            message: '反馈成功'
-          });
-          // 更改该检查项选中状态
-          let tempraryMessage = deepClone(this.departmentCheckList);
-          tempraryMessage['checkItemList'][index]['checkResult'] = '1';
-          this.changeDepartmentCheckList(tempraryMessage);
-          console.log('飒飒',this.departmentCheckList);
+          // 该巡查项下面有登记事件该巡查项无法再由X改为√。如果把登记的事件全部删除了，那就可以由X改为√。
+          if (res.data.data == 1) {
+            this.$toast({
+              type: 'fail',
+              message: '该巡查项下面有登记事件,把该巡查项下登记的事件全部删除后,方能通过'
+            });
+            return
+          };
+          this.loadingShow = true;
+          this.overlayShow = true;
+          this.loadText = '反馈中';
+          checkItemPass({resultId:item.resultId,workerName: this.userInfo.name}).then((res) => {
+            this.loadingShow = false;
+            this.overlayShow = false;
+            this.loadText = '';
+            if (res && res.data.code == 200) {
+              this.$toast({
+                type: 'success',
+                message: '反馈成功'
+              });
+              // 更改该检查项选中状态
+              let tempraryMessage = deepClone(this.departmentCheckList);
+              tempraryMessage['checkItemList'][index]['checkResult'] = '1';
+              this.changeDepartmentCheckList(tempraryMessage);
+            } else {
+              this.$toast({
+                type: 'fail',
+                message: res.data.msg
+              })
+            }
+          })
+          .catch((err) => {
+            this.loadingShow = false;
+            this.overlayShow = false;
+            this.loadText = '';
+            this.$toast({
+              type: 'fail',
+              message: err
+            })
+          })
         } else {
           this.$toast({
             type: 'fail',
@@ -236,11 +258,22 @@ export default {
       .catch((err) => {
         this.loadingShow = false;
         this.overlayShow = false;
+        this.loadText = '';
         this.$toast({
           type: 'fail',
           message: err
         })
       })
+    },
+
+    // 通过事件
+    passEvent (event,item,index) {
+      // 已完成的任务不可操作
+      if (this.patrolTaskListMessage.state == 4) {
+        return
+      };
+      // 判断该巡查项下是否有登记事件
+      this.queryIsHaveEventRegister(item.resultId)
     },
 
     // 不通过事件
@@ -265,11 +298,12 @@ export default {
         // 未完成的任务
         this.loadingShow = true;
         this.overlayShow = true;
-        this.loadText = '提交中';
+        this.loadText = '反馈中';
         checkItemNoPass({resultId:item.resultId,workerName: this.userInfo.name}).then((res) => {
+          this.loadingShow = false;
+          this.overlayShow = false;
+          this.loadText = '';
           if (res && res.data.code == 200) {
-            this.loadingShow = false;
-            this.overlayShow = false;
             this.$toast({
               type: 'success',
               message: '反馈成功'
@@ -305,6 +339,7 @@ export default {
         .catch((err) => {
           this.loadingShow = false;
           this.overlayShow = false;
+          this.loadText = '';
           this.$toast({
             type: 'fail',
             message: err

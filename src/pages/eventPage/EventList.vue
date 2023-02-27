@@ -33,8 +33,8 @@
                   </div>
                   <div class="backlog-task-content">
                       <div class="taskset-name">
-                          <span>记录人:</span>
-                          <span>{{ item.createName }}</span>
+                        <span>记录人:</span>
+                        <span>{{ item.createName }}</span>
                       </div>
                       <div class="taskset-name">
                           <span>记录时间:</span>
@@ -668,6 +668,8 @@ export default {
       temporaryEnterEventRegisterPageMessage['isOnlyMe'] = this.isOnlyMe;
       temporaryEnterEventRegisterPageMessage['storageRadio'] = this.storageRadio;
       temporaryEnterEventRegisterPageMessage['patrolItemName'] = '';
+      temporaryEnterEventRegisterPageMessage['checkItemId'] = '';
+      temporaryEnterEventRegisterPageMessage['enterRegisterEventPageSource'] = '/eventList';
       this.changeEnterEventRegisterPageMessage(temporaryEnterEventRegisterPageMessage)
     },
 
@@ -692,6 +694,8 @@ export default {
       temporaryEnterEventRegisterPageMessage['resultId'] = '';
       temporaryEnterEventRegisterPageMessage['structId'] = '';
       temporaryEnterEventRegisterPageMessage['depId'] = '';
+      temporaryEnterEventRegisterPageMessage['checkItemId'] = '';
+      temporaryEnterEventRegisterPageMessage['enterRegisterEventPageSource'] = '/eventList';
       temporaryEnterEventRegisterPageMessage['depName'] = '';
       this.changeEnterEventRegisterPageMessage(temporaryEnterEventRegisterPageMessage)
     },

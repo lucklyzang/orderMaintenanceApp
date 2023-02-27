@@ -8,14 +8,17 @@
     <!-- 删除提示框   -->
     <div class="quit-info-box">
        <van-dialog v-model="quitInfoShow"  show-cancel-button width="85%"
-          @confirm="deleteSure" @cancel="deleteCancel" confirm-button-text="确定"
-          cancel-button-text="取消"
+          @confirm="deleteSure" @cancel="deleteCancel" confirm-button-text="取消"
+          cancel-button-text="确定"
         >
           <div class="dialog-title">
             <img :src="exclamationPointPng">
           </div>
+          <div class="dialog-top">
+            您确定要删除该事件？
+          </div>
           <div class="dialog-center">
-            您确定要删除拾金不昧整个事件？
+            删除事件后,所有节点的内容将无法再被查询或恢复。
           </div>
       </van-dialog>
     </div>    
@@ -175,7 +178,11 @@ export default {
       pushHistory();
       that.gotoURL(() => {
         pushHistory();
-        that.$router.push({path: '/eventList'})
+        if (that.enterEventRegisterPageMessage['enterRegisterEventPageSource']) {
+          that.$router.push({path: that.enterEventRegisterPageMessage['enterRegisterEventPageSource']})
+        } else {
+          that.$router.push({path: '/eventList'})
+        }
       })
     }
   },
@@ -195,7 +202,7 @@ export default {
   },
 
   computed: {
-    ...mapGetters(["userInfo","transportantTaskMessage","temporaryStorageRepairsRegisterMessage","moreEventMessage","claimRegisterElectronicSignatureMessage"]),
+    ...mapGetters(["userInfo","transportantTaskMessage","temporaryStorageRepairsRegisterMessage","enterEventRegisterPageMessage","moreEventMessage","claimRegisterElectronicSignatureMessage"]),
     proId () {
       return this.userInfo.proIds[0]
     },
@@ -211,7 +218,11 @@ export default {
     ...mapMutations(["changeCatchComponent","changeOverDueWay","changetransportTypeMessage","changeTemporaryStorageRepairsRegisterMessage","changeClaimRegisterElectronicSignatureMessage","changeMoreEventMessage"]),
 
     onClickLeft() {
-      this.$router.push({ path: "/eventList"})
+      if (this.enterEventRegisterPageMessage['enterRegisterEventPageSource']) {
+        this.$router.push({path: this.enterEventRegisterPageMessage['enterRegisterEventPageSource']})
+      } else {
+        this.$router.push({path: '/eventList'})
+      }
     },
 
     onClickRight() {
@@ -326,11 +337,11 @@ export default {
 
     // 删除确定
     deleteSure () {
-      this.deleteEvent()
     },
 
     // 删除取消
     deleteCancel () {
+      this.deleteEvent()
     },
 
     //删除事件
@@ -414,15 +425,15 @@ export default {
           };
           .van-dialog__cancel {
             height: 40px;
-            color: #3B9DF9;
-            border: 1px solid #3B9DF9;
+            background: #3B9DF9;
+            color: #fff !important;
             border-radius: 8px;
             margin-right: 20px
           };
           .van-dialog__confirm {
             height: 40px;
-            background: #3B9DF9;
-            color: #fff !important;
+            color: #3B9DF9;
+            border: 1px solid #3B9DF9;
             border-radius: 8px
           }
         };

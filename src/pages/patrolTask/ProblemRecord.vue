@@ -37,29 +37,43 @@
               </div>
             </div>
           </div>
-          <div class="backlog-task-list-box" ref="scrollBacklogTask" v-show="patrolTaskListMessage.state != 4">
-              <div class="backlog-task-list" v-for="(item,index) in backlogTaskList" :key="index">
+          <div class="backlog-task-list-box" ref="scrollBacklogTask">
+              <div class="backlog-task-list" v-for="(item,index) in fullBacklogTaskList" :key="index">
                   <div class="backlog-task-top">
                       <div class="backlog-task-top-left">
                           <span>事件类型:</span>
-                          <span>{{ item.eventType }}</span>
+                          <span>{{ eventTypeTransform(item.eventType) }}</span>
                       </div>
                       <div class="backlog-task-top-right">
-                          <span :class="{'spanNoStartStyle': item.state == 1,'spanCompletedStyle': item.state == 4}">{{ taskStatusTransition(item.state) }}</span>
+                          <span :class="{'spanNoSubmitStyle':item.state == -1}">
+                            {{ taskStatusTransition(item.state,item.eventType) }}
+                          </span>
                       </div>
                   </div>
-                  <div class="backlog-task-content">
+                  <div class="backlog-task-content" v-show="item.eventType == 1">
+                      <div class="taskset-create-time-type">
+                          <span>问题描述:</span>
+                          <span>{{ item.description }}</span>
+                      </div>
+                  </div>
+                  <div class="backlog-task-content" v-show="item.eventType == 2">
                       <div class="taskset-name">
                           <span>拾得地点:</span>
-                          <span>{{ item.problemType }}</span>
+                          <span>{{ `${item.structureName}-${item.depName}-${item.roomName}` }}</span>
                       </div>
                       <div class="taskset-create-time-type">
                           <span>拾得内容:</span>
-                          <span>{{ item.describe }}</span>
+                          <span>{{ item.description }}</span>
+                      </div>
+                  </div>
+                  <div class="backlog-task-content" v-show="item.eventType == 3">
+                      <div class="taskset-create-time-type">
+                          <span>情况说明:</span>
+                          <span>{{ item.description }}</span>
                       </div>
                   </div>
                   <div class="right-arrow-box" @click="taskDetailsEvent(item)">
-                      <van-icon name="arrow" color="#1684FC" size="24" />
+                    <van-icon name="arrow" color="#1684FC" size="24" />
                   </div>
               </div>
               <van-empty description="暂无数据" v-show="backlogEmptyShow" />
@@ -97,8 +111,8 @@
 import NavBar from "@/components/NavBar";
 import { mapGetters, mapMutations } from "vuex";
 import { mixinsDeviceReturn } from '@/mixins/deviceReturnFunction';
+import { getEventList } from '@/api/escortManagement.js'
 import { deepClone } from "@/common/js/utils";
-import { getTaskProblemWorkerOrderDetails } from '@/api/escortManagement.js'
 export default {
   name: "ProblemRecord",
   components: {
@@ -113,47 +127,37 @@ export default {
       isShowBacklogTaskNoMoreData: false,
       questionListTimer: 0,
       timeOne: null,
+      totalCount: '',
+      currentPage: 1,
+      pageSize: 10,
       checkResultValue: '1',
       eventTypeList: ['工程报修','拾金不昧','其他'],
       loadingShow: false,
-      backlogTaskList: [
+      backlogTaskList: [],
+      fullBacklogTaskList: [
         {
+          eventType: 1,
           state: 1,
-          eventType: '拾金不昧',
-          problemType: '飒飒飒飒',
-          describe: '飒飒飒飒啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊'
+          problemType: 'sasas1',
+          description: 'sasas1'
+        },
+        {
+          eventType: 2,
+          state: 1,
+          structureName: '门诊楼',
+          depName: '妇科',
+          roomName: '房间一',
+          problemType: 'sasas1',
+          description: 'sasas1'
         },
          {
+          eventType: 3,
           state: 1,
-          eventType: '拾金不昧',
-          problemType: '飒飒飒飒',
-          describe: '飒飒飒飒啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊'
-        },
-         {
-          state: 1,
-          eventType: '拾金不昧',
-          problemType: '飒飒飒飒',
-          describe: '飒飒飒飒啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊'
-        },
-         {
-          state: 1,
-          eventType: '拾金不昧',
-          problemType: '飒飒飒飒',
-          describe: '飒飒飒飒啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊'
-        },
-         {
-          state: 1,
-          eventType: '拾金不昧',
-          problemType: '飒飒飒飒',
-          describe: '飒飒飒飒啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊'
-        },
-         {
-          state: 1,
-          eventType: '拾金不昧',
-          problemType: '飒飒飒飒',
-          describe: '飒飒飒飒啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊'
+          problemType: 'sasas1',
+          description: 'sasas1'
         }
       ],
+      temporaryStorageCurrentCheckItemEventList: [],
       loadText: '加载中',
       existOnlineImgPath: [],
       checkCheckboxPng: require("@/common/images/home/check-checkbox-circle.png"),
@@ -167,6 +171,7 @@ export default {
   mounted() {
     // 控制设备物理返回按键
     this.deviceReturn(`${this.enterProblemRecordMessage['enterProblemRecordPageSource']}`);
+    // this.queryEventList(this.currentPage,this.pageSize,this.userName,1);
     this.$nextTick(()=> {
         try {
             this.initScrollChange()
@@ -190,7 +195,10 @@ export default {
   watch: {},
 
   computed: {
-    ...mapGetters(["userInfo","patrolTaskListMessage","departmentCheckList","enterProblemRecordMessage","enterEventRegisterPageMessage"])
+    ...mapGetters(["userInfo","patrolTaskListMessage","temporaryStorageOtherRegisterMessage","temporaryStorageRepairsRegisterMessage","temporaryStorageClaimRegisterMessage","departmentCheckList","enterProblemRecordMessage","enterEventRegisterPageMessage"]),
+    userName () {
+      return this.userInfo.name
+    }
   },
 
   methods: {
@@ -219,28 +227,116 @@ export default {
       temporaryEnterEventRegisterPageMessage['patrolItemName'] = this.enterProblemRecordMessage['issueInfo']['name'];
       temporaryEnterEventRegisterPageMessage['resultId'] = this.enterProblemRecordMessage['issueInfo']['resultId'];
       temporaryEnterEventRegisterPageMessage['depId'] = this.departmentCheckList['depId'];
+      temporaryEnterEventRegisterPageMessage['checkItemId'] = this.enterProblemRecordMessage['issueInfo']['id'];
+      temporaryEnterEventRegisterPageMessage['enterRegisterEventPageSource'] = '/problemRecord';
       temporaryEnterEventRegisterPageMessage['structId'] = this.enterProblemRecordMessage['issueInfo']['structId'];
       temporaryEnterEventRegisterPageMessage['depName'] = this.patrolTaskListMessage.needSpaces.filter((item)=> { return item.id == this.departmentCheckList['depId'] })[0]['name'];
       this.changeEnterEventRegisterPageMessage(temporaryEnterEventRegisterPageMessage)
     },
 
+    // 事件类型转换
+    eventTypeTransform (num) {
+      switch(num) {
+        case 1 :
+          return '工程报修'
+          break;
+        case 2 :
+          return '拾金不昧'
+          break;
+        case 3 :
+          return '其他'
+          break;
+      }
+    },
 
     // 任务状态转换
-    taskStatusTransition (num) {
-      switch(num) {
-          case 1 :
-              return '未开始'
+    taskStatusTransition (num,eventType) {
+      if (eventType == 1) {
+        switch(num) {
+          case -1 :
+              return '已暂存'
               break;
-          case 2 :
-              return '进行中'
+          case 0 :
+              return '已报修'
               break;
           case 3 :
-              return '待签字'
+              return '已完成/已取消'
+              break
+        }
+      } else if (eventType == 2) {
+        switch(num) {
+          case -1 :
+              return '已暂存'
               break;
-          case 4 :
-              return '已完成'
+          case 0 :
+              return '已登记'
               break;
+          case 1 :
+              return '已交接'
+              break;
+          case 2 :
+            return '已联系'
+            break;
+          case 3 :
+              return '已领取'
+              break
+        }
+      } else if (eventType == 3) {
+        switch(num) {
+          case -1 :
+              return '已暂存'
+              break;
+          case 0 :
+              return '已登记'
+              break
+        }
       }
+    },
+
+    // 获取事件列表
+    queryEventList (page,pageSize,name,registerType) {
+      this.loadingShow = true;
+      this.overlayShow = true;
+      this.loadText = '加载中';
+      this.backlogEmptyShow = false;
+      this.isShowBacklogTaskNoMoreData = false;
+      getEventList({proId:this.userInfo.proIds[0], system: 6, 
+        name,limit:pageSize,registerType,checkResultId:this.enterProblemRecordMessage['issueInfo']['resultId']
+      })
+      .then((res) => {
+        this.loadingShow = false;
+        this.overlayShow = false;
+        this.loadText = '';
+        if (res && res.data.code == 200) {
+          this.backlogTaskList = res.data.data.list;
+          this.totalCount = res.data.data.total;
+          // 加载第一页时,合并该巡查项下暂存的事件列表
+          if (oage == 1) {
+            this.fullBacklogTaskList = [].concat(this.temporaryStorageOtherRegisterMessage,this.temporaryStorageRepairsRegisterMessage,this.temporaryStorageClaimRegisterMessage);
+            this.fullBacklogTaskList = this.fullBacklogTaskList.filter((item) => { return item['checkItemId'] == this.enterProblemRecordMessage['issueInfo']['id'] && item['registerType'] == 1 && item['depId'] == this.departmentCheckList['depId']});
+            this.fullBacklogTaskList = this.fullBacklogTaskList.concat(this.backlogTaskList)
+          } else {
+            this.fullBacklogTaskList = this.fullBacklogTaskList.concat(this.backlogTaskList)
+          };
+          if (this.fullBacklogTaskList.length == 0) {
+            this.backlogEmptyShow = true
+          }
+        } else {
+          this.$toast({
+            type: 'fail',
+            message: res.data.msg
+          })
+        }
+      })
+      .catch((err) => {
+        this.loadingShow = false;
+        this.overlayShow = false;
+        this.loadText = '';
+        this.$toast({
+          type: 'fail',
+          message: err
+        })
+      })
     },
 
     // 异常巡查项列表绑定滚动事件
@@ -257,47 +353,49 @@ export default {
         this.questionListTimer = 1;
         this.timeOne = setTimeout(()=> {
           this.questionListTimer = 0;
-          console.log('事件列表滚动了',boxBackScroll.scrollTop, boxBackScroll.offsetHeight, boxBackScroll.scrollHeight)
+           let totalPage = Math.ceil(this.totalCount/this.pageSize);
+          if (this.currentPage >= totalPage) {
+            this.isShowBacklogTaskNoMoreData = true
+          } else {
+            this.isShowBacklogTaskNoMoreData = false;
+            this.currentPage = this.currentPage + 1;
+            this.queryEventList(this.currentPage,this.pageSize,this.userName,1)
+          };
+          this.questionListTimer = 0
         },300)
       }  
     },
 
     // 进入事件详情事件
     taskDetailsEvent (item) {
-
-    },
-
-    // 查询问题工单详情
-    queryTaskProblemWorkerOrderDetails (data) {
-      this.loadingShow = true;
-      this.overlayShow = true;
-      this.loadText = '加载中';
-      getTaskProblemWorkerOrderDetails(data).then((res) => {
-        this.loadingShow = false;
-        this.overlayShow = false;
-        if (res && res.data.code == 200) {
-          this.checkItemName = res.data.data.itemName;
-          this.spaceName = res.data.data.spaceName;
-          this.createTime = res.data.data.createTime;
-          this.problemPicturesList = deepClone(res.data.data.imgPaths);
-          this.existOnlineImgPath = deepClone(res.data.data.imgPaths);
-          this.problemDescription = res.data.data['describe'];
-          this.note = res.data.data['remark']
-        } else {
-          this.$toast({
-            type: 'fail',
-            message: res.data.msg
-          })
+       // 1-工程报修,2-拾金不昧,3-其他
+      if (item.eventType == 1) {
+        if (item.state == -1) {
+          this.$router.push({path: '/repairsRegister',query:{eventId: item.id}})
+          //已报修
+        } else if (item.state == 0 || item.state == 3) {
+          this.$router.push({path: '/historyRepairsRegister',query:{eventId: item.id}})
         }
-      })
-      .catch((err) => {
-        this.loadingShow = false;
-        this.overlayShow = false;
-        this.$toast({
-          type: 'fail',
-          message: err
-        })
-      })
+      } else if (item.eventType == 2) {
+        if (item.state == -1) {
+          this.$router.push({path: '/claimRegister',query:{eventId: item.id}})
+          //已登记
+        } else if (item.state == 0 || item.state == 1 || item.state == 2 || item.state == 3) {
+          this.$router.push({path: '/historyClaimRegister',query:{eventId: item.id}})
+        }
+      } else if (item.eventType == 3) {
+        if (item.state == -1) {
+          this.$router.push({path: '/otherRegister',query:{eventId: item.id}})
+          //已登记
+        } else if (item.state == 0 || item.state == 3) {
+          this.$router.push({path: '/historyOtherRegister',query:{eventId: item.id}})
+        }
+      };
+      let temporaryEnterEventRegisterPageMessage = this.enterEventRegisterPageMessage;
+      temporaryEnterEventRegisterPageMessage['patrolItemName'] = this.enterProblemRecordMessage['issueInfo']['name'];
+      temporaryEnterEventRegisterPageMessage['checkItemId'] = this.enterProblemRecordMessage['issueInfo']['id'];
+      temporaryEnterEventRegisterPageMessage['enterRegisterEventPageSource'] = '/problemRecord';
+      this.changeEnterEventRegisterPageMessage(temporaryEnterEventRegisterPageMessage)
     }
   }
 };
@@ -533,21 +631,18 @@ export default {
                   };
                   .backlog-task-top-right {
                       width: 70px;
-                      text-align: center;
+                      text-align: right;
                       span {
                           display: inline-block;
                           width: 62px;
                           height: 22px;
-                          text-align: center;
+                          text-align: right;
                           line-height: 22px;
-                          color: #289E8E;
+                          color: #101010;
                           border-radius: 6px;
                       };
-                      .spanNoStartStyle {
-                          color: #174E97;
-                      };
-                      .spanCompletedStyle {
-                          color: #101010;
+                      .spanNoSubmitStyle {
+                          color: #E86F50 !important;
                       }
                   }
               };

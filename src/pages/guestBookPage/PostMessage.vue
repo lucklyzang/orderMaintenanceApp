@@ -99,8 +99,9 @@ export default {
   },
 
   mounted() {
+    console.log('任务接',this.enterPostMessagePageMessage);
     // 控制设备物理返回按键
-    this.deviceReturn("/guestBook")
+    this.deviceReturn(`${this.enterPostMessagePageMessage['enterPostMessagePageSource']}`)
   },
 
   watch: {},
@@ -123,7 +124,7 @@ export default {
 
     // 顶部导航左边点击事件
     onClickLeft () {
-      this.$router.push({path: '/guestBook'})
+      this.$router.push({path: `${this.enterPostMessagePageMessage['enterPostMessagePageSource']}`})
     },
 
     // 发布事件
@@ -144,10 +145,11 @@ export default {
         workers: this.enterPostMessagePageMessage['workers'], //任务集参与者
         collect: this.enterPostMessagePageMessage['collect'], //巡更集名称
         content: this.commentContent,
-        extendData:{},
+        // extendData:{},
         images:[],
-        state: '',
-        system: 6
+        state: 1,
+        system: 6,
+        proId: this.proId
       };
       // 上传图片到阿里云服务器
       if (this.resultImgList.length > 0) {

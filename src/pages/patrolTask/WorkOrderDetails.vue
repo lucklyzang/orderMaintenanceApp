@@ -15,7 +15,7 @@
     <van-loading size="35px" vertical color="#e6e6e6" v-show="loadingShow">{{ loadText }}</van-loading>
     <van-overlay :show="overlayShow" />
     <div class="nav">
-      <van-nav-bar title="巡更详情" left-text="返回" left-arrow @click-left="onClickLeft" @click-right="onClickRight" right-text="事件登记" :border="false">
+      <van-nav-bar title="巡更详情" left-text="返回" left-arrow @click-left="onClickLeft" @click-right="onClickRight" :right-text="patrolTaskListMessage.state !=4 ? '事件登记' : ''" :border="false">
       </van-nav-bar>
     </div>
     <div class="content">
@@ -211,7 +211,7 @@ export default {
     // 发布留言事件
     addMessageEvent () {
       let temporaryEnterPostMessagePageMessage = this.enterPostMessagePageMessage;
-      temporaryEnterPostMessagePageMessage['storageRadio'] = true;
+      temporaryEnterPostMessagePageMessage['storageRadio'] = false;
       temporaryEnterPostMessagePageMessage['collect'] = this.patrolTaskListMessage.configName;
       temporaryEnterPostMessagePageMessage['workers'] = this.patrolTaskListMessage.workers;
       temporaryEnterPostMessagePageMessage['enterPostMessagePageSource'] = '/workOrderDetails';
@@ -347,11 +347,12 @@ export default {
         depName,// 当前扫描科室名称
         workerId: this.userInfo.id, // 当前登陆员工id
         proId: this.userInfo.proIds[0], // 所属项目
-        system: 4, // 所属系统
+        system: 6, // 所属系统
         punchCardReason, //如果是蓝牙连接，可以传空串
         punchCardType //打卡类型(1:蓝牙 2:手动)
       }).then((res) => {
         if (res && res.data.code == 200) {
+          console.log('数据',res.data);
           this.loadingShow = false;
           this.overlayShow = false;
           let temporaryMessage = this.departmentCheckList;
@@ -391,16 +392,17 @@ export default {
         depId, // 当前扫描科室id
         workerId: this.userInfo.id, // 当前登陆员工id
         proId: this.userInfo.proIds[0], // 所属项目
-        system: 4 // 所属系统
+        system: 6 // 所属系统
       }).then((res) => {
         if (res && res.data.code == 200) {
+          console.log(res.data.data);
           this.loadingShow = false;
           this.overlayShow = false;
           let temporaryMessage = this.departmentCheckList;
           temporaryMessage['depId'] = depId;
-          temporaryMessage['punchCardType'] = punchCardType;
-          temporaryMessage['punchCardReason'] = punchCardReason;
-          temporaryMessage['checkItemList'] = res.data.data;
+          temporaryMessage['punchCardType'] = res.data.data['punchCardType'];
+          temporaryMessage['punchCardReason'] = res.data.data['punchCardReason'];
+          temporaryMessage['checkItemList'] = res.data.data['itemList'];
           temporaryMessage['checkItemList'].forEach(item => {
             item['checkResult'] = item['checkResult'].toString()
           });

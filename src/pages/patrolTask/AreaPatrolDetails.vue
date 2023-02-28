@@ -188,6 +188,7 @@ export default {
         this.$router.push({path: '/otherRegister'})
       };
       temporaryEnterEventRegisterPageMessage['registerType'] = '巡查';
+      temporaryEnterEventRegisterPageMessage['taskId'] = this.patrolTaskListMessage.id;
       temporaryEnterEventRegisterPageMessage['patrolItemName'] = this.enterProblemRecordMessage['issueInfo']['name'];
       temporaryEnterEventRegisterPageMessage['resultId'] = this.resultId;
       temporaryEnterEventRegisterPageMessage['structId'] = this.enterProblemRecordMessage['issueInfo']['structId'];
@@ -199,7 +200,7 @@ export default {
     },
 
     // 判断该巡查项下是否有登记事件
-    queryIsHaveEventRegister (resultId) {
+    queryIsHaveEventRegister (resultId,index) {
       this.loadingShow = true;
       this.overlayShow = true;
       this.loadText = '查询中';
@@ -214,12 +215,16 @@ export default {
               type: 'fail',
               message: '该巡查项下面有登记事件,把该巡查项下登记的事件全部删除后,方能通过'
             });
+            // 更改该检查项选中状态
+            let tempraryMessage = deepClone(this.departmentCheckList);
+            tempraryMessage['checkItemList'][index]['checkResult'] = '3';
+            this.changeDepartmentCheckList(tempraryMessage);
             return
           };
           this.loadingShow = true;
           this.overlayShow = true;
           this.loadText = '反馈中';
-          checkItemPass({resultId:item.resultId,workerName: this.userInfo.name}).then((res) => {
+          checkItemPass({resultId,workerName: this.userInfo.name}).then((res) => {
             this.loadingShow = false;
             this.overlayShow = false;
             this.loadText = '';
@@ -273,7 +278,7 @@ export default {
         return
       };
       // 判断该巡查项下是否有登记事件
-      this.queryIsHaveEventRegister(item.resultId)
+      this.queryIsHaveEventRegister(item.resultId,index)
     },
 
     // 不通过事件

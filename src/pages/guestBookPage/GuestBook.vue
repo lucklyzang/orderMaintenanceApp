@@ -127,7 +127,7 @@ export default {
       backlogEmptyShow: false,
       screenDialogShow: false,
       isShowBacklogTaskNoMoreData: false,
-      storageRadio: true,
+      storageRadio: false,
       currentImgUrl: '',
       currentDateRange: '',
       commentContent: '',
@@ -160,7 +160,7 @@ export default {
       proId: this.proId,
       system: 6,
       date: '2023-02-27',
-      userId: this.workerId,
+      userId: this.enterPostMessagePageMessage['storageRadio'] ? this.workerId : '',
       collect: '',
       page: this.currentPage,
       limit: this.pageSize

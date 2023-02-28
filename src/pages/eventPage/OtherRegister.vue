@@ -267,6 +267,7 @@ export default {
       photoBox: false,
       imgBoxShow: false,
       imgIndex: '',
+      checkResultId: '',
       imgOnlinePathArr: [],
       imgDeleteUrlArr: [],
       existOnlineImgPath: [],
@@ -319,7 +320,7 @@ export default {
 
   beforeRouteEnter(to, from, next) {
     next(vm=>{
-      if (from.path == '/eventList') {
+      if (from.path == '/eventList' || from.path == '/problemRecord') {
         // 判断是否回显暂存数据
         let temporaryIndex = vm.temporaryStorageOtherRegisterMessage.findIndex((item) => { return item.id == vm.$route.query.eventId});
         if (temporaryIndex != -1) {
@@ -410,7 +411,8 @@ export default {
       this.taskDescribe = casuallyTemporaryStorageOtherRegisterMessage[temporaryIndex]['remark'];
       this.problemPicturesList = casuallyTemporaryStorageOtherRegisterMessage[temporaryIndex]['images'];
       this.registerType = casuallyTemporaryStorageOtherRegisterMessage[temporaryIndex]['registerType'];
-      this.itemName = casuallyTemporaryStorageOtherRegisterMessage[temporaryIndex]['registerType']
+      this.itemName = casuallyTemporaryStorageOtherRegisterMessage[temporaryIndex]['itemName'];
+      this.checkResultId = casuallyTemporaryStorageOtherRegisterMessage[temporaryIndex]['resultId'] ? casuallyTemporaryStorageOtherRegisterMessage[temporaryIndex]['resultId'] : ''
     },
 
     // 处理维修任务参与者
@@ -915,10 +917,10 @@ export default {
         this.$toast('区域不能为空');
         return
       };
-      if (this.currentGoalSpaces == '请选择') {
-        this.$toast('房间不能为空');
-        return
-      };
+      // if (this.currentGoalSpaces == '请选择') {
+      //   this.$toast('房间不能为空');
+      //   return
+      // };
       if (!this.detailsSite) {
         this.$toast('详细地点不能为空');
         return
@@ -959,17 +961,19 @@ export default {
           }
       };
       // 创建其他任务
+      // roomId: this.goalSpacesOption.filter((item) => { return item['text'] == this.currentGoalSpaces})[0]['value'],
+      // roomName: this.currentGoalSpaces,
       let temporaryMessage = {
         eventType: this.eventTypeTransform(this.enterEventRegisterPageMessage['eventType']),
         registerType: this.registerTypeTransform(this.enterEventRegisterPageMessage['registerType']),
-        checkResultId: this.enterEventRegisterPageMessage['resultId'],
+        checkResultId: this.checkResultId,
         findTime: this.getNowFormatDate(this.currentFindTime),
         structureId: this.structureOption.filter((item) => { return item['text'] == this.currentStructure})[0]['value'],
         structureName: this.currentStructure,
         depId: this.goalDepartmentOption.filter((item) => { return item['text'] == this.currentGoalDepartment})[0]['value'],
         depName: this.currentGoalDepartment,
-        roomId: this.goalSpacesOption.filter((item) => { return item['text'] == this.currentGoalSpaces})[0]['value'],
-        roomName: this.currentGoalSpaces,
+        roomId: 12,
+        roomName: '厕所',
         address: this.detailsSite,
         description: this.problemOverview,
         remark: this.taskDescribe,
@@ -1053,6 +1057,8 @@ export default {
             casuallyTemporaryStorageOtherRegisterMessage.push({
               id: uuidv4(),
               checkItemId: this.enterEventRegisterPageMessage['checkItemId'],
+              resultId: this.enterEventRegisterPageMessage['resultId'],
+              taskId: this.enterEventRegisterPageMessage['taskId'],
               depId: this.enterEventRegisterPageMessage['depId'],
               eventType: this.eventTypeTransform(this.eventType),
               registerType: this.registerTypeTransform(this.enterEventRegisterPageMessage['registerType']),
@@ -1073,6 +1079,8 @@ export default {
           casuallyTemporaryStorageOtherRegisterMessage.push({
             id: uuidv4(),
             checkItemId: this.enterEventRegisterPageMessage['checkItemId'],
+            resultId: this.enterEventRegisterPageMessage['resultId'],
+            taskId: this.enterEventRegisterPageMessage['taskId'],
             depId: this.enterEventRegisterPageMessage['depId'],
             eventType: this.eventTypeTransform(this.eventType),
             registerType: this.registerTypeTransform(this.enterEventRegisterPageMessage['registerType']),
@@ -1423,6 +1431,11 @@ export default {
                   padding-right: 6px;
                   box-sizing: border-box
                 }
+              }
+            };
+            .event-type-right {
+              span {
+                color: #3B9DF9 !important
               }
             }
           };

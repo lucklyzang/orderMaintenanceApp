@@ -3,7 +3,7 @@
     <van-loading size="35px" vertical color="#e6e6e6" v-show="loadingShow">加载中...</van-loading>
     <van-overlay :show="overlayShow" z-index="100000" />
     <div class="nav">
-        <van-nav-bar title="巡更任务" left-text="返回" left-arrow @click-left="onClickLeft" @click-right="onClickRight" right-text="留言簿" :border="false">
+        <van-nav-bar title="巡更任务" left-text="返回" left-arrow @click-left="onClickLeft" @click-right="onClickRight" :right-text=" activeName == 'backlogTask' ? '留言簿' : ''" :border="false">
         </van-nav-bar>
     </div>
     <div class="content">
@@ -188,7 +188,7 @@ export default {
         let temporaryEnterPostMessagePageMessage = this.enterPostMessagePageMessage;
         temporaryEnterPostMessagePageMessage['collect'] = '';
         temporaryEnterPostMessagePageMessage['workers'] = [];
-        temporaryEnterPostMessagePageMessage['storageRadio'] = true;
+        temporaryEnterPostMessagePageMessage['storageRadio'] = false;
         temporaryEnterPostMessagePageMessage['enterPostMessagePageSource'] = '/patrolTasklist';
         this.changeEnterPostMessagePageMessage(temporaryEnterPostMessagePageMessage);
         this.$router.push({path: '/postMessage'})
@@ -294,7 +294,7 @@ export default {
         this.completedEmptyShow = false;
         this.isShowBacklogTaskNoMoreData = false;
         this.isShowCompletetedTaskNoMoreData = false;
-		getAllTaskList({proId : this.userInfo.proIds[0], workerId: this.userInfo.id,taskType,system:4,page,pageSize})
+		getAllTaskList({proId : this.userInfo.proIds[0], workerId: this.userInfo.id,taskType,system:6,page,pageSize})
         .then((res) => {
             this.loadingShow = false;
             this.overlayShow = false;

@@ -226,15 +226,15 @@ export default {
         vm.isOnlyMe = true;
         vm.storageRadio = false;
         // 获取事件列表
-        vm.queryEventList(vm.currentPage,vm.pageSize,vm.userName)
+        vm.queryEventList(vm.currentPage,vm.pageSize,false,vm.userName)
       } else {
         vm.isOnlyMe = vm.enterEventRegisterPageMessage['isOnlyMe'];
         vm.storageRadio = vm.enterEventRegisterPageMessage['storageRadio'];
         if (!vm.storageRadio) {
           if (vm.isOnlyMe) {
-            vm.queryEventList(vm.currentPage,vm.pageSize,vm.userName)
+            vm.queryEventList(vm.currentPage,vm.pageSize,false,vm.userName)
           } else {
-            vm.queryEventList(vm.currentPage,vm.pageSize)
+            vm.queryEventList(vm.currentPage,vm.pageSize,false)
           }
         }  
       }
@@ -286,9 +286,9 @@ export default {
       } else {
         this.currentPage = 1;
         if (this.isOnlyMe) {
-          this.queryEventList(this.currentPage,this.pageSize,this.userName)
+          this.queryEventList(this.currentPage,this.pageSize,false,this.userName)
         } else {
-          this.queryEventList(this.currentPage,this.pageSize)
+          this.queryEventList(this.currentPage,this.pageSize,false)
         }
       }
     },
@@ -329,9 +329,9 @@ export default {
     if (!this.storageRadio) {
       this.currentPage = 1;
       if (this.isOnlyMe) {
-        this.queryEventList(this.currentPage,this.pageSize,this.userName)
+        this.queryEventList(this.currentPage,this.pageSize,false,this.userName)
       } else {
-        this.queryEventList(this.currentPage,this.pageSize)
+        this.queryEventList(this.currentPage,this.pageSize,false)
       }
     }  
    },
@@ -416,7 +416,7 @@ export default {
         } else {
           registerType = []
         };
-        this.queryEventList(this.currentPage,this.pageSize,register,this.currentStartDate,this.currentEndDate,eventType,registerType)
+        this.queryEventList(this.currentPage,this.pageSize,true,register,this.currentStartDate,this.currentEndDate,eventType,registerType)
       } else {
         // 筛选本地暂存数据
         if (!this.currentDateRange && (!this.currentRegistrant || !this.currentRegistrant['value']) && this.currentEventType.length == 0 && this.registerType.length == 0) {
@@ -579,9 +579,9 @@ export default {
             this.isShowBacklogTaskNoMoreData = false;
             this.currentPage = this.currentPage + 1;
             if (this.isOnlyMe) {
-              this.queryEventList(this.currentPage,this.pageSize,this.userName)
+              this.queryEventList(this.currentPage,this.pageSize,false,this.userName)
             } else {
-              this.queryEventList(this.currentPage,this.pageSize)
+              this.queryEventList(this.currentPage,this.pageSize,false)
             }
           };
           this.eventTime = 0;
@@ -701,12 +701,15 @@ export default {
     },
 
     // 获取事件列表
-    queryEventList (page,pageSize,name='',startDate='',endDate='',eventType=[],registerType=[]) {
+    queryEventList (page,pageSize,flag,name='',startDate='',endDate='',eventType=[],registerType=[]) {
       this.loadingShow = true;
       this.overlayShow = true;
       this.loadText = '加载中';
       this.backlogEmptyShow = false;
       this.isShowBacklogTaskNoMoreData = false;
+      if (flag) {
+        this.fullBacklogTaskList = []
+      };
       getEventList({proId:this.userInfo.proIds[0], system: 6, 
         workerId: this.userInfo.id,page, limit:pageSize, name,
         startDate,endDate,eventType:eventType,registerType
@@ -858,8 +861,8 @@ export default {
                 font-weight: bold
               }
             };
-            /deep/ .vue-dropdown {
-              width: 65%;
+            .vue-dropdown {
+              width: 100%;
               border-radius: 6px !important
             };
             .date-range-box {

@@ -134,29 +134,7 @@ export default {
       eventTypeList: ['工程报修','拾金不昧','其他'],
       loadingShow: false,
       backlogTaskList: [],
-      fullBacklogTaskList: [
-        {
-          eventType: 1,
-          state: 1,
-          problemType: 'sasas1',
-          description: 'sasas1'
-        },
-        {
-          eventType: 2,
-          state: 1,
-          structureName: '门诊楼',
-          depName: '妇科',
-          roomName: '房间一',
-          problemType: 'sasas1',
-          description: 'sasas1'
-        },
-         {
-          eventType: 3,
-          state: 1,
-          problemType: 'sasas1',
-          description: 'sasas1'
-        }
-      ],
+      fullBacklogTaskList: [],
       temporaryStorageCurrentCheckItemEventList: [],
       loadText: '加载中',
       existOnlineImgPath: [],
@@ -171,7 +149,7 @@ export default {
   mounted() {
     // 控制设备物理返回按键
     this.deviceReturn(`${this.enterProblemRecordMessage['enterProblemRecordPageSource']}`);
-    // this.queryEventList(this.currentPage,this.pageSize,this.userName,1);
+    this.queryEventList(this.currentPage,this.pageSize,this.userName,1);
     this.$nextTick(()=> {
         try {
             this.initScrollChange()
@@ -227,6 +205,7 @@ export default {
       temporaryEnterEventRegisterPageMessage['patrolItemName'] = this.enterProblemRecordMessage['issueInfo']['name'];
       temporaryEnterEventRegisterPageMessage['resultId'] = this.enterProblemRecordMessage['issueInfo']['resultId'];
       temporaryEnterEventRegisterPageMessage['depId'] = this.departmentCheckList['depId'];
+      temporaryEnterEventRegisterPageMessage['taskId'] = this.patrolTaskListMessage.id;
       temporaryEnterEventRegisterPageMessage['checkItemId'] = this.enterProblemRecordMessage['issueInfo']['id'];
       temporaryEnterEventRegisterPageMessage['enterRegisterEventPageSource'] = '/problemRecord';
       temporaryEnterEventRegisterPageMessage['structId'] = this.enterProblemRecordMessage['issueInfo']['structId'];
@@ -254,7 +233,7 @@ export default {
       if (eventType == 1) {
         switch(num) {
           case -1 :
-              return '已暂存'
+              return '未提交'
               break;
           case 0 :
               return '已报修'
@@ -266,7 +245,7 @@ export default {
       } else if (eventType == 2) {
         switch(num) {
           case -1 :
-              return '已暂存'
+              return '未提交'
               break;
           case 0 :
               return '已登记'
@@ -284,7 +263,7 @@ export default {
       } else if (eventType == 3) {
         switch(num) {
           case -1 :
-              return '已暂存'
+              return '未提交'
               break;
           case 0 :
               return '已登记'
@@ -311,9 +290,11 @@ export default {
           this.backlogTaskList = res.data.data.list;
           this.totalCount = res.data.data.total;
           // 加载第一页时,合并该巡查项下暂存的事件列表
-          if (oage == 1) {
+          if (page == 1) {
             this.fullBacklogTaskList = [].concat(this.temporaryStorageOtherRegisterMessage,this.temporaryStorageRepairsRegisterMessage,this.temporaryStorageClaimRegisterMessage);
-            this.fullBacklogTaskList = this.fullBacklogTaskList.filter((item) => { return item['checkItemId'] == this.enterProblemRecordMessage['issueInfo']['id'] && item['registerType'] == 1 && item['depId'] == this.departmentCheckList['depId']});
+            this.fullBacklogTaskList = this.fullBacklogTaskList.filter((item) => { return item['checkItemId'] == this.enterProblemRecordMessage['issueInfo']['id'] && item['registerType'] == 1 
+            && item['depId'] == this.departmentCheckList['depId'] && item['taskId'] == this.patrolTaskListMessage['id']
+            });
             this.fullBacklogTaskList = this.fullBacklogTaskList.concat(this.backlogTaskList)
           } else {
             this.fullBacklogTaskList = this.fullBacklogTaskList.concat(this.backlogTaskList)
@@ -393,8 +374,14 @@ export default {
       };
       let temporaryEnterEventRegisterPageMessage = this.enterEventRegisterPageMessage;
       temporaryEnterEventRegisterPageMessage['patrolItemName'] = this.enterProblemRecordMessage['issueInfo']['name'];
+      temporaryEnterEventRegisterPageMessage['taskId'] = this.patrolTaskListMessage.id;
       temporaryEnterEventRegisterPageMessage['checkItemId'] = this.enterProblemRecordMessage['issueInfo']['id'];
       temporaryEnterEventRegisterPageMessage['enterRegisterEventPageSource'] = '/problemRecord';
+      temporaryEnterEventRegisterPageMessage['registerType'] = '巡查';
+      temporaryEnterEventRegisterPageMessage['resultId'] = this.enterProblemRecordMessage['issueInfo']['resultId'];
+      temporaryEnterEventRegisterPageMessage['depId'] = this.departmentCheckList['depId'];
+      temporaryEnterEventRegisterPageMessage['structId'] = this.enterProblemRecordMessage['issueInfo']['structId'];
+      temporaryEnterEventRegisterPageMessage['depName'] = this.patrolTaskListMessage.needSpaces.filter((item)=> { return item.id == this.departmentCheckList['depId'] })[0]['name'];
       this.changeEnterEventRegisterPageMessage(temporaryEnterEventRegisterPageMessage)
     }
   }
@@ -678,7 +665,7 @@ export default {
                 justify-content: center;
                 align-items: center;
                 right: 8px;
-                top: 50%;
+                top: 55%;
                 transform: translateY(-50%)
             }
           };

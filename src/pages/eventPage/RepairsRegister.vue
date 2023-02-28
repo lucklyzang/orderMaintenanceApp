@@ -96,13 +96,13 @@
 		</div>
       <div class="content-box">
         <div class="message-box">
-         <div class="select-box event-type" v-if="enterEventRegisterPageMessage['patrolItemName'] != ''">
+         <div class="select-box event-type" v-if="enterEventRegisterPageMessage['patrolItemName'] != '' || registerType == 1">
             <div class="select-box-left">
               <span>*</span>
               <span>巡查项</span>
             </div>
             <div class="select-box-right event-type-right">
-              <span>{{ enterEventRegisterPageMessage['patrolItemName'] }}</span>
+              <span>{{ itemName }}</span>
             </div>
           </div>
          <div class="select-box event-type">
@@ -265,6 +265,7 @@ export default {
       maxDate: new Date(2050, 10, 1),
       currentFindTime: new Date(),
       currentImgUrl: '',
+      checkResultId: '',
       patrolItem: '',
       photoBox: false,
       imgBoxShow: false,
@@ -323,7 +324,7 @@ export default {
 
   beforeRouteEnter(to, from, next) {
     next(vm=>{
-      if (from.path == '/eventList') {
+      if (from.path == '/eventList' || from.path == '/problemRecord') {
         // 判断是否回显暂存数据
         let temporaryIndex = vm.temporaryStorageRepairsRegisterMessage.findIndex((item) => { return item.id == vm.$route.query.eventId});
         if (temporaryIndex != -1) {
@@ -441,7 +442,8 @@ export default {
       this.taskDescribe = casuallyTemporaryStorageRepairsRegisterMessage[temporaryIndex]['remark'];
       this.problemPicturesList = casuallyTemporaryStorageRepairsRegisterMessage[temporaryIndex]['images'];
       this.registerType = casuallyTemporaryStorageRepairsRegisterMessage[temporaryIndex]['registerType'];
-      this.itemName = casuallyTemporaryStorageOtherRegisterMessage[temporaryIndex]['registerType']
+      this.itemName = casuallyTemporaryStorageRepairsRegisterMessage[temporaryIndex]['itemName'];
+      this.checkResultId = casuallyTemporaryStorageRepairsRegisterMessage[temporaryIndex]['resultId'] ? casuallyTemporaryStorageRepairsRegisterMessage[temporaryIndex]['resultId'] : ''
     },
 
     // 公共修改是否暂存的方法
@@ -928,6 +930,7 @@ export default {
       if (this.temporaryStorageRepairsRegisterMessage.length > 0 ) {
           let temporaryIndex = this.temporaryStorageRepairsRegisterMessage.findIndex((item) => { return item.id == this.$route.query.eventId});
           if (temporaryIndex != -1) {
+             console.log('类型呢3',this.enterEventRegisterPageMessage);
             casuallyTemporaryStorageRepairsRegisterMessage[temporaryIndex]['createTime'] = this.getNowFormatDate(this.currentFindTime);
             casuallyTemporaryStorageRepairsRegisterMessage[temporaryIndex]['roomName'] = this.currentGoalSpaces == '请选择' ? '' : this.currentGoalSpaces;
             casuallyTemporaryStorageRepairsRegisterMessage[temporaryIndex]['address'] = this.detailsSite;
@@ -938,9 +941,12 @@ export default {
             casuallyTemporaryStorageRepairsRegisterMessage[temporaryIndex]['depName'] = this.currentGoalDepartment == '请选择' ? '' : this.currentGoalDepartment;
             casuallyTemporaryStorageRepairsRegisterMessage[temporaryIndex]['roomName'] = this.currentGoalSpaces == '请选择' ? '' : this.currentGoalSpaces
           } else {
+            console.log('类型呢2',this.enterEventRegisterPageMessage);
             casuallyTemporaryStorageRepairsRegisterMessage.push({
               id: uuidv4(),
               checkItemId: this.enterEventRegisterPageMessage['checkItemId'],
+              resultId: this.enterEventRegisterPageMessage['resultId'],
+              taskId: this.enterEventRegisterPageMessage['taskId'],
               depId: this.enterEventRegisterPageMessage['depId'],
               eventType: this.eventTypeTransform(this.eventType),
               registerType: this.registerTypeTransform(this.enterEventRegisterPageMessage['registerType']),
@@ -958,9 +964,12 @@ export default {
             })
           }
         } else {
+           console.log('类型呢1',this.enterEventRegisterPageMessage);
           casuallyTemporaryStorageRepairsRegisterMessage.push({
             id: uuidv4(),
             checkItemId: this.enterEventRegisterPageMessage['checkItemId'],
+            resultId: this.enterEventRegisterPageMessage['resultId'],
+            taskId: this.enterEventRegisterPageMessage['taskId'],
             depId: this.enterEventRegisterPageMessage['depId'],
             eventType: this.eventTypeTransform(this.eventType),
             registerType: this.registerTypeTransform(this.enterEventRegisterPageMessage['registerType']),
@@ -987,6 +996,8 @@ export default {
     },
 
     // 报修事件
+    // roomId: this.goalSpacesOption.filter((item) => { return item['text'] == this.currentGoalSpaces})[0]['value'],
+    //     roomName: this.currentGoalSpaces,
     async repairsEvent () {
       if (!this.eventType) {
         this.$toast('事件类型不能为空');
@@ -1000,10 +1011,10 @@ export default {
         this.$toast('区域不能为空');
         return
       };
-      if (this.currentGoalSpaces == '请选择') {
-        this.$toast('房间不能为空');
-        return
-      };
+      // if (this.currentGoalSpaces == '请选择') {
+      //   this.$toast('房间不能为空');
+      //   return
+      // };
       if (!this.detailsSite) {
         this.$toast('详细地点不能为空');
         return
@@ -1047,14 +1058,14 @@ export default {
       let temporaryMessage = {
         eventType: this.eventTypeTransform(this.enterEventRegisterPageMessage['eventType']),
         registerType: this.registerTypeTransform(this.enterEventRegisterPageMessage['registerType']),
-        checkResultId: this.enterEventRegisterPageMessage['resultId'],
+        checkResultId: this.checkResultId,
         findTime: this.getNowFormatDate(this.currentFindTime),
         structureId: this.structureOption.filter((item) => { return item['text'] == this.currentStructure})[0]['value'],
         structureName: this.currentStructure,
         depId: this.goalDepartmentOption.filter((item) => { return item['text'] == this.currentGoalDepartment})[0]['value'],
         depName: this.currentGoalDepartment,
-        roomId: this.goalSpacesOption.filter((item) => { return item['text'] == this.currentGoalSpaces})[0]['value'],
-        roomName: this.currentGoalSpaces,
+        roomId: 13,
+        roomName: '地铁a口',
         address: this.detailsSite,
         description: this.problemOverview,
         remark: this.taskDescribe,

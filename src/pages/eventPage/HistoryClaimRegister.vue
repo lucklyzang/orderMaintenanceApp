@@ -603,7 +603,8 @@ export default {
       if (index > this.currentStepIndex + 1) {
         return
       };
-      this.checkedStepIndex = index
+      this.checkedStepIndex = index;
+      console.log('当前环节',this.checkedStepIndex)
     },
 
     // 删除确定
@@ -771,7 +772,6 @@ export default {
     // 回显暂存的信息
     async echoTemporaryStorageMessage (temporaryIndex) {
       let casuallyTemporaryStorageHistoryClaimRegisterMessage = this.temporaryStorageHistoryClaimRegisterMessage;
-      this.checkedStepIndex = casuallyTemporaryStorageHistoryClaimRegisterMessage[temporaryIndex]['checkedStepIndex'];
       if (this.checkedStepIndex == 1) {
         this.handoverTime = new Date(casuallyTemporaryStorageHistoryClaimRegisterMessage[temporaryIndex]['handoverTime']);
         this.connectSite = casuallyTemporaryStorageHistoryClaimRegisterMessage[temporaryIndex]['connectSite'];
@@ -799,7 +799,7 @@ export default {
         if (res && res.data.code == 200) {
           this.changeMoreEventMessage(res.data.data);
           this.currentStepIndex = res.data.data['state'];
-          this.checkedStepIndex = res.data.data['state'] + 1;
+          this.checkedStepIndex = res.data.data['state'];
           this.eventId = res.data.data['id'];
           if (this.currentStepIndex == 0) {
             // 展示登记信息
@@ -821,7 +821,7 @@ export default {
               this.checkedStepIndex = this.claimRegisterElectronicSignatureMessage['checkedStepIndex'];
               this.handoverTime = this.claimRegisterElectronicSignatureMessage['handoverTime'];
               this.connectSite = this.claimRegisterElectronicSignatureMessage['connectSite']
-            }
+            }  
           } else if (this.currentStepIndex == 1) {
             // 展示登记信息
             this.eventType = res.data.data['eventType'];
@@ -932,7 +932,23 @@ export default {
           let temporaryIndex = this.temporaryStorageHistoryClaimRegisterMessage.findIndex((item) => { return item.id == this.eventId});
           if (temporaryIndex != -1) {
             if (!flag) {
-              this.echoTemporaryStorageMessage(temporaryIndex)
+              this.checkedStepIndex = this.temporaryStorageHistoryClaimRegisterMessage[temporaryIndex]['checkedStepIndex'];
+              // 已提交的步骤,再次进入时直接显示该提交步骤的下一步骤信息,如果下一步的信息还没有暂存时，则不回显下一步的暂存信息
+              if (this.checkedStepIndex == this.currentStepIndex && this.currentStepIndex < 3) {
+                this.checkedStepIndex = this.checkedStepIndex + 1
+              } else {
+                this.echoTemporaryStorageMessage(temporaryIndex)
+              }
+            } else {
+              // 防止返回上一页时,存储的电子签名信息被清空后,保管人签名为空(此时从电子签名页返回该页面后,不会回显暂存的拾金不昧信息,这里就手动给交接人和保管人)
+              if (this.checkedStepIndex == 1) {
+                this.connectSignature = this.connectSignature ? this.connectSignature : this.temporaryStorageHistoryClaimRegisterMessage[temporaryIndex]['connectSignature'];
+                this.keeperSignature = this.keeperSignature ? this.keeperSignature : this.temporaryStorageHistoryClaimRegisterMessage[temporaryIndex]['keeperSignature']
+              }  
+            }
+          } else {
+            if (this.checkedStepIndex == this.currentStepIndex && this.currentStepIndex < 3) {
+              this.checkedStepIndex = this.checkedStepIndex + 1
             }
           }
         } else {
@@ -1190,14 +1206,14 @@ export default {
 
     // 拾金不昧交接
     postEventHandover (data) {
-      this.loadingText = '创建中...';
+      this.loadingText = '提交中...';
       this.loadingShow = true;
       this.overlayShow = true;
       eventHandover(data).then((res) => {
         this.imgOnlinePathArr = [];
         if (res && res.data.code == 200) {
-          this.$toast(`${res.data.msg}`);
           this.$Alert({message:"提交成功!",duration:3000,type:'success'});
+          this.$router.push({path:'/eventList'})
         } else {
           this.$dialog.alert({
             message: `${res.data.msg}`,
@@ -1224,13 +1240,13 @@ export default {
 
     // 拾金不昧联系
     postEventContact (data) {
-      this.loadingText = '创建中...';
+      this.loadingText = '提交中...';
       this.loadingShow = true;
       this.overlayShow = true;
       eventContact(data).then((res) => {
         if (res && res.data.code == 200) {
           this.$Alert({message:"提交成功!",duration:3000,type:'success'});
-          this.$router.push({path:'/eventList'});
+          this.$router.push({path:'/eventList'})
         } else {
           this.linkmanImgOnlinePathArr = [];
           this.$dialog.alert({
@@ -1258,7 +1274,7 @@ export default {
 
     // 拾金不昧领取
     postEventReceive (data) {
-      this.loadingText = '创建中...';
+      this.loadingText = '提交中...';
       this.loadingShow = true;
       this.overlayShow = true;
       eventReceive(data).then((res) => {

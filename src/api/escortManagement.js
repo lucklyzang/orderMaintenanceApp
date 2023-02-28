@@ -112,7 +112,7 @@ export function taskComplete(data) {
 // 根据检查项ID判断该检查项下是否有注册事件
 export function getIsHaveEventRegister(proId,system,resultId) {
     return request({
-        url: `nblink/checkResult/isHaveEventRegister/${proId}/${system}/${resultId}`,
+        url: `nblink/patrol/checkResult/isHaveEventRegister/${proId}/${system}/${resultId}`,
         method: 'get'
     })
 }

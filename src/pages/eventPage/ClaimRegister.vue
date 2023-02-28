@@ -523,6 +523,7 @@ export default {
       photoBox: false,
       imgBoxShow: false,
       imgIndex: '',
+      checkResultId: '',
       imgOnlinePathArr: [],
       linkmanImgOnlinePathArr: [],
       imgDeleteUrlArr: [],
@@ -595,7 +596,6 @@ export default {
   },
 
   mounted() {
-    console.log('qs',this.enterEventRegisterPageMessage);
     // 控制设备物理返回按键
     if (!IsPC()) {
       let that = this;
@@ -621,8 +621,7 @@ export default {
 
   beforeRouteEnter(to, from, next) {
     next(vm=>{
-      console.log('eventId',vm.$route.query.eventId);
-      if (from.path == '/eventList') {
+      if (from.path == '/eventList' || from.path == '/problemRecord') {
         // 判断是否回显暂存数据
         let temporaryIndex = vm.temporaryStorageClaimRegisterMessage.findIndex((item) => { return item.id == vm.$route.query.eventId});
         if (temporaryIndex != -1) {
@@ -762,11 +761,11 @@ export default {
       this.currentGoalDepartment = casuallyTemporaryStorageClaimRegisterMessage[temporaryIndex]['depName']  == '' ? '请选择' : casuallyTemporaryStorageClaimRegisterMessage[temporaryIndex]['depName'];
       this.currentGoalSpaces = casuallyTemporaryStorageClaimRegisterMessage[temporaryIndex]['roomName']  == '' ? '请选择' : casuallyTemporaryStorageClaimRegisterMessage[temporaryIndex]['roomName'];
       this.detailsSite = casuallyTemporaryStorageClaimRegisterMessage[temporaryIndex]['address'];
-      this.problemOverview = casuallyTemporaryStorageClaimRegisterMessage[temporaryIndex]['description'];
-      this.taskDescribe = casuallyTemporaryStorageClaimRegisterMessage[temporaryIndex]['remark'];
+      this.taskDescribe = casuallyTemporaryStorageClaimRegisterMessage[temporaryIndex]['description'];
       this.problemPicturesList = casuallyTemporaryStorageClaimRegisterMessage[temporaryIndex]['images'];
       this.itemName = casuallyTemporaryStorageClaimRegisterMessage[temporaryIndex]['itemName'];
-      this.registerType = casuallyTemporaryStorageClaimRegisterMessage[temporaryIndex]['registerType']
+      this.registerType = casuallyTemporaryStorageClaimRegisterMessage[temporaryIndex]['registerType'];
+      this.checkResultId = casuallyTemporaryStorageClaimRegisterMessage[temporaryIndex]['resultId'] ? casuallyTemporaryStorageClaimRegisterMessage[temporaryIndex]['resultId'] : ''
     },
 
     // 处理维修任务参与者
@@ -1288,10 +1287,10 @@ export default {
         this.$toast('区域不能为空');
         return
       };
-      if (this.currentGoalSpaces == '请选择') {
-        this.$toast('房间不能为空');
-        return
-      };
+      // if (this.currentGoalSpaces == '请选择') {
+      //   this.$toast('房间不能为空');
+      //   return
+      // };
       if (!this.detailsSite) {
         this.$toast('拾得地点不能为空');
         return
@@ -1328,20 +1327,22 @@ export default {
           }
       };
       // 创建拾金不昧任务
+      // this.goalSpacesOption.filter((item) => { return item['text'] == this.currentGoalSpaces})[0]['value'];
+      // this.currentGoalSpaces
       let temporaryMessage = {
         eventType: this.eventTypeTransform(this.enterEventRegisterPageMessage['eventType']),
         registerType: this.registerTypeTransform(this.enterEventRegisterPageMessage['registerType']),
-        checkResultId: this.enterEventRegisterPageMessage['resultId'],
+        checkResultId: this.checkResultId,
         findTime: this.getNowFormatDate(this.currentFindTime),
         structureId: this.structureOption.filter((item) => { return item['text'] == this.currentStructure})[0]['value'],
         structureName: this.currentStructure,
         depId: this.goalDepartmentOption.filter((item) => { return item['text'] == this.currentGoalDepartment})[0]['value'],
         depName: this.currentGoalDepartment,
-        roomId: this.goalSpacesOption.filter((item) => { return item['text'] == this.currentGoalSpaces})[0]['value'],
-        roomName: this.currentGoalSpaces,
+        roomId: 12,
+        roomName: '厕所',
         address: this.detailsSite,
-        description: '',
-        remark: this.taskDescribe,
+        description: this.taskDescribe,
+        remark: '',
         images: this.imgOnlinePathArr,
         system: 6,
         proId: this.proId,
@@ -1354,7 +1355,7 @@ export default {
 
     // 生成拾金不昧任务
     postGenerateRepairsTask (data) {
-      this.loadingText = '创建中...';
+      this.loadingText = '提交中...';
       this.loadingShow = true;
       this.overlayShow = true;
       eventregister(data).then((res) => {
@@ -1648,8 +1649,7 @@ export default {
             casuallyTemporaryStorageClaimRegisterMessage[temporaryIndex]['createTime'] = this.getNowFormatDate(this.currentFindTime);
             casuallyTemporaryStorageClaimRegisterMessage[temporaryIndex]['roomName'] = this.currentGoalSpaces == '请选择' ? '' : this.currentGoalSpaces;
             casuallyTemporaryStorageClaimRegisterMessage[temporaryIndex]['address'] = this.detailsSite;
-            casuallyTemporaryStorageClaimRegisterMessage[temporaryIndex]['description'] = this.problemOverview;
-            casuallyTemporaryStorageClaimRegisterMessage[temporaryIndex]['remark'] = this.taskDescribe;
+            casuallyTemporaryStorageClaimRegisterMessage[temporaryIndex]['description'] = this.taskDescribe;
             casuallyTemporaryStorageClaimRegisterMessage[temporaryIndex]['images'] = this.problemPicturesList;
             casuallyTemporaryStorageClaimRegisterMessage[temporaryIndex]['structureName'] = this.currentStructure == '请选择' ? '' : this.currentStructure;
             casuallyTemporaryStorageClaimRegisterMessage[temporaryIndex]['depName'] = this.currentGoalDepartment == '请选择' ? '' : this.currentGoalDepartment;
@@ -1658,6 +1658,8 @@ export default {
             casuallyTemporaryStorageClaimRegisterMessage.push({
               id: uuidv4(),
               checkItemId: this.enterEventRegisterPageMessage['checkItemId'],
+              resultId: this.enterEventRegisterPageMessage['resultId'],
+              taskId: this.enterEventRegisterPageMessage['taskId'],
               depId: this.enterEventRegisterPageMessage['depId'],
               eventType: this.eventTypeTransform(this.eventType),
               registerType: this.registerTypeTransform(this.enterEventRegisterPageMessage['registerType']),
@@ -1667,8 +1669,7 @@ export default {
               depName: this.currentGoalDepartment == '请选择' ? '' : this.currentGoalDepartment,
               roomName: this.currentGoalSpaces == '请选择' ? '' : this.currentGoalSpaces,
               address: this.detailsSite,
-              description: this.problemOverview,
-              remark: this.taskDescribe,
+              description: this.taskDescribe,
               images: this.problemPicturesList,
               state: -1,
               itemName: this.enterEventRegisterPageMessage['patrolItemName']
@@ -1678,6 +1679,8 @@ export default {
           casuallyTemporaryStorageClaimRegisterMessage.push({
             id: uuidv4(),
             checkItemId: this.enterEventRegisterPageMessage['checkItemId'],
+            resultId: this.enterEventRegisterPageMessage['resultId'],
+            taskId: this.enterEventRegisterPageMessage['taskId'],
             depId: this.enterEventRegisterPageMessage['depId'],
             eventType: this.eventTypeTransform(this.eventType),
             registerType: this.registerTypeTransform(this.enterEventRegisterPageMessage['registerType']),
@@ -1687,8 +1690,7 @@ export default {
             depName: this.currentGoalDepartment == '请选择' ? '' : this.currentGoalDepartment,
             roomName: this.currentGoalSpaces == '请选择' ? '' : this.currentGoalSpaces,
             address: this.detailsSite,
-            description: this.problemOverview,
-            remark: this.taskDescribe,
+            description: this.taskDescribe,
             images: this.problemPicturesList,
             state: -1,
             itemName: this.enterEventRegisterPageMessage['patrolItemName']
@@ -2039,7 +2041,6 @@ export default {
               color: #8E9397
             };
             .currentSpanStyle {
-              color: #289E8E;
               font-size: 16px;
               font-weight: bold;
               .bottom-border-1px(#3B9DF9,6px)

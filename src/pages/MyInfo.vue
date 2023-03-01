@@ -130,7 +130,7 @@ export default {
   watch: {},
 
   computed: {
-    ...mapGetters(["userInfo", "isLogin","roleNameList"])
+    ...mapGetters(["userInfo", "isLogin","roleNameList","globalTimer"])
   },
 
   methods: {
@@ -151,6 +151,7 @@ export default {
           this.overlayShow = false;
 					if (res && res.data.code == 200) {
 						removeAllLocalStorage();
+            if(this.globalTimer) {window.clearInterval(this.globalTimer)};
             this.$router.push({path: '/'})
 					} else {
 						this.$toast({

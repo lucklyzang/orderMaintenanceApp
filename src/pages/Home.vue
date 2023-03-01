@@ -29,6 +29,7 @@
                 >
                     <img :src="item.imgUrl" alt="">
                     <span>{{ item.name }}</span>
+                    <span class="message-number" v-show="isShowMessageNumber && item.name == '留言簿' ">{{ messageNumber }}</span>
                 </div> 
             </div>
         </div>
@@ -37,12 +38,12 @@
 </template>
 <script>
     import NavBar from "@/components/NavBar";
-    import {
-    } from '@/api/escortManagement.js'
+    import { queryNewCount } from '@/api/escortManagement.js'
     import {
         mapGetters,
         mapMutations
     } from 'vuex'
+    let windowTimer
     export default {
         name: 'Home',
         components: {
@@ -50,6 +51,9 @@
         },
         data() {
             return {
+                messageNumber: 0,
+                isShowMessageNumber: false,
+                isTimeoutContinue: true,
                 cleaningManagementList: [
                     {
                         name: '巡更任务',
@@ -74,6 +78,24 @@
         },
 
         mounted() {
+            // 轮询是否有当前登录用户参与任务集下新的留言
+            if (!windowTimer) {
+                windowTimer = window.setInterval(() => {
+                    if (this.isTimeoutContinue) {
+                        setTimeout(this.queryNewMessage, 0)
+                    }
+                }, 3000);
+                this.changeGlobalTimer(windowTimer)
+            }
+        },
+        
+        beforeRouteEnter(to, from, next) {
+            next(vm=>{
+                if (from.path == '/guestBook') {
+                    vm.isShowMessageNumber = false
+                }
+            });
+            next() 
         },
 
         watch: {},
@@ -83,13 +105,45 @@
                 'userInfo',
                 'isLogin',
                 'hospitalMessage'
-            ])
+            ]),
+
+            proId () {
+                return this.userInfo.proIds[0]
+            },
+
+            userName () {
+                return this.userInfo.name
+            },
+
+            workerId () {
+                return this.userInfo.id
+            }
         },
 
         methods: {
             ...mapMutations([
-                "changeChooseProject"
+                "changeChooseProject",
+                'changeGlobalTimer'
             ]),
+
+            // 查询是否有当前登录用户参与任务集下新的留言
+            queryNewMessage () {
+                this.isTimeoutContinue = false;
+                queryNewCount({userId: this.workerId, system:6, proId: this.proId}).then((res) => {
+                    if (res && res.data.code == 200) {
+                        this.isTimeoutContinue = true;
+                        this.messageNumber = res.data.data;
+                        this.isShowMessageNumber = res.data.data > 0 ? true : false
+                    }
+                })
+                .catch((err) => {
+                    this.$dialog.alert({
+                        message: `${err.message}`,
+                        closeOnPopstate: true
+                    }).then(() => {
+                    })
+                })
+            },
 
             // 头像点击事件
             userInfoEvent () {
@@ -231,6 +285,7 @@
                     flex-flow: row wrap;
                     flex: 1;
                     .subproject-list {
+                        position: relative;
                         width: 33.3%;
                         display: flex;
                         margin-bottom: 25px;
@@ -243,9 +298,18 @@
                             margin-left: 6px;
                         };
                         >span {
-                            margin-top: 14px;
-                            font-size: 16px;
-                            color: #101010
+                            &:nth-child(2){
+                                margin-top: 14px;
+                                font-size: 16px;
+                                color: #101010
+                            };
+                            &:nth-child(3) {
+                                position: absolute;
+                                top: -6px;
+                                right: 14px;
+                                font-size: 16px;
+                                color: red
+                            }
                         }
                     }
                 }

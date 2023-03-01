@@ -55,6 +55,7 @@ service.interceptors.response.use(
             if (error.response.hasOwnProperty('status')) {
                 if (error.response.status === 401) {
                     removeAllLocalStorage();
+                    if(store.getters.globalTimer) {window.clearInterval(this.globalTimer)};
                     if (!store.getters.overDueWay) {
                         Toast({
                             message: 'token已过期,请重新登录',

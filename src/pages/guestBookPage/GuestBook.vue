@@ -70,9 +70,11 @@
                     <div>
                     <div class="comment-input">
                       <van-field
-                            v-model="commentContent"
+                            v-model="item.commentContent"
                             rows="1"
-                            @focus="(event) => { commontFocus(item) }"
+                            ref="innerCommentInput"
+                            @input="innerCommentInputEvent"
+                            @focus="(event) => { commontFocus(item,index) }"
                             @blur="commentBlur"
                             autosize
                             type="textarea"
@@ -93,12 +95,15 @@
     <div class="comment-area" v-show="showCommentArea">
       <van-field
         v-model="commentContent"
+        ref="outerCommentInput"
         rows="1"
+        @input="outerCommentInputEvent"
+        @blur="outerCommontBlur"
         autosize
         type="textarea"
         placeholder="说点什么吧..."
       />
-      <span @click="commentEvent()">发送</span>
+      <span @click="commentEvent">发送</span>
     </div>
     <div class="img-dislog-box">
         <van-dialog v-model="imgBoxShow" width="98%" :close-on-click-overlay="true" confirm-button-text="关闭">
@@ -110,7 +115,7 @@
 <script>
 import NavBar from "@/components/NavBar";
 import { mapGetters, mapMutations } from "vuex";
-import {queryGuestBook, guestBookDelete, guestCommentDelete, guestCommentAdd, guestSupport, guestCancel} from '@/api/escortManagement.js'
+import {queryGuestBook,guestBookDelete, guestCommentDelete, guestCommentAdd, guestSupport, guestCancel} from '@/api/escortManagement.js'
 import {mixinsDeviceReturn} from '@/mixins/deviceReturnFunction';
 export default {
   name: "GuestBook",
@@ -124,6 +129,7 @@ export default {
       dateQueryRangeShow: false,
       showCommentArea: false,
       currentMessageId: '',
+      currentMessageIndex: '',
       backlogEmptyShow: false,
       screenDialogShow: false,
       isShowBacklogTaskNoMoreData: false,
@@ -161,10 +167,17 @@ export default {
       system: 6,
       date: '2023-02-27',
       userId: this.enterPostMessagePageMessage['storageRadio'] ? this.workerId : '',
+      worker: this.workerId,
       collect: '',
       page: this.currentPage,
       limit: this.pageSize
-    },false)
+    },false);
+    //点击外部评论输入框以外的地方时,隐藏外部评论输入框
+		document.addEventListener('click', (e) => {
+			if (e.target.className != 'comment-area' && e.target.className != 'comment-input'){
+				this.showCommentArea = false
+			};
+		}, false)
   },
 
    beforeDestroy () {
@@ -206,15 +219,35 @@ export default {
       next() 
     },
 
+    // 外部评论框值变化事件
+    outerCommentInputEvent (value) {
+      this.fullBacklogTaskList[this.currentMessageIndex]['commentContent'] = value
+    },
+
+    // 外部评论框失去焦点事件
+    outerCommontBlur () {
+      // this.showCommentArea = false
+    },
+
+
+    //评论框值变化事件
+    innerCommentInputEvent (value) {
+      this.commentContent= value
+    },
+
     // 评论框获得焦点事件
-    commontFocus (item) {
+    commontFocus (item,index) {
       this.currentMessageId = item.id;
-      this.showCommentArea = true
+      this.currentMessageIndex = index;
+      this.showCommentArea = true;
+      this.commentContent = this.fullBacklogTaskList[this.currentMessageIndex]['commentContent'];
+      this.$nextTick(()=> {
+        this.$refs['outerCommentInput'].focus()
+      })
     },
 
     // 评论框失去焦点事件
-    commentBlur () {
-    },
+    commentBlur () {},
 
     // 提取点赞人员
     extractLikePerson (personArray) {
@@ -235,6 +268,7 @@ export default {
           system: 6,
           date: '2023-02-27',
           userId: this.workerId,
+          worker: this.workerId,
           collect: '',
           page: 1,
           limit: this.pageSize
@@ -245,6 +279,7 @@ export default {
           system: 6,
           date: '2023-02-27',
           userId: '',
+          worker: this.workerId,
           collect: '',
           page: 1,
           limit: this.pageSize
@@ -294,6 +329,7 @@ export default {
                 system: 6,
                 date: '2023-02-27',
                 userId: this.workerId,
+                worker: this.workerId,
                 collect: '',
                 page: this.currentPage,
                 limit: this.pageSize
@@ -304,6 +340,7 @@ export default {
                 system: 6,
                 date: '2023-02-27',
                 userId: '',
+                worker: this.workerId,
                 collect: '',
                 page: this.currentPage,
                 limit: this.pageSize
@@ -331,6 +368,7 @@ export default {
         this.overlayShow = false;
         if (res && res.data.code == 200) {
           this.backlogTaskList = res.data.data.list;
+          this.backlogTaskList.forEach((item) => {item['commentContent'] = ''});
           this.totalCount = res.data.data.count;
           this.fullBacklogTaskList = this.fullBacklogTaskList.concat(this.backlogTaskList);
           if (this.fullBacklogTaskList.length == 0) {
@@ -369,6 +407,7 @@ export default {
                 system: 6,
                 date: '2023-02-27',
                 userId: this.workerId,
+                worker: this.workerId,
                 collect: '',
                 page: 1,
                 limit: this.pageSize
@@ -379,6 +418,7 @@ export default {
                 system: 6,
                 date: '2023-02-27',
                 userId: '',
+                worker: this.workerId,
                 collect: '',
                 page: 1,
                 limit: this.pageSize
@@ -416,6 +456,7 @@ export default {
                 system: 6,
                 date: '2023-02-27',
                 userId: this.workerId,
+                worker: this.workerId,
                 collect: '',
                 page: 1,
                 limit: this.pageSize
@@ -426,6 +467,7 @@ export default {
                 system: 6,
                 date: '2023-02-27',
                 userId: '',
+                worker: this.workerId,
                 collect: '',
                 page: 1,
                 limit: this.pageSize
@@ -470,6 +512,7 @@ export default {
                   system: 6,
                   date: '2023-02-27',
                   userId: this.workerId,
+                  worker: this.workerId,
                   collect: '',
                   page: 1,
                   limit: this.pageSize
@@ -480,6 +523,7 @@ export default {
                   system: 6,
                   date: '2023-02-27',
                   userId: '',
+                  worker: this.workerId,
                   collect: '',
                   page: 1,
                   limit: this.pageSize
@@ -513,6 +557,7 @@ export default {
                   system: 6,
                   date: '2023-02-27',
                   userId: this.workerId,
+                  worker: this.workerId,
                   collect: '',
                   page: 1,
                   limit: this.pageSize
@@ -523,6 +568,7 @@ export default {
                   system: 6,
                   date: '2023-02-27',
                   userId: '',
+                  worker: this.workerId,
                   collect: '',
                   page: 1,
                   limit: this.pageSize
@@ -548,10 +594,14 @@ export default {
 
     // 评论事件
     commentEvent () {
+      this.showCommentArea = true;
+      if (!this.commentContent) {
+        this.$toast('请输入评论内容');
+        return 
+      };
       this.loadingShow = true;
       this.overlayShow = true;
       this.loadText = '评论中';
-      this.showCommentArea = false;
       guestCommentAdd({
         userId: this.workerId,
         userName: this.userName,
@@ -560,6 +610,7 @@ export default {
         proId: this.proId,
         content: this.commentContent
       }).then((res) => {
+        this.showCommentArea = false;
         this.loadingShow = false;
         this.overlayShow = false;
         if (res && res.data.code == 200) {
@@ -569,6 +620,7 @@ export default {
               system: 6,
               date: '2023-02-27',
               userId: this.workerId,
+              worker: this.workerId,
               collect: '',
               page: 1,
               limit: this.pageSize
@@ -579,6 +631,7 @@ export default {
               system: 6,
               date: '2023-02-27',
               userId: '',
+              worker: this.workerId,
               collect: '',
               page: 1,
               limit: this.pageSize
@@ -593,6 +646,7 @@ export default {
         }
       })
       .catch((err) => {
+        this.showCommentArea = false;
         this.loadingShow = false;
         this.overlayShow = false;
         this.$toast({
@@ -873,7 +927,7 @@ export default {
     width: 100%;
     position: fixed;
     left: 0;
-    bottom: 60px;
+    bottom: 0;
     background: #333;
     padding: 6px 4px;
     box-sizing: border-box;

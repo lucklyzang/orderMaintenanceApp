@@ -13,6 +13,8 @@ export default {
             return state.hospitalMessage
         },
 
+        globalTimer: state => state.globalTimer,
+
         token: (state) => {
             state.token = getStore('token') ? getStore('token') : null;
             return state.token
@@ -63,6 +65,11 @@ export default {
                 setStore('userInfo', playLoad);
                 state.userInfo = playLoad
             }
+        },
+
+        // 保存全局定时器的状态
+        changeGlobalTimer (state, playLoad) {
+            state.globalTimer = playLoad
         },
 
         // 保存医院信息

@@ -204,7 +204,7 @@
                 type="textarea"
                 maxlength="200"
                 show-word-limit
-                placeholder="请输入对应的问题描述"
+                placeholder="请输入对该问题的描述"
               />
             </div>
           </div>
@@ -916,7 +916,11 @@ export default {
 
     // 确定退出
     quitSure () {
-      this.$router.push({ path: "/eventList"})
+      if (this.enterEventRegisterPageMessage['enterRegisterEventPageSource']) {
+        this.$router.push({path: this.enterEventRegisterPageMessage['enterRegisterEventPageSource']})
+      } else {
+        this.$router.push({path: '/eventList'})
+      }
     },
 
     // 取消退出(暂存)
@@ -930,7 +934,6 @@ export default {
       if (this.temporaryStorageRepairsRegisterMessage.length > 0 ) {
           let temporaryIndex = this.temporaryStorageRepairsRegisterMessage.findIndex((item) => { return item.id == this.$route.query.eventId});
           if (temporaryIndex != -1) {
-             console.log('类型呢3',this.enterEventRegisterPageMessage);
             casuallyTemporaryStorageRepairsRegisterMessage[temporaryIndex]['createTime'] = this.getNowFormatDate(this.currentFindTime);
             casuallyTemporaryStorageRepairsRegisterMessage[temporaryIndex]['roomName'] = this.currentGoalSpaces == '请选择' ? '' : this.currentGoalSpaces;
             casuallyTemporaryStorageRepairsRegisterMessage[temporaryIndex]['address'] = this.detailsSite;
@@ -941,7 +944,6 @@ export default {
             casuallyTemporaryStorageRepairsRegisterMessage[temporaryIndex]['depName'] = this.currentGoalDepartment == '请选择' ? '' : this.currentGoalDepartment;
             casuallyTemporaryStorageRepairsRegisterMessage[temporaryIndex]['roomName'] = this.currentGoalSpaces == '请选择' ? '' : this.currentGoalSpaces
           } else {
-            console.log('类型呢2',this.enterEventRegisterPageMessage);
             casuallyTemporaryStorageRepairsRegisterMessage.push({
               id: uuidv4(),
               checkItemId: this.enterEventRegisterPageMessage['checkItemId'],
@@ -964,7 +966,6 @@ export default {
             })
           }
         } else {
-           console.log('类型呢1',this.enterEventRegisterPageMessage);
           casuallyTemporaryStorageRepairsRegisterMessage.push({
             id: uuidv4(),
             checkItemId: this.enterEventRegisterPageMessage['checkItemId'],

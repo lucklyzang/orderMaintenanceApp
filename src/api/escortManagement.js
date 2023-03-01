@@ -228,6 +228,15 @@ export function queryGuestBook(data) {
     })
 };
 
+// 查询新留言数量
+export function queryNewCount(data) {
+    return request({
+        url: 'nblink/patrol/guestBook/app/newCount',
+        method: 'get',
+        params: data
+    })
+};
+
 // 留言删除
 export function guestBookDelete(id) {
     return request({

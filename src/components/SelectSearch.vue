@@ -148,8 +148,6 @@
 				this.isShow = false;
 				if (this.multiple) {
 					this.$emit('change',this.selectedItem)
-				} else {
-					this.$emit('change',this.curData)
 				}
 			}
 		}, false)

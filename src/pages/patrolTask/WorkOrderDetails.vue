@@ -308,6 +308,7 @@ export default {
           console.log(res.data.data);
           this.loadingShow = false;
           this.overlayShow = false;
+          this.loadText = '';
           this.queryDataSuccess = true;
           this.changePatrolTaskListMessage(res.data.data);
           // 选择打卡地点弹框的数据
@@ -329,6 +330,7 @@ export default {
       .catch((err) => {
         this.loadingShow = false;
         this.overlayShow = false;
+        this.loadText = '';
         this.$toast({
           type: 'fail',
           message: err
@@ -398,6 +400,7 @@ export default {
           console.log(res.data.data);
           this.loadingShow = false;
           this.overlayShow = false;
+          this.loadText = '';
           let temporaryMessage = this.departmentCheckList;
           temporaryMessage['depId'] = depId;
           temporaryMessage['punchCardType'] = res.data.data['punchCardType'];
@@ -418,6 +421,7 @@ export default {
       .catch((err) => {
         this.loadingShow = false;
         this.overlayShow = false;
+        this.loadText = '';
         this.$toast({
           type: 'fail',
           message: err

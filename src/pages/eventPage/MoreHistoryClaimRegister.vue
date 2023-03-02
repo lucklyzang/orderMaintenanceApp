@@ -51,10 +51,10 @@
               <span>最后更新时间</span>
             </div>
             <div class="select-box-right">
-              <span>{{ moreEventMessage.createTime }}</span>
+              <span>{{ moreEventMessage.modifyTime }}</span>
             </div>
           </div>
-         <div class="select-box" v-if="moreEventMessage['eventType'] == 1">
+         <div class="select-box" v-if="enterEventRegisterPageMessage['patrolItemName'] != '' || moreEventMessage['registerType'] == 1">
             <div class="select-box-left">
               <span>巡更任务编号</span>
             </div>
@@ -62,7 +62,7 @@
               <span>{{ moreEventMessage.taskNumber }}</span>
             </div>
           </div>
-          <div class="select-box" v-if="moreEventMessage['eventType'] == 1">
+          <div class="select-box" v-if="enterEventRegisterPageMessage['patrolItemName'] != '' || moreEventMessage['registerType'] == 1">
             <div class="select-box-left">
               <span>巡更任务集名称</span>
             </div>
@@ -70,7 +70,7 @@
               <span>{{ moreEventMessage.collectName }}</span>
             </div>
           </div>
-          <div class="select-box" v-if="moreEventMessage['eventType'] == 1 && moreEventMessage.itemName">
+          <div class="select-box" v-if="enterEventRegisterPageMessage['patrolItemName'] != '' || (moreEventMessage['registerType'] == 1 && moreEventMessage.itemName)">
             <div class="select-box-left">
               <span>巡查项</span>
             </div>

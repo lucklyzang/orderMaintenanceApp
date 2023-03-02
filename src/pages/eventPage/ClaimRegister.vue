@@ -851,11 +851,11 @@ export default {
             })
           };
           resolve();
-          console.log('当前图片',this.imgOnlinePathArr);
         })
         .catch((err) => {
           this.overlayShow = false;
           this.loadingShow = false;
+          this.loadingText = '';
           this.$toast({
             message: `${err}`,
             type: 'fail'
@@ -1313,7 +1313,7 @@ export default {
       };
       // 上传图片到阿里云服务器
       let temporaryProblemPicturesList = this.problemPicturesList.filter((item) => { return item.indexOf('https://') == -1});
-      this.loadText ='提交中';
+      this.loadingText ='图片上传中...';
       this.overlayShow = true;
       this.loadingShow = true;
       for (let imgI of temporaryProblemPicturesList) {
@@ -1336,7 +1336,7 @@ export default {
       let temporaryMessage = {
         eventType: this.eventTypeTransform(this.enterEventRegisterPageMessage['eventType']),
         registerType: this.registerTypeTransform(this.enterEventRegisterPageMessage['registerType']),
-        checkResultId: this.checkResultId,
+        checkResultId: this.checkResultId ? this.checkResultId : this.enterEventRegisterPageMessage['resultId'],
         findTime: this.getNowFormatDate(this.currentFindTime),
         structureId: this.structureOption.filter((item) => { return item['text'] == this.currentStructure})[0]['value'],
         structureName: this.currentStructure,
@@ -1417,7 +1417,7 @@ export default {
           this.$toast('保管人签字不能为空');
           return
         };
-        this.loadText ='提交中';
+        this.loadingText ='提交中';
         this.overlayShow = true;
         this.loadingShow = true;
         // 将交接人、保管人签名图片上传到阿里云
@@ -1463,7 +1463,7 @@ export default {
           this.$toast('联系情况不能为空');
           return
         };
-        this.loadText ='提交中';
+        this.loadingText ='提交中';
         this.overlayShow = true;
         this.loadingShow = true;
         // 拾金不昧联系
@@ -1497,7 +1497,7 @@ export default {
           this.$toast('领取人签字不能为空');
           return
         };
-        this.loadText ='提交中';
+        this.loadingText ='提交中';
         this.overlayShow = true;
         this.loadingShow = true;
         // 将领取人签名图片上传到阿里云

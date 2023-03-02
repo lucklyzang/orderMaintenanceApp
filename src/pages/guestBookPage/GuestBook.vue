@@ -72,7 +72,6 @@
                       <van-field
                             v-model="item.commentContent"
                             rows="1"
-                            ref="innerCommentInput"
                             @input="innerCommentInputEvent"
                             @focus="(event) => { commontFocus(item,index) }"
                             @blur="commentBlur"
@@ -165,7 +164,7 @@ export default {
     this.getGuestBook({
       proId: this.proId,
       system: 6,
-      date: '2023-02-27',
+      date: '',
       userId: this.enterPostMessagePageMessage['storageRadio'] ? this.workerId : '',
       worker: this.workerId,
       collect: '',
@@ -174,10 +173,20 @@ export default {
     },false);
     //点击外部评论输入框以外的地方时,隐藏外部评论输入框
 		document.addEventListener('click', (e) => {
-			if (e.target.className != 'comment-area' && e.target.className != 'comment-input'){
+			if (e.target.className != 'van-field__control'){
 				this.showCommentArea = false
 			};
 		}, false)
+  },
+
+  beforeRouteEnter(to, from, next) {
+    next(vm=>{
+      if (from.path == '/postMessage') {
+        // 判断是否回显暂存数据
+        vm.storageRadio = vm.enterPostMessagePageMessage['storageRadio']
+      }
+    });
+    next() 
   },
 
    beforeDestroy () {
@@ -207,16 +216,6 @@ export default {
     // 顶部导航左边点击事件
     onClickLeft () {
       this.$router.push({path: '/home'})
-    },
-
-    beforeRouteEnter(to, from, next) {
-      next(vm=>{
-        if (from.path == '/postMessage') {
-          // 判断是否回显暂存数据
-          this.storageRadio == this.enterPostMessagePageMessage['storageRadio']
-        }
-      });
-      next() 
     },
 
     // 外部评论框值变化事件
@@ -266,7 +265,7 @@ export default {
         this.getGuestBook({
           proId: this.proId,
           system: 6,
-          date: '2023-02-27',
+          date: '',
           userId: this.workerId,
           worker: this.workerId,
           collect: '',
@@ -277,7 +276,7 @@ export default {
         this.getGuestBook({
           proId: this.proId,
           system: 6,
-          date: '2023-02-27',
+          date: '',
           userId: '',
           worker: this.workerId,
           collect: '',
@@ -327,7 +326,7 @@ export default {
               this.getGuestBook({
                 proId: this.proId,
                 system: 6,
-                date: '2023-02-27',
+                date: '',
                 userId: this.workerId,
                 worker: this.workerId,
                 collect: '',
@@ -338,7 +337,7 @@ export default {
               this.getGuestBook({
                 proId: this.proId,
                 system: 6,
-                date: '2023-02-27',
+                date: '',
                 userId: '',
                 worker: this.workerId,
                 collect: '',
@@ -405,7 +404,7 @@ export default {
               this.getGuestBook({
                 proId: this.proId,
                 system: 6,
-                date: '2023-02-27',
+                date: '',
                 userId: this.workerId,
                 worker: this.workerId,
                 collect: '',
@@ -416,7 +415,7 @@ export default {
               this.getGuestBook({
                 proId: this.proId,
                 system: 6,
-                date: '2023-02-27',
+                date: '',
                 userId: '',
                 worker: this.workerId,
                 collect: '',
@@ -454,7 +453,7 @@ export default {
               this.getGuestBook({
                 proId: this.proId,
                 system: 6,
-                date: '2023-02-27',
+                date: '',
                 userId: this.workerId,
                 worker: this.workerId,
                 collect: '',
@@ -465,7 +464,7 @@ export default {
               this.getGuestBook({
                 proId: this.proId,
                 system: 6,
-                date: '2023-02-27',
+                date: '',
                 userId: '',
                 worker: this.workerId,
                 collect: '',
@@ -510,7 +509,7 @@ export default {
                 this.getGuestBook({
                   proId: this.proId,
                   system: 6,
-                  date: '2023-02-27',
+                  date: '',
                   userId: this.workerId,
                   worker: this.workerId,
                   collect: '',
@@ -521,7 +520,7 @@ export default {
                 this.getGuestBook({
                   proId: this.proId,
                   system: 6,
-                  date: '2023-02-27',
+                  date: '',
                   userId: '',
                   worker: this.workerId,
                   collect: '',
@@ -555,7 +554,7 @@ export default {
                 this.getGuestBook({
                   proId: this.proId,
                   system: 6,
-                  date: '2023-02-27',
+                  date: '',
                   userId: this.workerId,
                   worker: this.workerId,
                   collect: '',
@@ -566,7 +565,7 @@ export default {
                 this.getGuestBook({
                   proId: this.proId,
                   system: 6,
-                  date: '2023-02-27',
+                  date: '',
                   userId: '',
                   worker: this.workerId,
                   collect: '',
@@ -618,7 +617,7 @@ export default {
             this.getGuestBook({
               proId: this.proId,
               system: 6,
-              date: '2023-02-27',
+              date: '',
               userId: this.workerId,
               worker: this.workerId,
               collect: '',
@@ -629,7 +628,7 @@ export default {
             this.getGuestBook({
               proId: this.proId,
               system: 6,
-              date: '2023-02-27',
+              date: '',
               userId: '',
               worker: this.workerId,
               collect: '',
@@ -845,6 +844,7 @@ export default {
                 };
                 .like-person {
                     margin: 10px 0;
+                    word-break: break-all;
                     span {
                         font-size: 14px;
                         color: #101010;
@@ -874,6 +874,7 @@ export default {
                             }
                         };
                         .comment-bottom {
+                          word-break: break-all;
                             span {
                                 font-size: 14px;
                                 color: #000000 

@@ -83,7 +83,7 @@
     </div>
     <div class="task-operation-box" v-show="patrolTaskListMessage.state != 4">
       <div class="new-increase-btn" @click="eventTypeShow = true">新增</div>
-      <div class="back-btn">返回</div>
+      <div class="back-btn" @click="backEvent">返回</div>
     </div>
     <!-- 事件类型选择弹窗 -->
     <div class="event-type-box">
@@ -184,6 +184,11 @@ export default {
 
     // 顶部导航左边点击事件
     onClickLeft () {
+      this.$router.push({path: `${this.enterProblemRecordMessage['enterProblemRecordPageSource']}`})
+    },
+
+    // 底部返回事件
+    backEvent () {
       this.$router.push({path: `${this.enterProblemRecordMessage['enterProblemRecordPageSource']}`})
     },
 

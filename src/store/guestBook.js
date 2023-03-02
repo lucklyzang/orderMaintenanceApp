@@ -7,7 +7,15 @@ export default {
 
         enterPostMessagePageMessage: (state) => {
             return state.enterPostMessagePageMessage
-        }
+        },
+
+        isEnterGuestBookPageFromHomePage: (state) => {
+            return state.isEnterGuestBookPageFromHomePage
+        },
+
+        lastMessageNumber: (state) => {
+            return state.lastMessageNumber
+        },
     },
 
     mutations: {
@@ -16,6 +24,20 @@ export default {
         changeEnterPostMessagePageMessage(state, playLoad) {
             if (playLoad && playLoad != 'null') {
                 state.enterPostMessagePageMessage = playLoad
+            }
+        },
+
+        // 保存是否从首页进入过留言簿页的信息
+        changeIsEnterGuestBookPageFromHomePage(state, playLoad) {
+            if (playLoad && playLoad != 'null') {
+                state.isEnterGuestBookPageFromHomePage = playLoad
+            }
+        },
+
+        // 保存上次留言数量
+        changeLastMessageNumber(state, playLoad) {
+            if (playLoad && playLoad != 'null') {
+                state.lastMessageNumber = playLoad
             }
         },
 

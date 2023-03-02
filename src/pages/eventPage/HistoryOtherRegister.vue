@@ -317,7 +317,11 @@ export default {
 
     // 关闭事件
     closeEvent () {
-      this.$router.push({ path: "/eventList"})
+      if (this.enterEventRegisterPageMessage['enterRegisterEventPageSource']) {
+          this.$router.push({path: this.enterEventRegisterPageMessage['enterRegisterEventPageSource']})
+        } else {
+          this.$router.push({path: '/eventList'})
+        }
     },
 
      // 事件类型转换
@@ -407,13 +411,21 @@ export default {
               height: 24px
             }
           };
-          .dialog-center {
+          .dialog-top {
             line-height: 20px;
-            padding: 20px 0;
+            padding: 20px 0 10px 0;
             text-align: center;
             box-sizing: border-box;
             color: #101010;
-            font-size: 16px
+            font-size: 16px;
+            font-weight: bold
+          }
+          .dialog-center {
+            line-height: 20px;
+            padding: 10px 30px;
+            box-sizing: border-box;
+            color: #7a7a7a;
+            font-size: 14px
           }
         };
         .van-dialog__footer {

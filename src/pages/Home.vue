@@ -43,7 +43,6 @@
         mapGetters,
         mapMutations
     } from 'vuex'
-    let windowTimer
     export default {
         name: 'Home',
         components: {
@@ -52,6 +51,8 @@
         data() {
             return {
                 messageNumber: 0,
+                windowTimer: null,
+                currentMessageNumber: 0,
                 isShowMessageNumber: false,
                 isTimeoutContinue: true,
                 cleaningManagementList: [
@@ -79,23 +80,14 @@
 
         mounted() {
             // 轮询是否有当前登录用户参与任务集下新的留言
-            if (!windowTimer) {
-                windowTimer = window.setInterval(() => {
+            if (!this.windowTimer) {
+                this.windowTimer = window.setInterval(() => {
                     if (this.isTimeoutContinue) {
                         setTimeout(this.queryNewMessage, 0)
                     }
                 }, 3000);
-                this.changeGlobalTimer(windowTimer)
+                this.changeGlobalTimer(this.windowTimer)
             }
-        },
-        
-        beforeRouteEnter(to, from, next) {
-            next(vm=>{
-                if (from.path == '/guestBook') {
-                    vm.isShowMessageNumber = false
-                }
-            });
-            next() 
         },
 
         watch: {},
@@ -104,7 +96,9 @@
             ...mapGetters([
                 'userInfo',
                 'isLogin',
-                'hospitalMessage'
+                'hospitalMessage',
+                'isEnterGuestBookPageFromHomePage',
+                'lastMessageNumber'
             ]),
 
             proId () {
@@ -123,7 +117,9 @@
         methods: {
             ...mapMutations([
                 "changeChooseProject",
-                'changeGlobalTimer'
+                'changeGlobalTimer',
+                'changeIsEnterGuestBookPageFromHomePage',
+                'changeLastMessageNumber'
             ]),
 
             // 查询是否有当前登录用户参与任务集下新的留言
@@ -132,8 +128,30 @@
                 queryNewCount({userId: this.workerId, system:6, proId: this.proId}).then((res) => {
                     if (res && res.data.code == 200) {
                         this.isTimeoutContinue = true;
-                        this.messageNumber = res.data.data;
-                        this.isShowMessageNumber = res.data.data > 0 ? true : false
+                        // 实时总留言数量
+                        this.currentMessageNumber = res.data.data;
+                        if (res.data.data > 0) {
+                            // 有新增留言
+                            if (this.lastMessageNumber != null && (this.lastMessageNumber != res.data.data)) {
+                                this.isShowMessageNumber = true;
+                                // 重置是否从首页进入过留言页
+                                this.changeIsEnterGuestBookPageFromHomePage(false);
+                                // 显示新的留言数量
+                                this.messageNumber = res.data.data - this.lastMessageNumber
+                            } else {
+                              // 记录留言数量没变化前的留言数量
+                              this.changeLastMessageNumber(res.data.data);
+                              // 去过留言簿页就默认读过留言
+                               if (this.isEnterGuestBookPageFromHomePage) {
+                                   this.isShowMessageNumber = false
+                               } else {
+                                   this.messageNumber = this.lastMessageNumber;
+                                   this.isShowMessageNumber = true
+                               }
+                            }
+                        } else {
+                            this.isShowMessageNumber = false
+                        }
                     }
                 })
                 .catch((err) => {
@@ -157,6 +175,9 @@
                 } else if (item.name == '事件登记') {
                     this.$router.push({path: '/eventList'})
                 } else if (item.name == '留言簿') {
+                    this.changeIsEnterGuestBookPageFromHomePage(true);
+                    // 记录留言数量没变化前的留言数量(进入留言簿页面后默认读过所有新留言)
+                    this.changeLastMessageNumber(this.currentMessageNumber);
                     this.$router.push({path: '/guestBook'})
                 }
             }
@@ -305,10 +326,15 @@
                             };
                             &:nth-child(3) {
                                 position: absolute;
-                                top: -6px;
-                                right: 14px;
+                                width: 70px;
+                                .no-wrap();
+                                top: -10px;
+                                right: -10px;
                                 font-size: 16px;
-                                color: red
+                                color: red;
+                                padding-left: 22px;
+                                display: inline-block;
+                                box-sizing: border-box
                             }
                         }
                     }

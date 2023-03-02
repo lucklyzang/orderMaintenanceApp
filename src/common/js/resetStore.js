@@ -47,6 +47,8 @@ export function getDefaultEventRegisterState() {
 // 留言簿模块store的初始值
 export function getDefaultGuestbookState() {
     return {
-        enterPostMessagePageMessage: {} // 进入留言发布页的信息
+        enterPostMessagePageMessage: {}, // 进入留言发布页的信息,
+        isEnterGuestBookPageFromHomePage: false, // 是否从首页进入过留言簿页
+        lastMessageNumber: null, //上次留言数量
     }
 };

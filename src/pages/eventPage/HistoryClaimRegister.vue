@@ -171,7 +171,7 @@
               <span>拾得内容</span>
             </div>
             <div class="transport-type-right">
-             {{ taskDescribe }}
+             {{ problemOverview }}
             </div>
           </div>
           <div class="result-picture">
@@ -451,7 +451,8 @@ export default {
       imgIndex: '',
       loadingText: '加载中...',
       detailsSite: '',
-      taskDescribe: '飒飒水水水水水水水水水水水水',
+      taskDescribe: '',
+      problemOverview: '',
       transportNumberValue: '',
       currentFindTime: '',
       imgOnlinePathArr: [],
@@ -751,7 +752,13 @@ export default {
 
     // 关闭事件
     closeEvent () {
-      this.$router.push({ path: "/eventList"})
+      //清除拾金不昧签名相关信息
+      this.changeClaimRegisterElectronicSignatureMessage({receiverSignature:[]});
+      if (this.enterEventRegisterPageMessage['enterRegisterEventPageSource']) {
+        this.$router.push({path: this.enterEventRegisterPageMessage['enterRegisterEventPageSource']})
+      } else {
+        this.$router.push({path: '/eventList'})
+      }
     },
 
     // 事件类型转换
@@ -928,6 +935,10 @@ export default {
               }
             }
           };
+          // 从更多页和签名页进来时,回显离开此页面时的步骤
+          if (flag) {
+            this.checkedStepIndex = this.claimRegisterElectronicSignatureMessage['checkedStepIndex'];
+          };
           // 判断是否回显暂存数据
           let temporaryIndex = this.temporaryStorageHistoryClaimRegisterMessage.findIndex((item) => { return item.id == this.eventId});
           if (temporaryIndex != -1) {
@@ -1079,7 +1090,7 @@ export default {
           this.$toast('保管人签字不能为空');
           return
         };
-        this.loadText ='提交中';
+        this.loadingText ='提交中';
         this.overlayShow = true;
         this.loadingShow = true;
         // 将交接人、保管人签名图片上传到阿里云
@@ -1125,7 +1136,7 @@ export default {
           this.$toast('联系情况不能为空');
           return
         };
-        this.loadText ='提交中';
+        this.loadingText ='提交中';
         this.overlayShow = true;
         this.loadingShow = true;
         // 拾金不昧联系
@@ -1159,7 +1170,7 @@ export default {
           this.$toast('领取人签字不能为空');
           return
         };
-        this.loadText ='提交中';
+        this.loadingText ='提交中';
         this.overlayShow = true;
         this.loadingShow = true;
         // 将领取人签名图片上传到阿里云
@@ -1352,8 +1363,8 @@ export default {
               casuallyTemporaryStorageHistoryClaimRegisterMessage[temporaryIndex]['checkedStepIndex'] = this.checkedStepIndex,
               casuallyTemporaryStorageHistoryClaimRegisterMessage[temporaryIndex]['handoverTime'] = this.getNowFormatDate(this.handoverTime),
               casuallyTemporaryStorageHistoryClaimRegisterMessage[temporaryIndex]['connectSite'] = this.connectSite,
-              casuallyTemporaryStorageHistoryClaimRegisterMessage[temporaryIndex]['connectSignature'] = this.claimRegisterElectronicSignatureMessage.connectSignature,
-              casuallyTemporaryStorageHistoryClaimRegisterMessage[temporaryIndex]['keeperSignature'] = this.claimRegisterElectronicSignatureMessage.keeperSignature
+              casuallyTemporaryStorageHistoryClaimRegisterMessage[temporaryIndex]['connectSignature'] = this.claimRegisterElectronicSignatureMessage.connectSignature ? this.claimRegisterElectronicSignatureMessage.connectSignature : this.connectSignature,
+              casuallyTemporaryStorageHistoryClaimRegisterMessage[temporaryIndex]['keeperSignature'] = this.claimRegisterElectronicSignatureMessage.keeperSignature ? this.claimRegisterElectronicSignatureMessage.keeperSignature : this.keeperSignature
             } else if (this.checkedStepIndex == 2) {
               casuallyTemporaryStorageHistoryClaimRegisterMessage[temporaryIndex]['checkedStepIndex'] = this.checkedStepIndex,
               casuallyTemporaryStorageHistoryClaimRegisterMessage[temporaryIndex]['relationTime'] = this.getNowFormatDate(this.relationTime),
@@ -1373,8 +1384,8 @@ export default {
                 checkedStepIndex: this.checkedStepIndex,
                 handoverTime: this.getNowFormatDate(this.handoverTime),
                 connectSite: this.connectSite,
-                connectSignature: this.claimRegisterElectronicSignatureMessage.connectSignature,
-                keeperSignature: this.claimRegisterElectronicSignatureMessage.keeperSignature
+                connectSignature: this.claimRegisterElectronicSignatureMessage.connectSignature ? this.claimRegisterElectronicSignatureMessage.connectSignature : this.connectSignature,
+                keeperSignature: this.claimRegisterElectronicSignatureMessage.keeperSignature ? this.claimRegisterElectronicSignatureMessage.keeperSignature : this.keeperSignature
               })
             } else if (this.checkedStepIndex == 2) {
               casuallyTemporaryStorageHistoryClaimRegisterMessage.push({
@@ -1402,8 +1413,8 @@ export default {
                 checkedStepIndex: this.checkedStepIndex,
                 handoverTime: this.getNowFormatDate(this.handoverTime),
                 connectSite: this.connectSite,
-                connectSignature: this.claimRegisterElectronicSignatureMessage.connectSignature,
-                keeperSignature: this.claimRegisterElectronicSignatureMessage.keeperSignature
+                connectSignature: this.claimRegisterElectronicSignatureMessage.connectSignature ? this.claimRegisterElectronicSignatureMessage.connectSignature : this.connectSignature,
+                keeperSignature: this.claimRegisterElectronicSignatureMessage.keeperSignature ? this.claimRegisterElectronicSignatureMessage.keeperSignature : this.keeperSignature
               })
             } else if (this.checkedStepIndex == 2) {
               casuallyTemporaryStorageHistoryClaimRegisterMessage.push({

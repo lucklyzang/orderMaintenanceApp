@@ -34,7 +34,7 @@
               <span>事件类型</span>
             </div>
             <div class="select-box-right">
-              <span>{{ eventType }}</span>
+              <span>{{ eventTypeTransform(eventType) }}</span>
             </div>
           </div>
           <div class="select-box">
@@ -319,7 +319,11 @@ export default {
 
     // 关闭事件
     closeEvent () {
-      this.$router.push({ path: "/eventList"})
+      if (this.enterEventRegisterPageMessage['enterRegisterEventPageSource']) {
+        this.$router.push({path: this.enterEventRegisterPageMessage['enterRegisterEventPageSource']})
+      } else {
+        this.$router.push({path: '/eventList'})
+      }
     }
   }
 };

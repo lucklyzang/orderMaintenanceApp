@@ -23,7 +23,7 @@
                     </div>
                     <div class="patrol-item-list-right">
                         <van-radio-group v-model="item.checkResult" direction="horizontal">
-                            <van-radio name="1" @click="(event) => passEvent(event,item,index)">
+                            <van-radio name="1" @click="(event) => passEvent(event,item,index)" :disabled="patrolTaskListMessage.state == 4">
                                 <template #icon="props">
                                     <img class="img-icon" :src="props.checked ? checkCheckboxPng : checkboxPng" />
                                 </template>
@@ -200,11 +200,11 @@ export default {
     },
 
     // 判断该巡查项下是否有登记事件
-    queryIsHaveEventRegister (resultId,index) {
+    queryIsHaveEventRegister (event,item,index) {
       this.loadingShow = true;
       this.overlayShow = true;
       this.loadText = '查询中';
-      getIsHaveEventRegister(this.userInfo.proIds[0],6,resultId).then((res) => {
+      getIsHaveEventRegister(this.userInfo.proIds[0],6,item.resultId).then((res) => {
         this.loadingShow = false;
         this.overlayShow = false;
         this.loadText = '';
@@ -215,16 +215,14 @@ export default {
               type: 'fail',
               message: '该巡查项下面有登记事件,把该巡查项下登记的事件全部删除后,方能通过'
             });
-            // 更改该检查项选中状态
-            let tempraryMessage = deepClone(this.departmentCheckList);
-            tempraryMessage['checkItemList'][index]['checkResult'] = '3';
-            this.changeDepartmentCheckList(tempraryMessage);
+            // 重置该检查项选中状态
+            item['checkResult'] = '3';
             return
           };
           this.loadingShow = true;
           this.overlayShow = true;
           this.loadText = '反馈中';
-          checkItemPass({resultId,workerName: this.userInfo.name}).then((res) => {
+          checkItemPass({resultId:item.resultId,workerName: this.userInfo.name}).then((res) => {
             this.loadingShow = false;
             this.overlayShow = false;
             this.loadText = '';
@@ -236,7 +234,7 @@ export default {
               // 更改该检查项选中状态
               let tempraryMessage = deepClone(this.departmentCheckList);
               tempraryMessage['checkItemList'][index]['checkResult'] = '1';
-              this.changeDepartmentCheckList(tempraryMessage);
+              this.changeDepartmentCheckList(tempraryMessage)
             } else {
               this.$toast({
                 type: 'fail',
@@ -278,7 +276,7 @@ export default {
         return
       };
       // 判断该巡查项下是否有登记事件
-      this.queryIsHaveEventRegister(item.resultId,index)
+      this.queryIsHaveEventRegister(event,item,index)
     },
 
     // 不通过事件
@@ -297,6 +295,8 @@ export default {
           this.$router.push({path: '/problemRecord'})
         } else {
           // 该检查项最终结果选为√,点击后不做处理
+          // 重置该检查项选中状态
+          item['checkResult'] = '1';
           return
         }
       } else {

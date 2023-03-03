@@ -614,7 +614,6 @@ export default {
         this.$refs['registrantOption'].clearSelectValue();
         this.$refs['eventTypeOption'].selectAllValue();
         this.$refs['registerTypeOption'].selectAllValue();
-        console.log('登记人',this.currentRegistrant);
         done(false);
         return
       } else {

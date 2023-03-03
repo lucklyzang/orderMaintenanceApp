@@ -917,10 +917,10 @@ export default {
         this.$toast('区域不能为空');
         return
       };
-      // if (this.currentGoalSpaces == '请选择') {
-      //   this.$toast('房间不能为空');
-      //   return
-      // };
+      if (this.currentGoalSpaces == '请选择') {
+        this.$toast('房间不能为空');
+        return
+      };
       if (!this.detailsSite) {
         this.$toast('详细地点不能为空');
         return
@@ -961,8 +961,6 @@ export default {
           }
       };
       // 创建其他任务
-      // roomId: this.goalSpacesOption.filter((item) => { return item['text'] == this.currentGoalSpaces})[0]['value'],
-      // roomName: this.currentGoalSpaces,
       let temporaryMessage = {
         eventType: this.eventTypeTransform(this.enterEventRegisterPageMessage['eventType']),
         registerType: this.registerTypeTransform(this.enterEventRegisterPageMessage['registerType']),
@@ -972,8 +970,8 @@ export default {
         structureName: this.currentStructure,
         depId: this.goalDepartmentOption.filter((item) => { return item['text'] == this.currentGoalDepartment})[0]['value'],
         depName: this.currentGoalDepartment,
-        roomId: 12,
-        roomName: '厕所',
+        roomId: this.goalSpacesOption.filter((item) => { return item['text'] == this.currentGoalSpaces})[0]['value'],
+        roomName: this.currentGoalSpaces,
         address: this.detailsSite,
         description: this.problemOverview,
         remark: this.taskDescribe,

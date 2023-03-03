@@ -997,8 +997,6 @@ export default {
     },
 
     // 报修事件
-    // roomId: this.goalSpacesOption.filter((item) => { return item['text'] == this.currentGoalSpaces})[0]['value'],
-    //     roomName: this.currentGoalSpaces,
     async repairsEvent () {
       if (!this.eventType) {
         this.$toast('事件类型不能为空');
@@ -1012,10 +1010,10 @@ export default {
         this.$toast('区域不能为空');
         return
       };
-      // if (this.currentGoalSpaces == '请选择') {
-      //   this.$toast('房间不能为空');
-      //   return
-      // };
+      if (this.currentGoalSpaces == '请选择') {
+        this.$toast('房间不能为空');
+        return
+      };
       if (!this.detailsSite) {
         this.$toast('详细地点不能为空');
         return
@@ -1065,8 +1063,8 @@ export default {
         structureName: this.currentStructure,
         depId: this.goalDepartmentOption.filter((item) => { return item['text'] == this.currentGoalDepartment})[0]['value'],
         depName: this.currentGoalDepartment,
-        roomId: 13,
-        roomName: '地铁a口',
+        roomId: this.goalSpacesOption.filter((item) => { return item['text'] == this.currentGoalSpaces})[0]['value'],
+        roomName: this.currentGoalSpaces,
         address: this.detailsSite,
         description: this.problemOverview,
         remark: this.taskDescribe,

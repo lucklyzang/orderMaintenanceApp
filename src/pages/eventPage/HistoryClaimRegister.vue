@@ -687,7 +687,6 @@ export default {
       this.getMessage.splice(index,1);
       // 删除该联系人中对应的签名base64字符串
       let temporaryClaimRegisterElectronicSignatureMessage = this.claimRegisterElectronicSignatureMessage;
-      console.log('签字信息',this.claimRegisterElectronicSignatureMessage);
       temporaryClaimRegisterElectronicSignatureMessage['receiverSignature'] = temporaryClaimRegisterElectronicSignatureMessage['receiverSignature'].filter((item) => { return item['eventIndex'] != index});
       this.changeClaimRegisterElectronicSignatureMessage(temporaryClaimRegisterElectronicSignatureMessage);
     },
@@ -778,7 +777,8 @@ export default {
 
     // 回显暂存的信息
     async echoTemporaryStorageMessage (temporaryIndex) {
-      let casuallyTemporaryStorageHistoryClaimRegisterMessage = this.temporaryStorageHistoryClaimRegisterMessage;
+      console.log('回显数据',this.temporaryStorageHistoryClaimRegisterMessage);
+      let casuallyTemporaryStorageHistoryClaimRegisterMessage = _.cloneDeep(this.temporaryStorageHistoryClaimRegisterMessage);
       if (this.checkedStepIndex == 1) {
         this.handoverTime = new Date(casuallyTemporaryStorageHistoryClaimRegisterMessage[temporaryIndex]['handoverTime']);
         this.connectSite = casuallyTemporaryStorageHistoryClaimRegisterMessage[temporaryIndex]['connectSite'];
@@ -798,7 +798,7 @@ export default {
 
     // 查询事件详情
     queryEventDetails (id,flag) {
-      // flag true: 从签名页进入 false: 从事件列表页进入
+      // flag true: 从签名页和更多信息页进入 false: 从事件列表页进入
       this.loadingText = '加载中...';
       this.loadingShow = true;
       this.overlayShow = true;
@@ -819,7 +819,7 @@ export default {
             this.problemPicturesList = res.data.data['images'];
             this.problemOverview = res.data.data['description'];
             this.taskDescribe = res.data.data['remark'];
-            // 保存进入签名页之前的交接时间和交接地点信息
+            // 回显进入签名页和更多信息页之前的交接时间和交接地点信息
             if (this.claimRegisterElectronicSignatureMessage['checkedStepIndex']) {
               this.checkedStepIndex = this.claimRegisterElectronicSignatureMessage['checkedStepIndex']
             };
@@ -880,7 +880,7 @@ export default {
             this.contactDepartment = res.data.data['extendData']['contact']['department'];
             this.linkman = res.data.data['extendData']['contact']['name'];
             this.contactInformation = res.data.data['extendData']['contact']['situation'];
-            // 保存进入签名页之前领取的相关信息
+            // 回显进入签名页和更多信息页之前领取的相关信息
             if (flag) {
               this.checkedStepIndex = this.claimRegisterElectronicSignatureMessage['checkedStepIndex'];
               this.getTime = this.claimRegisterElectronicSignatureMessage['getTime'];
@@ -935,10 +935,6 @@ export default {
               }
             }
           };
-          // 从更多页和签名页进来时,回显离开此页面时的步骤
-          if (flag) {
-            this.checkedStepIndex = this.claimRegisterElectronicSignatureMessage['checkedStepIndex'];
-          };
           // 判断是否回显暂存数据
           let temporaryIndex = this.temporaryStorageHistoryClaimRegisterMessage.findIndex((item) => { return item.id == this.eventId});
           if (temporaryIndex != -1) {
@@ -951,7 +947,7 @@ export default {
                 this.echoTemporaryStorageMessage(temporaryIndex)
               }
             } else {
-              // 防止返回上一页时,存储的电子签名信息被清空后,保管人签名为空(此时从电子签名页返回该页面后,不会回显暂存的拾金不昧信息,这里就手动给交接人和保管人)
+              // 防止返回上一页时,存储的电子签名信息被清空后,保管人签名为空(此时从电子签名页返回该页面后,不会回显暂存的拾金不昧信息,这里就手动给交接人和保管人签名赋值)
               if (this.checkedStepIndex == 1) {
                 this.connectSignature = this.connectSignature ? this.connectSignature : this.temporaryStorageHistoryClaimRegisterMessage[temporaryIndex]['connectSignature'];
                 this.keeperSignature = this.keeperSignature ? this.keeperSignature : this.temporaryStorageHistoryClaimRegisterMessage[temporaryIndex]['keeperSignature']
@@ -961,6 +957,10 @@ export default {
             if (this.checkedStepIndex == this.currentStepIndex && this.currentStepIndex < 3) {
               this.checkedStepIndex = this.checkedStepIndex + 1
             }
+          };
+          // 从更多页和签名页进来时,回显离开此页面时的步骤
+          if (flag) {
+            this.checkedStepIndex = this.claimRegisterElectronicSignatureMessage['checkedStepIndex']
           }
         } else {
           this.$dialog.alert({
@@ -1355,7 +1355,7 @@ export default {
 
     // 暂存事件
     temporaryStorageEvent () {
-      let casuallyTemporaryStorageHistoryClaimRegisterMessage = this.temporaryStorageHistoryClaimRegisterMessage;
+      let casuallyTemporaryStorageHistoryClaimRegisterMessage = _.cloneDeep(this.temporaryStorageHistoryClaimRegisterMessage);
       if (this.temporaryStorageHistoryClaimRegisterMessage.length > 0 ) {
           let temporaryIndex = this.temporaryStorageHistoryClaimRegisterMessage.findIndex((item) => { return item.id == this.eventId});
           if (temporaryIndex != -1) {
@@ -1375,7 +1375,7 @@ export default {
               casuallyTemporaryStorageHistoryClaimRegisterMessage[temporaryIndex]['checkedStepIndex'] = this.checkedStepIndex,
               casuallyTemporaryStorageHistoryClaimRegisterMessage[temporaryIndex]['getTime'] = this.getNowFormatDate(this.getTime),
               casuallyTemporaryStorageHistoryClaimRegisterMessage[temporaryIndex]['getSite'] = this.getSite,
-              casuallyTemporaryStorageHistoryClaimRegisterMessage[temporaryIndex]['getMessage'] = this.getMessage
+              casuallyTemporaryStorageHistoryClaimRegisterMessage[temporaryIndex]['getMessage'] = _.cloneDeep(this.getMessage)
             }
           } else {
             if (this.checkedStepIndex == 1) {
@@ -1402,7 +1402,7 @@ export default {
                 checkedStepIndex: this.checkedStepIndex,
                 getTime: this.getNowFormatDate(this.getTime),
                 getSite: this.getSite,
-                getMessage: this.getMessage
+                getMessage: _.cloneDeep(this.getMessage)
               })
             }
           }
@@ -1431,7 +1431,7 @@ export default {
                 checkedStepIndex: this.checkedStepIndex,
                 getTime: this.getNowFormatDate(this.getTime),
                 getSite: this.getSite,
-                getMessage: this.getMessage
+                getMessage: _.cloneDeep(this.getMessage)
               })
             }
       };

@@ -132,7 +132,7 @@ export default {
       backlogEmptyShow: false,
       screenDialogShow: false,
       isShowBacklogTaskNoMoreData: false,
-      storageRadio: false,
+      storageRadio: true,
       currentImgUrl: '',
       currentDateRange: '',
       commentContent: '',

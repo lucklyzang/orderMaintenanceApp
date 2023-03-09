@@ -1002,6 +1002,7 @@ export default {
             this.$router.push({path: '/eventList'})
           }
         } else {
+          // 防止任务生成失败后，再次生成时造成同一图片重复上传
           this.imgOnlinePathArr = [];
           this.$dialog.alert({
             message: `${res.data.msg}`,

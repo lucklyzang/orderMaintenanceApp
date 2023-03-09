@@ -1221,11 +1221,11 @@ export default {
       this.loadingShow = true;
       this.overlayShow = true;
       eventHandover(data).then((res) => {
-        this.imgOnlinePathArr = [];
         if (res && res.data.code == 200) {
           this.$Alert({message:"提交成功!",duration:3000,type:'success'});
           this.$router.push({path:'/eventList'})
         } else {
+          this.imgOnlinePathArr = [];
           this.$dialog.alert({
             message: `${res.data.msg}`,
             closeOnPopstate: true

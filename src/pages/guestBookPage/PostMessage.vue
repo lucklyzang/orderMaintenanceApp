@@ -187,6 +187,7 @@ export default {
           });
           this.$router.push({path: '/guestBook'})
         } else {
+          // 防止发布留言失败后，再次发布时造成同一图片重复上传
           this.imgOnlinePathArr = [];
           this.$toast({
             type: 'fail',

@@ -78,6 +78,12 @@
             }
         },
 
+        beforeDestroy () {
+            if (this.windowTimer) {
+                clearInterval(this.windowTimer)
+            }
+        },
+
         mounted() {
             // 轮询是否有当前登录用户参与任务集下新的留言
             if (!this.windowTimer) {

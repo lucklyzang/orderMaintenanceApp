@@ -1372,6 +1372,7 @@ export default {
             this.$router.push({path: '/eventList'})
           }
         } else {
+          // 防止任务生成失败后，再次生成时造成同一图片重复上传
           this.imgOnlinePathArr = [];
           this.$dialog.alert({
             message: `${res.data.msg}`,
@@ -1546,11 +1547,11 @@ export default {
       this.loadingShow = true;
       this.overlayShow = true;
       eventHandover(data).then((res) => {
-        this.imgOnlinePathArr = [];
         if (res && res.data.code == 200) {
           this.$Alert({message:"保存成功",duration:3000,type:'success'});
           this.$router.push({path:'/eventList'});
         } else {
+          this.imgOnlinePathArr = [];
           this.$dialog.alert({
             message: `${res.data.msg}`,
             closeOnPopstate: true

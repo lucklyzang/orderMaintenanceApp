@@ -1585,7 +1585,6 @@ export default {
           this.$toast(`${res.data.msg}`);
           this.$router.push({path:'/eventList'});
         } else {
-          this.linkmanImgOnlinePathArr = [];
           this.$dialog.alert({
             message: `${res.data.msg}`,
             closeOnPopstate: true
@@ -1597,7 +1596,6 @@ export default {
         this.overlayShow = false
       })
       .catch((err) => {
-        this.linkmanImgOnlinePathArr = [];
         this.$dialog.alert({
           message: `${err.message}`,
           closeOnPopstate: true
@@ -1619,7 +1617,7 @@ export default {
           this.$toast(`${res.data.msg}`);
           this.$router.push({path:'/eventList'});
         } else {
-          this.imgOnlinePathArr = [];
+          this.linkmanImgOnlinePathArr = [];
           this.$dialog.alert({
             message: `${res.data.msg}`,
             closeOnPopstate: true
@@ -1631,7 +1629,7 @@ export default {
         this.overlayShow = false
       })
       .catch((err) => {
-        this.imgOnlinePathArr = [];
+        this.linkmanImgOnlinePathArr = [];
         this.$dialog.alert({
           message: `${err.message}`,
           closeOnPopstate: true

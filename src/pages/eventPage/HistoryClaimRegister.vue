@@ -1259,7 +1259,6 @@ export default {
           this.$Alert({message:"提交成功!",duration:3000,type:'success'});
           this.$router.push({path:'/eventList'})
         } else {
-          this.linkmanImgOnlinePathArr = [];
           this.$dialog.alert({
             message: `${res.data.msg}`,
             closeOnPopstate: true
@@ -1271,7 +1270,6 @@ export default {
         this.overlayShow = false
       })
       .catch((err) => {
-        this.linkmanImgOnlinePathArr = [];
         this.$dialog.alert({
           message: `${err.message}`,
           closeOnPopstate: true
@@ -1296,7 +1294,7 @@ export default {
           this.changeTemporaryStorageHistoryClaimRegisterMessage(casuallyTemporaryStorageHistoryClaimRegisterMessage);
           this.$router.push({path:'/eventList'});
         } else {
-          this.imgOnlinePathArr = [];
+          this.linkmanImgOnlinePathArr = [];
           this.$dialog.alert({
             message: `${res.data.msg}`,
             closeOnPopstate: true
@@ -1308,7 +1306,7 @@ export default {
         this.overlayShow = false
       })
       .catch((err) => {
-        this.imgOnlinePathArr = [];
+        this.linkmanImgOnlinePathArr = [];
         this.$dialog.alert({
           message: `${err.message}`,
           closeOnPopstate: true

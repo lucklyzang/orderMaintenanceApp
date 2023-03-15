@@ -30,8 +30,8 @@
         </ul>
         <div class="button-box" ref="buttonBox">
             <span @click="resetEvent" v-show="isShowReset">重置</span>
-            <span @click="cancel" v-show="!isShowReset">{{cancelText}}</span>
-            <span @click="sure">{{sureText}}</span>
+            <span @click="cancel" v-show="!isShowReset">取消</span>
+            <span @click="sure">确认</span>
         </div>
         <van-empty description="暂无数据" v-show="list.length == 0" />
       </section>
@@ -47,16 +47,6 @@ export default {
     title: {
       type: String,
       default: '请选择'
-    },
-    // 取消文案
-    cancelText: {
-      type: String,
-      default: '取消'
-    },
-    // 确认文案
-    sureText: {
-      type: String,
-      default: '确认'
     },
     // 滚动展示的数据 格式[{id: '',text:''}]
     columns: {
@@ -80,9 +70,10 @@ export default {
       searchValue: '',
       cacheList: '',
       list: [],
+      currentValue: '',
       show: false,
       active: null,
-      city: "",
+      currentText: "",
       listOffsetTop: [],
       timer: null
     };
@@ -142,9 +133,9 @@ export default {
     // 确认事件
     sure() {
       this.list.map((item, index) => {
-        item.id == this.active ? (this.city = item.text) : null
+        item.id == this.active ? (this.currentText = item.text,this.currentValue = item.value) : null
       });
-      this.$emit('sure',this.city);
+      this.$emit('sure',this.currentText,this.currentValue);
       // 没有搜索结果时点确认
       if (this.list.length == 0) {
         this.$emit('sure',null)
@@ -154,13 +145,13 @@ export default {
 
     // 关闭事件
     close () {
-      this.$emit('close',this.city);
+      this.$emit('close',this.currentText);
       this.show = false
     },
 
     // 取消事件
     cancel() {
-      this.$emit('cancel',this.city);
+      this.$emit('cancel',this.currentText);
       this.show = false
     },
 
@@ -254,7 +245,7 @@ export default {
       padding: 100px 0;
       box-sizing: border-box;
       margin: 0;
-      overflow: auto;
+      overflow: scroll;
       background-color: #fff;
       li {
         list-style: none;

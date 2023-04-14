@@ -428,7 +428,7 @@ export default {
             color: #101010;
             text-align: center
           };
-          /deep/ .van-icon {
+          .van-icon {
             position: absolute;
             top: 50%;
             transform: translateY(-50%);

@@ -134,9 +134,8 @@
               <van-icon name="arrow" color="#989999" size="20" />
             </div>
           </div>
-          <div class="select-box end-select-box">
+          <div class="select-box end-select-box end-select-box-room">
             <div class="select-box-left">
-              <span>*</span>
               <span>房间</span>
             </div>
             <div class="select-box-right" @click="goalSpacesClickEvent">
@@ -146,7 +145,6 @@
           </div>
           <div class="details-site problem-overview">
             <div class="transport-type-left">
-              <span>*</span>
               <span>详细地点</span>
             </div>
             <div class="transport-type-right">
@@ -193,7 +191,6 @@
          </div>
           <div class="transport-type problem-overview">
             <div class="transport-type-left">
-              <span>*</span>
               <span>情况说明</span>
             </div>
             <div class="transport-type-right">
@@ -210,7 +207,6 @@
           </div>
           <div class="transport-type">
             <div class="transport-type-left">
-              <span>*</span>
               <span>备注</span>
             </div>
             <div class="transport-type-right">
@@ -917,28 +913,12 @@ export default {
         this.$toast('区域不能为空');
         return
       };
-      if (this.currentGoalSpaces == '请选择') {
-        this.$toast('房间不能为空');
-        return
-      };
-      if (!this.detailsSite) {
-        this.$toast('详细地点不能为空');
-        return
-      };
       if (!this.currentFindTime) {
         this.$toast('记录时间不能为空');
         return
       };
       if (this.problemPicturesList.length == 0) {
         this.$toast('问题拍照图片不能为空');
-        return
-      };
-      if (!this.problemOverview) {
-        this.$toast('情况说明不能为空');
-        return
-      };
-      if (!this.taskDescribe) {
-        this.$toast('备注不能为空');
         return
       };
       // 上传图片到阿里云服务器
@@ -970,8 +950,8 @@ export default {
         structureName: this.currentStructure,
         depId: this.goalDepartmentOption.filter((item) => { return item['text'] == this.currentGoalDepartment})[0]['value'],
         depName: this.currentGoalDepartment,
-        roomId: this.goalSpacesOption.filter((item) => { return item['text'] == this.currentGoalSpaces})[0]['value'],
-        roomName: this.currentGoalSpaces,
+        roomId: this.currentGoalSpaces == '请选择' ? '' : this.goalSpacesOption.filter((item) => { return item['text'] == this.currentGoalSpaces})[0]['value'],
+        roomName: this.currentGoalSpaces == '请选择' ? '' : this.currentGoalSpaces,
         address: this.detailsSite,
         description: this.problemOverview,
         remark: this.taskDescribe,
@@ -1493,6 +1473,17 @@ export default {
                 };
               }
           };
+          .end-select-box-room {
+            .select-box-left {
+              >span {
+                &:nth-child(1) {
+                  color: #9E9E9A !important;
+                  padding-right: 6px;
+                  box-sizing: border-box
+                }
+              }
+            }
+          };
           .problem-overview {
             align-items: center
           };
@@ -1510,9 +1501,6 @@ export default {
               box-sizing: border-box;
               >span {
                 &:nth-child(1) {
-                  color: red
-                };
-                &:nth-child(2) {
                   color: #9E9E9A;
                   padding-right: 6px;
                   box-sizing: border-box
@@ -1545,9 +1533,6 @@ export default {
               margin-bottom: 8px;
               >span {
                 &:nth-child(1) {
-                  color: red
-                };
-                &:nth-child(2) {
                   color: #9E9E9A;
                   padding-right: 6px;
                   box-sizing: border-box

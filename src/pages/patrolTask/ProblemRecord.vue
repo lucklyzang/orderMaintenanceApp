@@ -284,7 +284,7 @@ export default {
       this.loadText = '加载中';
       this.backlogEmptyShow = false;
       this.isShowBacklogTaskNoMoreData = false;
-      getEventList({proId:this.userInfo.proIds[0], system: 6, 
+      getEventList({proId:this.userInfo.proIds[0], system: 6, page,
         name,limit:pageSize,registerType,checkResultId:this.enterProblemRecordMessage['issueInfo']['resultId']
       })
       .then((res) => {
@@ -425,7 +425,7 @@ export default {
             color: #101010;
             text-align: center
           };
-          /deep/ .van-icon {
+          .van-icon {
             position: absolute;
             top: 50%;
             transform: translateY(-50%);

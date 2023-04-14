@@ -1,6 +1,6 @@
 <template>
   <div class="page-box" ref="wrapper">
-    <div class="add-message" @click="addMessageEvent" v-show="patrolTaskListMessage.state !=4 ">
+    <div class="add-message" @click="addMessageEvent" v-if="patrolTaskListMessage.state !=4 ">
       <img :src="addMessagePng" alt="">
     </div>
     <div class="in-positioning" v-show="positioningShow">
@@ -49,9 +49,9 @@
             </div>
         </div>
     </div>
-    <div class="task-operation-box">
-      <div class="task-no-complete"  v-show="patrolTaskListMessage.state !=4 " :class="{'operationStyle': patrolTaskListMessage.state == 4 }" @click="clockInEvent">打卡</div>
-      <div class="task-complete" v-show="patrolTaskListMessage.state !=4 " @click="completeTaskEvent">完成任务</div>
+    <div class="task-operation-box" v-if="patrolTaskListMessage.state !=4 && isShowOperateBtn">
+      <div class="task-no-complete" @click="clockInEvent">打卡</div>
+      <div class="task-complete" :class="{'operationStyle': patrolTaskListMessage['needSpaces'].length == patrolTaskListMessage['allCheckItemOkDepArr'].length }" v-show="patrolTaskListMessage.state !=4 " @click="completeTaskEvent">完成任务</div>
     </div>
      <!-- 定位失败提示框 -->
     <div class="location-fail-box">
@@ -86,6 +86,22 @@
           <van-radio-group v-model="manualClockingReasonRadio">
             <van-radio :name="item.value" v-for="(item,index) in manualClockingReasonRadioList" :key="index">{{ item.text }}</van-radio>
           </van-radio-group>
+        </div>
+        <div class="dialog-bottom" v-if="manualClockingReasonRadio == '3' ">
+          <div class="bottom-left">
+            <span>*</span>
+            <span>说明：</span>
+          </div>
+          <div class="bottom-right">
+            <van-field
+                v-model="explainMessage"
+                rows="2"
+                autosize
+                type="textarea"
+                maxlength="200"
+                show-word-limit
+              />
+          </div>
         </div>
       </van-dialog>
     </div>
@@ -125,6 +141,8 @@ export default {
   data() {
     return {
       overlayShow: false,
+      explainMessage: '',
+      isShowOperateBtn: false,
       eventTypeShow: false,
       manualClockingReasonRadio: '1',
       manualClockingReasonRadioList:[
@@ -222,12 +240,18 @@ export default {
     // 打卡地点弹框确认事件
     clockingPlaceSureEvent (val) {
       if (val) {
-        this.currentClockingPlace =  val
+        this.currentClockingPlace =  val;
+        this.clockingPlaceShow = false;
+        this.manualclockingReasonShow = true;
+        this.explainMessage = ''
       } else {
-        this.currentClockingPlace= '请选择'
-      };
-      this.clockingPlaceShow = false;
-      this.manualclockingReasonShow = true
+        this.currentClockingPlace= '请选择';
+        this.clockingPlaceShow = false;
+        this.$toast({
+          type: 'fail',
+          message: '请先选择打卡地点'
+        })
+      }
     },
 
     // 打卡地点弹框取消事件
@@ -305,7 +329,7 @@ export default {
         this.patrolTaskListMessage.id
       ).then((res) => {
         if (res && res.data.code == 200) {
-          console.log(res.data.data);
+          this.isShowOperateBtn = true;
           this.loadingShow = false;
           this.overlayShow = false;
           this.loadText = '';
@@ -354,7 +378,6 @@ export default {
         punchCardType //打卡类型(1:蓝牙 2:手动)
       }).then((res) => {
         if (res && res.data.code == 200) {
-          console.log('数据',res.data);
           this.loadingShow = false;
           this.overlayShow = false;
           let temporaryMessage = this.departmentCheckList;
@@ -431,8 +454,22 @@ export default {
 
     // 手动打卡原因弹框关闭前事件
     beforeCloseDialogEvent (action, done) {
-      if (action == 'cancel') {
-        done()
+      if (action == 'confirm') {
+        if (this.manualClockingReasonRadio == 3) {
+          if (!this.explainMessage) {
+            this.$toast({
+              type: 'fail',
+              message: '请填写说明'
+            });
+            done(false)
+          } else {
+            this.codeDepartmentNoFinsh (this.patrolTaskListMessage.needSpaces.filter((item) => { return item['name'] == this.currentClockingPlace})[0]['id'],'加载中',this.currentClockingPlace,2,this.manualClockingReasonRadioList.filter((item) => { return item.value == this.manualClockingReasonRadio})[0]['text']);
+            done()
+          }
+        } else {
+          this.codeDepartmentNoFinsh (this.patrolTaskListMessage.needSpaces.filter((item) => { return item['name'] == this.currentClockingPlace})[0]['id'],'加载中',this.currentClockingPlace,2,this.manualClockingReasonRadioList.filter((item) => { return item.value == this.manualClockingReasonRadio})[0]['text']);
+          done()
+        }
       } else {
         done()
       }
@@ -440,7 +477,6 @@ export default {
 
     // 手动打卡原因弹框确认事件
     manualclockingReasonSure () {
-      this.codeDepartmentNoFinsh (this.patrolTaskListMessage.needSpaces.filter((item) => { return item['name'] == this.currentClockingPlace})[0]['id'],'加载中',this.currentClockingPlace,2,this.manualClockingReasonRadioList.filter((item) => { return item.value == this.manualClockingReasonRadio})[0]['text'])
     },
 
     // 蓝牙连接回调
@@ -654,7 +690,8 @@ export default {
       .van-dialog__content {
         padding: 0 20px 10px 20px !important;
         box-sizing: border-box;
-        height: 40vh;
+        height: 45vh;
+        overflow: auto;
         .dialog-top {
           height: 60px;
           position: relative;
@@ -666,7 +703,7 @@ export default {
             color: #101010;
             text-align: center
           };
-          /deep/ .van-icon {
+          .van-icon {
             position: absolute;
             top: 50%;
             transform: translateY(-50%);
@@ -679,6 +716,29 @@ export default {
           .van-radio-group {
             .van-radio {
               margin-top: 40px
+            }
+          }
+        };
+        .dialog-bottom {
+          display: flex;
+          justify-content: space-between;
+          margin-top: 20px;
+          .bottom-left {
+            width: 70px;
+            >span {
+              font-size: 14px;
+              &:nth-child(1) {
+                color: red
+              };
+              &:nth-child(2) {
+                color: #101010
+              }
+            }
+          };
+          .bottom-right {
+            flex: 1;
+            .van-cell {
+              border: 1px solid #888888
             }
           }
         }

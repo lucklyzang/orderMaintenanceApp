@@ -257,7 +257,7 @@ export default {
     // 打卡地点弹框取消事件
     clockingPlaceCancelEvent () {
       this.clockingPlaceShow = false;
-      this.locationFailShow = true
+      this.locationFailShow = false
     },
 
     // 打卡地点弹框关闭事件
@@ -283,14 +283,17 @@ export default {
 
     // 手动打卡事件
     manualClockingWvent () {
-      this.locationFailShow = false;
       this.clockingPlaceShow = true
     },
 
     // 重新定位事件
     againLocationEvent () {
       this.positioningShow = true;
-      this.locationFailShow = false
+      this.overlayShow = true;
+      setTimeout(() => {
+        this.positioningEvent();
+        this.locationFailShow = true
+      },2000)
     },
 
     // 定位中关闭事件
@@ -307,7 +310,7 @@ export default {
       // this.positioningShow = true;
       // this.overlayShow = true
       // 手动打卡测试
-      this.manualClockingWvent()
+      this.locationFailShow = true
     },
 
     // 完成任务事件

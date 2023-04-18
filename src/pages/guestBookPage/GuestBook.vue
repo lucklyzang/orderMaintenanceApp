@@ -165,7 +165,7 @@ export default {
       proId: this.proId,
       system: 6,
       date: '',
-      userId: this.enterPostMessagePageMessage['storageRadio'] ? this.workerId : '',
+      userId: this['storageRadio'] ? this.workerId : '',
       worker: this.workerId,
       collect: '',
       page: this.currentPage,
@@ -179,15 +179,15 @@ export default {
 		}, false)
   },
 
-  beforeRouteEnter(to, from, next) {
-    next(vm=>{
-      if (from.path == '/postMessage') {
-        // 判断是否回显暂存数据
-        vm.storageRadio = vm.enterPostMessagePageMessage['storageRadio']
-      }
-    });
-    next() 
-  },
+  // beforeRouteEnter(to, from, next) {
+  //   next(vm=>{
+  //     if (from.path == '/postMessage') {
+  //       // 判断是否回显暂存数据
+  //       vm.storageRadio = vm.enterPostMessagePageMessage['storageRadio']
+  //     }
+  //   });
+  //   next() 
+  // },
 
    beforeDestroy () {
     if (this.timeOne) {
@@ -269,7 +269,7 @@ export default {
           userId: this.workerId,
           worker: this.workerId,
           collect: '',
-          page: 1,
+          page: this.currentPage,
           limit: this.pageSize
         },true)
       } else {
@@ -280,7 +280,7 @@ export default {
           userId: '',
           worker: this.workerId,
           collect: '',
-          page: 1,
+          page: this.currentPage,
           limit: this.pageSize
         },true)
       }
@@ -779,7 +779,7 @@ export default {
                   .backlog-task-top-left {
                       flex: 1;
                       font-size: 16px;
-                      color: #000000;
+                      color: #3B9DF9;
                       .no-wrap()
                   };
                   .backlog-task-top-right {

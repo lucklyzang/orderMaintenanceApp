@@ -139,11 +139,11 @@
                         if (res.data.data > 0) {
                             // 有新增留言
                             if (this.lastMessageNumber != null && (this.lastMessageNumber != res.data.data)) {
-                                this.isShowMessageNumber = true;
                                 // 重置是否从首页进入过留言页
                                 this.changeIsEnterGuestBookPageFromHomePage(false);
                                 // 显示新的留言数量
-                                this.messageNumber = res.data.data - this.lastMessageNumber
+                                this.messageNumber = (res.data.data - this.lastMessageNumber) >= 0 ? (res.data.data - this.lastMessageNumber) : 0;
+                                this.isShowMessageNumber = this.messageNumber > 0 ? true : false
                             } else {
                               // 记录留言数量没变化前的留言数量
                               this.changeLastMessageNumber(res.data.data);
@@ -151,8 +151,8 @@
                                if (this.isEnterGuestBookPageFromHomePage) {
                                    this.isShowMessageNumber = false
                                } else {
-                                   this.messageNumber = this.lastMessageNumber;
-                                   this.isShowMessageNumber = true
+                                   this.messageNumber = (res.data.data - this.lastMessageNumber) >= 0 ? (res.data.data - this.lastMessageNumber) : 0
+                                   this.isShowMessageNumber = this.messageNumber > 0 ? true : false
                                }
                             }
                         } else {

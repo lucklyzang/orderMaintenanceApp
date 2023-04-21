@@ -937,6 +937,7 @@ export default {
                 this.echoTemporaryStorageMessage(temporaryIndex)
               }
             } else {
+              this.checkedStepIndex = this.claimRegisterElectronicSignatureMessage['checkedStepIndex'];
               // 防止返回上一页时,存储的电子签名信息被清空后,保管人签名为空(此时从电子签名页返回该页面后,不会回显暂存的拾金不昧信息,这里就手动给交接人和保管人签名赋值)
               if (this.checkedStepIndex == 1) {
                 this.connectSignature = this.connectSignature ? this.connectSignature : this.temporaryStorageHistoryClaimRegisterMessage[temporaryIndex]['connectSignature'];

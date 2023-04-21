@@ -517,6 +517,7 @@ export default {
   },
 
   mounted() {
+    console.log('回显数据',this.temporaryStorageHistoryClaimRegisterMessage);
     // 控制设备物理返回按键
     if (!IsPC()) {
       let that = this;
@@ -820,12 +821,8 @@ export default {
             this.problemOverview = res.data.data['description'];
             this.taskDescribe = res.data.data['remark'];
             // 回显进入签名页和更多信息页之前的交接时间和交接地点信息
-            if (this.claimRegisterElectronicSignatureMessage['checkedStepIndex']) {
-              this.checkedStepIndex = this.claimRegisterElectronicSignatureMessage['checkedStepIndex']
-            };
             if (flag) {
               // 回显交接信息
-              this.checkedStepIndex = this.claimRegisterElectronicSignatureMessage['checkedStepIndex'];
               this.handoverTime = this.claimRegisterElectronicSignatureMessage['handoverTime'];
               this.connectSite = this.claimRegisterElectronicSignatureMessage['connectSite']
             }  
@@ -840,9 +837,6 @@ export default {
             this.problemPicturesList = res.data.data['images'];
             this.problemOverview = res.data.data['description'];
             this.taskDescribe = res.data.data['remark'];
-            if (this.claimRegisterElectronicSignatureMessage['checkedStepIndex']) {
-              this.checkedStepIndex = this.claimRegisterElectronicSignatureMessage['checkedStepIndex']
-            };
             // 展示交接信息
             this.handoverTime = new Date(res.data.data['extendData']['handover']['time']);
             this.connectSite = res.data.data['extendData']['handover']['address'];
@@ -866,9 +860,6 @@ export default {
             this.problemPicturesList = res.data.data['images'];
             this.problemOverview = res.data.data['description'];
             this.taskDescribe = res.data.data['remark'];
-            if (this.claimRegisterElectronicSignatureMessage['checkedStepIndex']) {
-              this.checkedStepIndex = this.claimRegisterElectronicSignatureMessage['checkedStepIndex']
-            };
             // 展示交接信息
             this.handoverTime = new Date(res.data.data['extendData']['handover']['time']);
             this.connectSite = res.data.data['extendData']['handover']['address'];
@@ -882,7 +873,6 @@ export default {
             this.contactInformation = res.data.data['extendData']['contact']['situation'];
             // 回显进入签名页和更多信息页之前领取的相关信息
             if (flag) {
-              this.checkedStepIndex = this.claimRegisterElectronicSignatureMessage['checkedStepIndex'];
               this.getTime = this.claimRegisterElectronicSignatureMessage['getTime'];
               this.getSite = this.claimRegisterElectronicSignatureMessage['getSite'];
               this.getMessage = this.claimRegisterElectronicSignatureMessage['getMessage'];
@@ -905,9 +895,6 @@ export default {
             this.problemPicturesList = res.data.data['images'];
             this.problemOverview = res.data.data['description'];
             this.taskDescribe = res.data.data['remark'];
-            if (this.claimRegisterElectronicSignatureMessage['checkedStepIndex']) {
-              this.checkedStepIndex = this.claimRegisterElectronicSignatureMessage['checkedStepIndex']
-            };
             // 展示交接信息
             this.handoverTime = new Date(res.data.data['extendData']['handover']['time']);
             this.connectSite = res.data.data['extendData']['handover']['address'];
@@ -939,7 +926,10 @@ export default {
           let temporaryIndex = this.temporaryStorageHistoryClaimRegisterMessage.findIndex((item) => { return item.id == this.eventId});
           if (temporaryIndex != -1) {
             if (!flag) {
-              this.checkedStepIndex = this.temporaryStorageHistoryClaimRegisterMessage[temporaryIndex]['checkedStepIndex'];
+              // 当前实际流程大于暂存信息里的流程时则以当前实际流程为准
+              if (this.checkedStepIndex < this.temporaryStorageHistoryClaimRegisterMessage[temporaryIndex]['checkedStepIndex']) {
+                this.checkedStepIndex = this.temporaryStorageHistoryClaimRegisterMessage[temporaryIndex]['checkedStepIndex'];
+              };
               // 已提交的步骤,再次进入时直接显示该提交步骤的下一步骤信息,如果下一步的信息还没有暂存时，则不回显下一步的暂存信息
               if (this.checkedStepIndex == this.currentStepIndex && this.currentStepIndex < 3) {
                 this.checkedStepIndex = this.checkedStepIndex + 1

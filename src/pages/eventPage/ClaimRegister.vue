@@ -1173,10 +1173,14 @@ export default {
 
     // 目的房间下拉选择框确认事件
     goalSpacesSureEvent (val) {
-      if (val.length > 0) {
-        this.currentGoalSpaces =  val;
-      } else {
+      if (!val) {
         this.currentGoalSpaces = '请选择'
+      } else {
+        if (val.length > 0) {
+          this.currentGoalSpaces =  val;
+        } else {
+          this.currentGoalSpaces = '请选择'
+        }
       };
       this.showGoalSpaces = false
     },

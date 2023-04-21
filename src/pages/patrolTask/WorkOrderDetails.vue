@@ -466,7 +466,7 @@ export default {
             });
             done(false)
           } else {
-            this.codeDepartmentNoFinsh (this.patrolTaskListMessage.needSpaces.filter((item) => { return item['name'] == this.currentClockingPlace})[0]['id'],'加载中',this.currentClockingPlace,2,this.manualClockingReasonRadioList.filter((item) => { return item.value == this.manualClockingReasonRadio})[0]['text']);
+            this.codeDepartmentNoFinsh (this.patrolTaskListMessage.needSpaces.filter((item) => { return item['name'] == this.currentClockingPlace})[0]['id'],'加载中',this.currentClockingPlace,2,`其他-${this.explainMessage}`);
             done()
           }
         } else {

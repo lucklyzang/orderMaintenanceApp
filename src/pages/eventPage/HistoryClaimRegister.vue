@@ -927,7 +927,7 @@ export default {
           if (temporaryIndex != -1) {
             if (!flag) {
               // 当前实际流程大于暂存信息里的流程时则以当前实际流程为准
-              if (this.checkedStepIndex < this.temporaryStorageHistoryClaimRegisterMessage[temporaryIndex]['checkedStepIndex']) {
+              if (this.checkedStepIndex <= this.temporaryStorageHistoryClaimRegisterMessage[temporaryIndex]['checkedStepIndex']) {
                 this.checkedStepIndex = this.temporaryStorageHistoryClaimRegisterMessage[temporaryIndex]['checkedStepIndex'];
               };
               // 已提交的步骤,再次进入时直接显示该提交步骤的下一步骤信息,如果下一步的信息还没有暂存时，则不回显下一步的暂存信息
@@ -1437,6 +1437,7 @@ export default {
 @import "~@/common/stylus/modifyUi.less";
 .page-box {
   .content-wrapper();
+  height: 0;
   .quit-info-box {
     /deep/ .van-dialog {
       .van-dialog__content {

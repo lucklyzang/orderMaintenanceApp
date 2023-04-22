@@ -842,7 +842,7 @@ export default {
             this.connectSite = res.data.data['extendData']['handover']['address'];
             this.connectSignature = res.data.data['extendData']['handover']['from'];
             this.keeperSignature =  res.data.data['extendData']['handover']['to'];
-            // 回显联系信息
+            // 回显进入签名页和更多信息页之前的联系信息
             if (flag) {
               this.relationTime = this.claimRegisterElectronicSignatureMessage['relationTime'];
               this.contactDepartment = this.claimRegisterElectronicSignatureMessage['contactDepartment'];

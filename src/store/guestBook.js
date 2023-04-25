@@ -13,6 +13,10 @@ export default {
             return state.isEnterGuestBookPageFromHomePage
         },
 
+        currentScrollTop: (state) => {
+            return state.currentScrollTop
+        },
+
         lastMessageNumber: (state) => {
             return state.lastMessageNumber
         },
@@ -31,6 +35,13 @@ export default {
         changeIsEnterGuestBookPageFromHomePage(state, playLoad) {
             if (playLoad && playLoad != 'null') {
                 state.isEnterGuestBookPageFromHomePage = playLoad
+            }
+        },
+
+        // 保存当前留言簿列表滚动距离
+        changeCurrentScrollTop(state, playLoad) {
+            if (playLoad && playLoad != 'null') {
+                state.currentScrollTop = playLoad
             }
         },
 

@@ -50,5 +50,6 @@ export function getDefaultGuestbookState() {
         enterPostMessagePageMessage: {}, // 进入留言发布页的信息,
         isEnterGuestBookPageFromHomePage: false, // 是否从首页进入过留言簿页
         lastMessageNumber: null, //上次留言数量
+        currentScrollTop: 0 // 留言簿列表当前滚动距离
     }
 };

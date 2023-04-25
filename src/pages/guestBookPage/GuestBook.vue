@@ -129,6 +129,7 @@ export default {
       showCommentArea: false,
       currentMessageId: '',
       currentMessageIndex: '',
+      operateItemPage: 0,
       backlogEmptyShow: false,
       screenDialogShow: false,
       isShowBacklogTaskNoMoreData: false,
@@ -170,13 +171,15 @@ export default {
       collect: '',
       page: this.currentPage,
       limit: this.pageSize
-    },false);
+    },true);
     //点击外部评论输入框以外的地方时,隐藏外部评论输入框
 		document.addEventListener('click', (e) => {
 			if (e.target.className != 'van-field__control'){
 				this.showCommentArea = false
 			};
-		}, false)
+		}, false);
+    // 重置留言簿列表滚动距离为0
+    // this.changeCurrentScrollTop(0)
   },
 
   // beforeRouteEnter(to, from, next) {
@@ -198,7 +201,7 @@ export default {
   watch: {},
 
   computed: {
-    ...mapGetters(["userInfo","patrolTaskListMessage","departmentCheckList","enterPostMessagePageMessage"]),
+    ...mapGetters(["userInfo","patrolTaskListMessage","departmentCheckList","enterPostMessagePageMessage","currentScrollTop"]),
     proId () {
       return this.userInfo.proIds[0]
     },
@@ -211,7 +214,7 @@ export default {
   },
 
   methods: {
-    ...mapMutations(["changeDepartmentCheckList","changePatrolTaskListMessage","changeEnterPostMessagePageMessage"]),
+    ...mapMutations(["changeDepartmentCheckList","changePatrolTaskListMessage","changeEnterPostMessagePageMessage","changeCurrentScrollTop"]),
 
     // 顶部导航左边点击事件
     onClickLeft () {
@@ -312,6 +315,7 @@ export default {
     // 事件列表加载事件
     eventListLoadMore () {
       let boxBackScroll = this.$refs['scrollBacklogTask'];
+      // this.changeCurrentScrollTop(boxBackScroll.scrollTop);
       if (Math.ceil(boxBackScroll.scrollTop) + boxBackScroll.offsetHeight >= boxBackScroll.scrollHeight) {
         if (this.eventTime) {return};
         this.eventTime = 1;
@@ -372,8 +376,8 @@ export default {
           this.fullBacklogTaskList = this.fullBacklogTaskList.concat(this.backlogTaskList);
           if (this.fullBacklogTaskList.length == 0) {
             this.backlogEmptyShow = true
-          }
-          console.log('留言',res.data.data)
+          };
+          this.$refs['scrollBacklogTask'].scrollTop = this.currentScrollTop
         } else {
           this.$toast({
             type: 'fail',
@@ -396,6 +400,13 @@ export default {
       this.loadingShow = true;
       this.overlayShow = true;
       this.loadText = '删除中';
+      // 判断当前删除的项所在的页数
+      // this.operateItemPage = this.fullBacklogTaskList.findIndex((innerItem) => { return item == innerItem});
+      // if (this.operateItemPage%this.pageSize == 0) {
+      //   this.currentPage = (this.operateItemPage/this.pageSize)+1
+      // } else {
+      //   this.currentPage = Math.ceil(this.operateItemPage/this.pageSize)
+      // };
       guestBookDelete(item.id).then((res) => {
         this.loadingShow = false;
         this.overlayShow = false;

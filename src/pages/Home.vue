@@ -71,6 +71,10 @@
                     {
                         name: '留言簿',
                         imgUrl: require("@/common/images/home/guest-book.png")
+                    },
+                    {
+                        name: '打卡范围测定工具',
+                        imgUrl: require("@/common/images/home/guest-book.png")
                     }
                 ],
                 defaultPersonPng: require("@/common/images/home/default-person.png"),
@@ -185,6 +189,8 @@
                     // 记录留言数量没变化前的留言数量(进入留言簿页面后默认读过所有新留言)
                     this.changeLastMessageNumber(this.currentMessageNumber);
                     this.$router.push({path: '/guestBook'})
+                } else if (item.name == '打卡范围测定工具') {
+                    this.$router.push({path: '/beaconList'})
                 }
             }
         }
@@ -328,7 +334,8 @@
                             &:nth-child(2){
                                 margin-top: 14px;
                                 font-size: 16px;
-                                color: #101010
+                                color: #101010;
+                                text-align: center
                             };
                             &:nth-child(3) {
                                 position: absolute;
@@ -343,6 +350,9 @@
                                 box-sizing: border-box
                             }
                         }
+                    };
+                    >div:nth-child(5) {
+                        width: 35% !important
                     }
                 }
             }

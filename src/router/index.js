@@ -8,6 +8,8 @@ const Login = () =>
     import ('@/pages/Login')
 const MyInfo = () =>
     import ('@/pages/MyInfo')
+const BeaconList = () =>
+import ('@/pages/BeaconList')
 const PatrolTaskElectronicSignaturePage = () =>
     import ('@/pages/patrolTask/PatrolTaskElectronicSignaturePage')
 const EventRegisterElectronicSignaturePage = () =>
@@ -54,6 +56,11 @@ let baseRoute = [{
         path: '/home',
         name: 'home',
         component: Home
+    },
+    {
+        path: '/beaconList',
+        name: 'beaconList',
+        component: BeaconList
     },
     {
         path: '/patrolTaskElectronicSignaturePage',

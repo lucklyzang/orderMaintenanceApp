@@ -1,6 +1,6 @@
 <template>
   <div class="page-box" ref="wrapper">
-    <!-- 删除提示框   -->
+    <!-- 清除打卡点提示框   -->
     <div class="quit-info-box">
        <van-dialog v-model="deleteInfoShow"  show-cancel-button width="90%"
           @confirm="deleteSure" @cancel="deleteCancel" confirm-button-text="取消"
@@ -14,7 +14,21 @@
             <span>删除后无法恢复，请选择是否删除？</span>
           </div>
         </van-dialog>
-    </div>    
+    </div>
+    <!-- 是否成功提示框   -->
+    <div class="quit-info-box is-success-info">
+       <van-dialog v-model="isShowSuccessShow" width="80%"
+          confirm-button-text="确定"
+        >
+          <div class="dialog-title">
+            <van-icon name="cross" size="22" @click="isSuccessInfoEvent"/>
+          </div>
+          <div class="dialog-top">
+            <img :src="isSuccessIcon ?  exclamationPointSuccessPng : exclamationPointPng">
+            <span>{{ showIsSuccessText }}</span>
+          </div>
+        </van-dialog>
+    </div>        
     <van-loading size="35px" vertical color="#e6e6e6" v-show="loadingShow">{{ loadText }}</van-loading>
     <van-overlay :show="overlayShow" />
     <div class="nav">
@@ -36,11 +50,54 @@
             </div>
             <div class="building-box">
                 <span>楼栋选择</span>
-                <SelectSearch ref="registrantOption" :itemData="buildingOption" :curData="currentBuilding" @change="buildingOptionChange" />
+                <SelectSearch ref="registrantOption" :itemData="buildingOption" :curData="currentBuilding" @change="buildingOptionChange" :isNeedSearch="false" />
             </div>
             <div class="department-list-box" ref="departmentListBox">
-                <div class="department-list">
-
+                <div class="department-list" v-for="(item,index) in beaconList" :key="index">
+                  <div class="list-one-line">
+                    <div class="one-line-left">
+                      <div class="signal-is-have-box">
+                        <img :src="item.beacons.every((currentItem) => { return currentItem.currentSignal == 0}) ? signalNoPng : item.beacons.every((currentItem) => { return currentItem.currentSignal == 1}) ?  signalWeakPng : signalStrongPng " alt="信号标记" />
+                        <span :class="{'strongSignal':item.beacons.some((currentItem) => { return currentItem.currentSignal == 2}),'weakSignal':item.beacons.every((currentItem) => { return currentItem.currentSignal == 1})}">{{ item.beacons.every((currentItem) => { return currentItem.currentSignal == 0}) ? '无信号' : item.beacons.every((currentItem) => { return currentItem.currentSignal == 1}) ? '信号弱' : '信号强'}}</span>
+                      </div>
+                      <div class="department-box">{{ item.departmentName }}</div>
+                    </div>
+                    <div class="one-line-right" :class="{'oneLineRightStyle':item.isSetClockPoint}">
+                      {{ item.isSetClockPoint ? '打卡点已设置':'打卡点未设置'}}
+                    </div>
+                  </div>
+                  <div class="list-two-line">
+                    <div class="beacon-list" v-for="(innerItem,innerIndex) in item.beacons" :key="innerIndex">
+                      <div class="beacon-left">
+                        <span>信标编号:</span>
+                        <span>{{ innerItem.beaconNumber }}</span>
+                      </div>
+                      <div class="beacon-right">
+                        <span>当前信号:</span>
+                        <span>{{ innerItem.currentSignal == 0 ? "无信号" :  innerItem.currentSignal}}</span>
+                        <span>(-25dBm)</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="list-three-line">
+                    <div class="three-line-left">
+                      <span :class="{'canTestStyle':item.beacons.some((currentItem) => { return currentItem.currentSignal != 0}) && item.isSetClockPoint}" @click="clockTestEvent(item)">打卡测试</span>
+                      <span :class="{'setClockPointStyle':item.isSetClockPoint}" @click="setClockEvent(item)">设置打卡</span>
+                      <img :src="questionMarkPng" alt="疑问" @click="questionMarkEvent(item)" />
+                    </div>
+                    <div class="three-line-right" v-show="item.isSetClockPoint">
+                      <span @click="clearClockPointEvent">清除打卡点</span>
+                    </div>
+                  </div>
+                  <div class="explain-box" v-show="item.isShowExplain">
+                    <div class="explain-title">
+                      <img :src="exclamationPointPng" alt="说明">
+                      <span>说明</span>
+                    </div>
+                    <div class="explain-content">
+                      设置该位置为打卡点后，以信标位置为圆心，当前位置到信标位置的距离为半径的球形空间范围内均可打卡（无遮挡的情下）。
+                    </div>
+                  </div>
                 </div>
             </div>
         </div>
@@ -63,18 +120,73 @@ export default {
   data() {
     return {
       overlayShow: false,
-      deleteInfoShow: true,
+      deleteInfoShow: false,
+      isShowSuccessShow: false,
+      showIsSuccessText: '打卡成功！',
+      isSuccessIcon: true,
       timeOne: null,
       isLoadDataTime: null,
       loadingShow: false,
       totalCount: '',
       eventTime: 0,
       currentBuilding: null,
-      buildingOption: [],
+      beaconList: [
+        {
+          departmentName: '儿科',
+          isShowExplain: false,
+          beacons: [
+            {
+              beaconNumber: '0001',
+              currentSignal: 0,
+            },
+            {
+              beaconNumber: '0002',
+              currentSignal: '-11dMb',
+            }
+          ],
+          isSetClockPoint: false
+        },
+        {
+          departmentName: '妇科',
+          isShowExplain: false,
+          beacons: [
+            {
+              beaconNumber: '0003',
+              currentSignal: 0,
+            },
+            {
+              beaconNumber: '0004',
+              currentSignal: '-11dMb',
+            }
+          ],
+          isSetClockPoint: true
+        },
+        {
+          departmentName: '胸科',
+          isShowExplain: false,
+          beacons: [
+            {
+              beaconNumber: '0005',
+              currentSignal: 0,
+            },
+            {
+              beaconNumber: '0006',
+              currentSignal: '-11dMb',
+            }
+          ],
+          isSetClockPoint: false
+        }
+      ],
+      buildingOption: [{text:'请选择',value:null},{text:'住院部',value:1},{text:'急诊楼',value:2}],
       currentPage: 1,
       pageSize: 10,
       loadText: '加载中',
+      signalStrongPng: require("@/common/images/home/signal-strong.png"),
+      signalWeakPng: require("@/common/images/home/signal-weak.png"),
+      signalNoPng: require("@/common/images/home/signal-no.png"),
+      questionMarkPng: require("@/common/images/home/question-mark.png"),
       exclamationPointPng: require("@/common/images/home/exclamation-point.png"),
+      exclamationPointSuccessPng: require("@/common/images/home/exclamation-point-success.png"),
       statusBackgroundPng: require("@/common/images/home/status-background.png")
     }
   },
@@ -119,10 +231,39 @@ export default {
       this.$router.push({path: '/home'})
     },
 
-    // 删除弹框提示关闭事件
+    // 疑问点击事件
+    questionMarkEvent (item) {
+      item.isShowExplain = !item.isShowExplain
+    },
+
+    // 清除打卡点事件
+    clearClockPointEvent () {
+      this.deleteInfoShow = true
+    },
+
+    // 打卡测试事件
+    clockTestEvent (item) {
+      if (item.beacons.some((currentItem) => { return currentItem.currentSignal != 0}) && item.isSetClockPoint) {
+        this.isShowSuccessShow = true
+      }
+    },
+
+    // 设置打卡事件
+    setClockEvent (item) {
+      if (item.beacons.some((currentItem) => { return currentItem.currentSignal != 0})) {
+        this.isShowSuccessShow = true
+      }
+    },
+
+    // 删除弹框提示框关闭事件
     deleteCloseInfoEvent () {
-        this.deleteInfoShow = false
+      this.deleteInfoShow = false
     }, 
+
+    // 是否成功失败提示框关闭事件
+    isSuccessInfoEvent () {
+      this.isShowSuccessShow = false
+    },
 
     // 删除确定
     deleteSure () {
@@ -247,6 +388,26 @@ export default {
         }
     }
   };
+  .is-success-info {
+    /deep/ .van-dialog {
+      .van-dialog__footer {
+        padding: 10px 40px 20px 40px !important;
+        box-sizing: border-box;
+        justify-content: center;
+        ::after {
+          content: none
+        };
+        .van-dialog__confirm {
+          height: 40px;
+          background: #3B9DF9;
+          color: #fff !important;
+          border-radius: 8px;
+          flex: none !important;
+          width: 50%
+        }
+      }
+    }
+  };
   .content-wrapper();
   /deep/ .van-overlay {
     z-index: 1000 !important
@@ -344,8 +505,12 @@ export default {
                 color: #101010;
                 margin-right: 10px
             };
-            .vue-dropdown {
-                width: 50%
+            /deep/ .vue-dropdown {
+                width: 50%;
+                .cur-name {
+                  height: 28px;
+                  line-height: 28px
+                }
             }
         };
         .department-list-box {
@@ -354,7 +519,151 @@ export default {
             .department-list {
                 padding: 8px 4px;
                 box-sizing: border-box;
-                .bottom-border-1px(#BBBBBB)
+                position: relative;
+                .bottom-border-1px(#BBBBBB);
+                .list-one-line {
+                  display: flex;
+                  height: 40px;
+                  flex-flow: row nowrap;
+                  justify-content: space-between;
+                  align-items: center;
+                  .one-line-left {
+                    display: flex;
+                    align-items: center;
+                    .signal-is-have-box {
+                      display: flex;
+                      flex-direction: column;
+                      align-items: center;
+                      margin-right: 10px;
+                      >img {
+                        width: 14px;
+                        height: 14px;
+                        margin-bottom: 2px
+                      };
+                      >span {
+                        font-size: 12px;
+                        color: #BBBBBB
+                      };
+                      .strongSignal {
+                        color: #289E8E !important
+                      };
+                      .weakSignal {
+                        color: #F2A15F !important
+                      }
+                    };
+                    .department-box {
+                      color: #101010;
+                      font-size: 16px
+                    }
+                  };
+                  .one-line-right {
+                    color: #E86F50;
+                    font-size: 10px
+                  };
+                  .oneLineRightStyle {
+                    color: #289E8E !important
+                  }
+                };
+                .list-two-line {
+                  margin: 4px 0 14px 0;
+                  line-height: 20px;
+                  .beacon-list {
+                    display: flex;
+                    flex-flow: row nowrap;
+                    .beacon-left {
+                      margin-right: 10px;
+                      >span {
+                        font-size: 10px;
+                        color: #101010
+                      }
+                    };
+                    .beacon-right {
+                      flex: 1;
+                      >span {
+                        font-size: 10px;
+                        color: #101010;
+                        &:nth-child(2) {
+                          color: #0079FF
+                        }
+                      }
+                    }
+                  }
+                };
+                .list-three-line {
+                  display: flex;
+                  flex-flow: row nowrap;
+                  justify-content: space-between;
+                  align-items: center;
+                  .three-line-left {
+                    width: 50%;
+                    position: relative;
+                    >img {
+                      position: absolute;
+                      width: 13px;
+                      height: 13px;
+                      right: 10px;
+                      top: 50%;
+                      transform: translateY(-50%)
+                    };
+                    >span {
+                      display: inline-block;
+                      font-size: 12px;
+                      color: #fff;
+                      padding: 6px 10px;
+                      border-radius: 4px;
+                      box-sizing: border-box;
+                      background: #BBBBBB;
+                      &:nth-child(1) {
+                        margin-right: 6px
+                      }
+                    };
+                    .canTestStyle {
+                      background: #174E97 !important
+                    };
+                    .setClockPointStyle {
+                      background: #289E8E !important
+                    }
+                  };
+                  .three-line-right {
+                    display: inline-block;
+                    font-size: 12px;
+                    padding: 6px 10px;
+                    border-radius: 4px;
+                    box-sizing: border-box;
+                    color: #E86F50;
+                    border: 1px solid #E86F50
+                  }
+                };
+                .explain-box {
+                  position: absolute;
+                  box-shadow: 0px 1px 4px 0px #ececec;
+                  left: 30%;
+                  width: 55%;
+                  border-radius: 4px;
+                  padding: 10px 6px;
+                  box-sizing: border-box;
+                  top: 97%;
+                  z-index: 1;
+                  background: #fff;
+                  .explain-title {
+                    >img {
+                      width: 14px;
+                      height: 14px;
+                      margin-right: 6px;
+                      vertical-align: top
+                    };
+                    >span {
+                      font-size: 12px;
+                      color: #101010
+                    }
+                  };
+                  .explain-content {
+                    margin-top: 10px;
+                    font-size: 12px;
+                    color: #101010;
+                    line-height: 20px;
+                  }
+                }
             }
         }
     }    

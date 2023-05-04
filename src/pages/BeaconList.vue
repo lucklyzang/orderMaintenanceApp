@@ -83,7 +83,7 @@
                     <div class="three-line-left">
                       <span :class="{'canTestStyle':item.beacons.some((currentItem) => { return currentItem.currentSignal != 0}) && item.isSetClockPoint}" @click="clockTestEvent(item)">打卡测试</span>
                       <span :class="{'setClockPointStyle':item.isSetClockPoint}" @click="setClockEvent(item)">设置打卡</span>
-                      <img :src="questionMarkPng" alt="疑问" @click="questionMarkEvent(item)" />
+                      <img :src="questionMarkPng" alt="疑问" @click="questionMarkEvent(item)" class="exclamation-point-png" />
                     </div>
                     <div class="three-line-right" v-show="item.isSetClockPoint">
                       <span @click="clearClockPointEvent">清除打卡点</span>
@@ -91,7 +91,7 @@
                   </div>
                   <div class="explain-box" v-show="item.isShowExplain">
                     <div class="explain-title">
-                      <img :src="exclamationPointPng" alt="说明">
+                      <img :src="exclamationPointPng" alt="说明" />
                       <span>说明</span>
                     </div>
                     <div class="explain-content">
@@ -196,7 +196,13 @@ export default {
     this.deviceReturn("/home");
     this.$nextTick(()=> {
       this.initScrollChange()
-    })
+    });
+    //点击说明标志以外的地方时,隐藏说明弹出框
+		document.addEventListener('click', (e) => {
+			if (e.target.className != 'exclamation-point-png'){
+				this.beaconList.forEach((innerItem) => { return innerItem.isShowExplain = false });
+			};
+		}, false)
   },
 
   beforeDestroy () {
@@ -233,6 +239,7 @@ export default {
 
     // 疑问点击事件
     questionMarkEvent (item) {
+      this.beaconList.forEach((innerItem) => { if (item.departmentName != innerItem.departmentName) { return innerItem.isShowExplain = false } });
       item.isShowExplain = !item.isShowExplain
     },
 

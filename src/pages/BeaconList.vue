@@ -28,7 +28,22 @@
             <span>{{ showIsSuccessText }}</span>
           </div>
         </van-dialog>
-    </div>        
+    </div>
+    <!-- 是否重新设置打卡点提示框   -->
+    <div class="quit-info-box">
+       <van-dialog v-model="isAgainSetPointShow" show-cancel-button width="90%"
+          @confirm="isAgainSetPointSureEvent" @cancel="isAgainSetPointCancelEvent" confirm-button-text="取消"
+          cancel-button-text="确定"
+        >
+          <div class="dialog-title">
+            <van-icon name="cross" size="22" @click="isAgainSetPointCloseEvent"/>
+          </div>
+          <div class="dialog-top">
+            <img :src="exclamationPointPng">
+            <span>该科室已设置打卡点，是否重新设置</span>
+          </div>
+        </van-dialog>
+    </div>               
     <van-loading size="35px" vertical color="#e6e6e6" v-show="loadingShow">{{ loadText }}</van-loading>
     <van-overlay :show="overlayShow" />
     <div class="nav">
@@ -121,6 +136,7 @@ export default {
     return {
       overlayShow: false,
       deleteInfoShow: false,
+      isAgainSetPointShow: true,
       isShowSuccessShow: false,
       showIsSuccessText: '打卡成功！',
       isSuccessIcon: true,
@@ -278,6 +294,17 @@ export default {
 
     // 删除取消
     deleteCancel () {
+    },
+
+    // 重新设置打卡点确定事件
+    isAgainSetPointSureEvent () {},
+
+    // 重新设置打卡点取消事件
+    isAgainSetPointCancelEvent () {},
+
+    // 重新设置打卡点关闭事件
+    isAgainSetPointCloseEvent () {
+      this.isAgainSetPointShow = false
     },
 
     // 楼栋下拉框值改变事件

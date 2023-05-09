@@ -541,6 +541,7 @@ export default {
             };
             /deep/ .vue-dropdown {
                 width: 50%;
+                border-radius: 6px;
                 .cur-name {
                   height: 28px;
                   line-height: 28px

@@ -354,7 +354,7 @@ export default {
       }
     },
 
-    // 事件登记事件
+    // 刷新事件
     onClickRight () {
     }
   }

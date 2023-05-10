@@ -114,6 +114,7 @@
                     </div>
                   </div>
                 </div>
+                <div class="no-more-data" v-show="isShowBeaconListNoMoreData">没有更多数据了!</div>
             </div>
         </div>
     </div>
@@ -143,6 +144,7 @@ export default {
       timeOne: null,
       isLoadDataTime: null,
       loadingShow: false,
+      isShowBeaconListNoMoreData: false,
       totalCount: '',
       eventTime: 0,
       currentBuilding: null,
@@ -323,40 +325,34 @@ export default {
 
     // 信标列表加载事件
     beaconListLoadMore () {
-      // 暂存的数据不进行上拉加载
-      if (this.storageRadio) {return};
       let boxBackScroll = this.$refs['departmentListBox'];
       if (Math.ceil(boxBackScroll.scrollTop) + boxBackScroll.offsetHeight >= boxBackScroll.scrollHeight) {
-        // 点击筛选确定后，不加载数据
-        if (!this.isLoadData) {return};
         if (this.eventTime) {return};
         this.eventTime = 1;
         this.timeTwo = setTimeout(() => {
           let totalPage = Math.ceil(this.totalCount/this.pageSize);
           if (this.currentPage >= totalPage) {
-            if (this.isOnlyMe && this.fullBacklogTaskList.length == 0) {
-              this.isShowBacklogTaskNoMoreData = false
+            if (this.beaconList.length == 0) {
+              this.isShowBeaconListNoMoreData = false
             } else {
-              this.isShowBacklogTaskNoMoreData = true
+              this.isShowBeaconListNoMoreData = true
             }
           } else {
-            this.isShowBacklogTaskNoMoreData = false;
+            this.isShowBeaconListNoMoreData = false;
             this.currentPage = this.currentPage + 1;
-            if (this.isOnlyMe) {
-              this.queryEventList(this.currentPage,this.pageSize,this.userName)
-            } else {
-              this.queryEventList(this.currentPage,this.pageSize)
-            }
+            this.queryBeaconList(this.currentPage,this.pageSize)
           };
-          this.eventTime = 0;
-          console.log('信标列表滚动了',boxBackScroll.scrollTop, boxBackScroll.offsetHeight, boxBackScroll.scrollHeight)
+          this.eventTime = 0
         },300)
       }
     },
 
     // 刷新事件
     onClickRight () {
-    }
+    },
+
+    // 查询信标列表事件
+    queryBeaconList(currentPage,pageSize) {}
   }
 };
 </script>
@@ -699,6 +695,13 @@ export default {
                     line-height: 20px;
                   }
                 }
+            };
+            .no-more-data {
+              line-height: 30px;
+              width: 100%;
+              text-align: center;
+              color: #afafaf;
+              font-size: 12px
             }
         }
     }    

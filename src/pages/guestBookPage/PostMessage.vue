@@ -50,6 +50,7 @@
           <input
             name="uploadImg1"
             id="demo1"
+            ref="inputFile"
             @change="previewFileOne"
             type="file"
             accept="image/album"
@@ -236,6 +237,7 @@ export default {
             _this.photoBox = false;
             _this.overlayShow = false
           };
+          _this.$refs.inputFile.value = null;
         },
         false
       );

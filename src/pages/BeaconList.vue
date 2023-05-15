@@ -409,7 +409,8 @@ export default {
               this.overlayShow = false;
               let currentPageList = this.temporaryBeaconList.slice((this.currentPage - 1) * this.pageSize,(this.currentPage - 1) * this.pageSize + this.pageSize);
               // 合并已经加载的数据
-              this.beaconList = this.beaconList.concat(currentPageList)
+              this.beaconList = this.beaconList.concat(currentPageList);
+              this.beaconList.forEach((item) => { return item.isShowExplain = false})
             },1000)
           };
           this.eventTime = 0

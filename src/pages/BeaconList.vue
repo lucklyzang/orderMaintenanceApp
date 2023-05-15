@@ -50,7 +50,7 @@
       <van-nav-bar title="信标列表" left-text="返回" left-arrow @click-left="onClickLeft" :border="false">
            <template #right>
                 <van-icon name="replay" size="18" color="#fff" />
-                <span @click-right="onClickRight">刷新</span>
+                <span @click="onClickRight">刷新</span>
             </template>
       </van-nav-bar>
     </div>
@@ -63,7 +63,7 @@
                 <div class="info-content">当前蓝牙未打开，请打开手机蓝牙后再进行操作</div>
                 <div class="info-right" @click="turnNoBluetoothEvent">去打开</div>
             </div>
-            <div class="building-box">
+            <div class="building-box" ref="buildingBox">
                 <span>楼栋选择</span>
                 <SelectSearch ref="registrantOption" :itemData="buildingOption" :curData="currentBuilding" @change="buildingOptionChange" :isNeedSearch="false" />
             </div>
@@ -72,36 +72,37 @@
                   <div class="list-one-line">
                     <div class="one-line-left">
                       <div class="signal-is-have-box">
-                        <img :src="item.beacons.every((currentItem) => { return currentItem.currentSignal == 0}) ? signalNoPng : item.beacons.every((currentItem) => { return currentItem.currentSignal == 1}) ?  signalWeakPng : signalStrongPng " alt="信号标记" />
-                        <span :class="{'strongSignal':item.beacons.some((currentItem) => { return currentItem.currentSignal == 2}),'weakSignal':item.beacons.every((currentItem) => { return currentItem.currentSignal == 1})}">{{ item.beacons.every((currentItem) => { return currentItem.currentSignal == 0}) ? '无信号' : item.beacons.every((currentItem) => { return currentItem.currentSignal == 1}) ? '信号弱' : '信号强'}}</span>
+                        <img :src="item.beaconList.every((currentItem) => { return currentItem.rssi == 0}) ? signalNoPng : item.beaconList.every((currentItem) => { return currentItem.rssi == 1}) ?  signalWeakPng : signalStrongPng " alt="信号标记" />
+                        <span :class="{'strongSignal':item.beaconList.some((currentItem) => { return currentItem.rssi == 2}),'weakSignal':item.beaconList.every((currentItem) => { return currentItem.rssi == 1})}">{{ item.beaconList.every((currentItem) => { return currentItem.rssi == 0}) ? '无信号' : item.beacons.every((currentItem) => { return currentItem.rssi == 1}) ? '信号弱' : '信号强'}}</span>
                       </div>
-                      <div class="department-box">{{ item.departmentName }}</div>
+                      <div class="department-box">{{ item.depName }}</div>
                     </div>
-                    <div class="one-line-right" :class="{'oneLineRightStyle':item.isSetClockPoint}">
-                      {{ item.isSetClockPoint ? '打卡点已设置':'打卡点未设置'}}
+                    <div class="one-line-right" :class="{'oneLineRightStyle':item.range}">
+                      {{ item.range ? '打卡点已设置':'打卡点未设置'}}
                     </div>
                   </div>
                   <div class="list-two-line">
-                    <div class="beacon-list" v-for="(innerItem,innerIndex) in item.beacons" :key="innerIndex">
+                    <div class="beacon-list" v-for="(innerItem,innerIndex) in item.beaconList" :key="innerIndex">
                       <div class="beacon-left">
                         <span>信标编号:</span>
-                        <span>{{ innerItem.beaconNumber }}</span>
+                        <span>{{ innerItem.number }}</span>
                       </div>
                       <div class="beacon-right">
                         <span>当前信号:</span>
-                        <span>{{ innerItem.currentSignal == 0 ? "无信号" :  innerItem.currentSignal}}</span>
+                        <span>{{ innerItem.rssi == 0 ? "无信号" :  innerItem.rssi}}</span>
                         <span>(-25dBm)</span>
+                        <span>{{ innerItem.dumpEnergy }}</span>
                       </div>
                     </div>
                   </div>
                   <div class="list-three-line">
                     <div class="three-line-left">
-                      <span :class="{'canTestStyle':item.beacons.some((currentItem) => { return currentItem.currentSignal != 0}) && item.isSetClockPoint}" @click="clockTestEvent(item)">打卡测试</span>
-                      <span :class="{'setClockPointStyle':item.isSetClockPoint}" @click="setClockEvent(item)">设置打卡</span>
+                      <span :class="{'canTestStyle':item.beaconList.some((currentItem) => { return currentItem.rssi != 0}) && item.range}" @click="clockTestEvent(item)">打卡测试</span>
+                      <span :class="{'setClockPointStyle':item.range}" @click="setClockEvent(item)">设置打卡</span>
                       <img :src="questionMarkPng" alt="疑问" @click="questionMarkEvent(item)" class="exclamation-point-png" />
                     </div>
-                    <div class="three-line-right" v-show="item.isSetClockPoint">
-                      <span @click="clearClockPointEvent">清除打卡点</span>
+                    <div class="three-line-right">
+                      <span @click="clearClockPointEvent(item)">清除打卡点</span>
                     </div>
                   </div>
                   <div class="explain-box" v-show="item.isShowExplain">
@@ -114,7 +115,8 @@
                     </div>
                   </div>
                 </div>
-                <div class="no-more-data" v-show="isShowBeaconListNoMoreData">没有更多数据了!</div>
+                <van-empty description="暂无数据" v-show="emptyShow" />
+                <div class="no-more-data" v-show="isShowBeaconListNoMoreData && !emptyShow">没有更多数据了!</div>
             </div>
         </div>
     </div>
@@ -123,7 +125,7 @@
 <script>
 import NavBar from "@/components/NavBar";
 import { mapGetters, mapMutations } from "vuex";
-import { } from '@/api/escortManagement.js'
+import { queryStructure, queryBeaconList, setBeaconConfigRange, clearBeaconRange } from '@/api/escortManagement.js'
 import {mixinsDeviceReturn} from '@/mixins/deviceReturnFunction';
 import SelectSearch from "@/components/SelectSearch";
 export default {
@@ -136,69 +138,30 @@ export default {
   data() {
     return {
       overlayShow: false,
+      windowTimer: null,
+      isTimeoutContinue: true,
+      loadingShow: false,
+      emptyShow: false,
       deleteInfoShow: false,
-      isAgainSetPointShow: true,
+      isAgainSetPointShow: false,
       isShowSuccessShow: false,
       showIsSuccessText: '打卡成功！',
       isSuccessIcon: true,
       timeOne: null,
-      isLoadDataTime: null,
-      loadingShow: false,
+      timeTwo: null,
+      timeThree: null,
+      currentDepName: null,
       isShowBeaconListNoMoreData: false,
       totalCount: '',
       eventTime: 0,
+      depId: '',
       currentBuilding: null,
-      beaconList: [
-        {
-          departmentName: '儿科',
-          isShowExplain: false,
-          beacons: [
-            {
-              beaconNumber: '0001',
-              currentSignal: 0,
-            },
-            {
-              beaconNumber: '0002',
-              currentSignal: '-11dMb',
-            }
-          ],
-          isSetClockPoint: false
-        },
-        {
-          departmentName: '妇科',
-          isShowExplain: false,
-          beacons: [
-            {
-              beaconNumber: '0003',
-              currentSignal: 0,
-            },
-            {
-              beaconNumber: '0004',
-              currentSignal: '-11dMb',
-            }
-          ],
-          isSetClockPoint: true
-        },
-        {
-          departmentName: '胸科',
-          isShowExplain: false,
-          beacons: [
-            {
-              beaconNumber: '0005',
-              currentSignal: 0,
-            },
-            {
-              beaconNumber: '0006',
-              currentSignal: '-11dMb',
-            }
-          ],
-          isSetClockPoint: false
-        }
-      ],
-      buildingOption: [{text:'请选择',value:null},{text:'住院部',value:1},{text:'急诊楼',value:2}],
+      beaconList: [],
+      temporaryBeaconList: [],
+      buildingOption: [{text:'请选择',value:null}],
       currentPage: 1,
       pageSize: 10,
-      loadText: '加载中',
+      loadText: '加载中...',
       signalStrongPng: require("@/common/images/home/signal-strong.png"),
       signalWeakPng: require("@/common/images/home/signal-weak.png"),
       signalNoPng: require("@/common/images/home/signal-no.png"),
@@ -219,20 +182,47 @@ export default {
 		document.addEventListener('click', (e) => {
 			if (e.target.className != 'exclamation-point-png'){
 				this.beaconList.forEach((innerItem) => { return innerItem.isShowExplain = false });
+        this.$forceUpdate()
 			};
-		}, false)
+		}, false);
+    // 查询建筑信息
+    this.getStructure();
+    // 查询信标信息
+    this.getBeaconList('');
+    // 轮询信标信息列表
+    if (!this.windowTimer) {
+      this.windowTimer = window.setInterval(() => {
+        if (this.isTimeoutContinue) {
+          setTimeout(this.pollingGetBeaconList(!this.currentBuilding ? this.currentBuilding : this.currentBuilding.value), 0)
+        }
+      }, 10000);
+      this.changeGlobalTimer(this.windowTimer)
+    }
   },
 
   beforeDestroy () {
     if (this.timeOne) {
       clearTimeout(this.timeOne)
     };
-    if (this.isLoadDataTime) {
-      clearTimeout(this.isLoadDataTime)
+    if (this.timeTwo) {
+      clearTimeout(this.timeTwo)
+    };
+    if (this.timeThree) {
+      clearTimeout(this.timeThree)
+    };
+    if (this.windowTimer) {
+      clearInterval(this.windowTimer)
     }
   },
 
-  watch: {},
+  watch: {
+    currentBuilding: {
+      handler: function(newVal, oldVal) {
+        this.currentDepName = newVal.value
+      },
+      deep: true
+    }
+  },
 
   computed: {
     ...mapGetters(["userInfo"]),
@@ -248,7 +238,7 @@ export default {
   },
 
   methods: {
-    ...mapMutations([]),
+    ...mapMutations(['changeGlobalTimer']),
 
     // 顶部导航左边点击事件
     onClickLeft () {
@@ -257,30 +247,68 @@ export default {
 
     // 疑问点击事件
     questionMarkEvent (item) {
-      this.beaconList.forEach((innerItem) => { if (item.departmentName != innerItem.departmentName) { return innerItem.isShowExplain = false } });
-      item.isShowExplain = !item.isShowExplain
+      this.beaconList.forEach((innerItem) => { if (item.depName != innerItem.depName) { return innerItem.isShowExplain = false } });
+      item.isShowExplain = !item.isShowExplain;
+      this.$forceUpdate()
     },
 
     // 清除打卡点事件
-    clearClockPointEvent () {
+    clearClockPointEvent (item) {
+      this.depId = item.depId;
       this.deleteInfoShow = true
     },
 
     // 打卡测试事件
     clockTestEvent (item) {
-      if (item.beacons.some((currentItem) => { return currentItem.currentSignal != 0}) && item.isSetClockPoint) {
+      if (item.beaconList.some((currentItem) => { return currentItem.rssi != 0}) && item.range) {
         this.isShowSuccessShow = true
       }
     },
 
     // 设置打卡事件
     setClockEvent (item) {
-      if (item.beacons.some((currentItem) => { return currentItem.currentSignal != 0})) {
-        this.isShowSuccessShow = true
+      if (item.beaconList.some((currentItem) => { return currentItem.rssi != 0})) {
+      };
+      if (item.range) {
+        this.depId = item.depId;
+        this.isAgainSetPointShow = true
+      } else {
+        this.setBeaconRange(item.depId)
       }
     },
 
-    // 删除弹框提示框关闭事件
+    // 设置信标打开范围
+    setBeaconRange (depId) {
+      this.loadingShow = true;
+      this.overlayShow = true;
+      this.loadText = '设置中...';
+      setBeaconConfigRange({depId,proId:this.proId}).then((res) => {
+        this.loadingShow = false;
+        this.overlayShow = false;
+        if (res && res.data.code == 200) {
+          this.isShowSuccessShow = true;
+          this.isSuccessIcon = true;
+          this.showIsSuccessText = '设置打卡点成功!'
+        } else {
+          this.$dialog.alert({
+            message: `${err}`,
+            closeOnPopstate: true
+          }).then(() => {
+          })
+        }
+      })
+      .catch((err) => {
+        this.loadingShow = false;
+        this.overlayShow = false;
+        this.$dialog.alert({
+          message: `${err}`,
+          closeOnPopstate: true
+        }).then(() => {
+        })
+      })
+    },
+
+    // 删除打卡点弹框提示框关闭事件
     deleteCloseInfoEvent () {
       this.deleteInfoShow = false
     }, 
@@ -296,10 +324,40 @@ export default {
 
     // 删除取消
     deleteCancel () {
+      this.overlayShow = true;
+      this.loadingShow = true;
+      this.loadText = '清除中...';
+      clearBeaconRange({depId: this.depId,proId:this.proId}).then((res) => {
+        this.loadingShow = false;
+        this.overlayShow = false;
+        if (res && res.data.code == 200) {
+          this.isShowSuccessShow = true;
+          this.isSuccessIcon = true;
+          this.showIsSuccessText = '清除打卡点成功!'
+          this.getBeaconList(!this.currentBuilding ? this.currentBuilding : this.currentBuilding.value)
+        } else {
+          this.$dialog.alert({
+            message: `${err}`,
+            closeOnPopstate: true
+          }).then(() => {
+          })
+        }
+      })
+      .catch((err) => {
+        this.loadingShow = false;
+        this.overlayShow = false;
+        this.$dialog.alert({
+          message: `${err}`,
+          closeOnPopstate: true
+        }).then(() => {
+        })
+      })
     },
 
     // 重新设置打卡点确定事件
-    isAgainSetPointSureEvent () {},
+    isAgainSetPointSureEvent () {
+      this.setBeaconRange(this.depId)
+    },
 
     // 重新设置打卡点取消事件
     isAgainSetPointCancelEvent () {},
@@ -311,7 +369,8 @@ export default {
 
     // 楼栋下拉框值改变事件
     buildingOptionChange (val) {
-      this.currentBuilding = val
+      this.currentBuilding = val;
+      this.getBeaconList(val.value)
     },
 
     // 打开蓝牙事件
@@ -326,7 +385,8 @@ export default {
     // 信标列表加载事件
     beaconListLoadMore () {
       let boxBackScroll = this.$refs['departmentListBox'];
-      if (Math.ceil(boxBackScroll.scrollTop) + boxBackScroll.offsetHeight >= boxBackScroll.scrollHeight) {
+      console.log(boxBackScroll.scrollTop,boxBackScroll.offsetHeight,boxBackScroll.scrollHeight);
+      if (Math.ceil(boxBackScroll.scrollTop) + boxBackScroll.offsetHeight + this.$refs['buildingBox'].offsetHeight >= boxBackScroll.scrollHeight) {
         if (this.eventTime) {return};
         this.eventTime = 1;
         this.timeTwo = setTimeout(() => {
@@ -340,19 +400,131 @@ export default {
           } else {
             this.isShowBeaconListNoMoreData = false;
             this.currentPage = this.currentPage + 1;
-            this.queryBeaconList(this.currentPage,this.pageSize)
+            this.loadingShow = true;
+            this.overlayShow = true;
+            this.loadText = '加载中...';
+            // 模拟ajax请求
+            this.timeThree = setTimeout(() =>{
+              this.loadingShow = false;
+              this.overlayShow = false;
+              let currentPageList = this.temporaryBeaconList.slice((this.currentPage - 1) * this.pageSize,(this.currentPage - 1) * this.pageSize + this.pageSize);
+              // 合并已经加载的数据
+              this.beaconList = this.beaconList.concat(currentPageList)
+            },1000)
           };
           this.eventTime = 0
         },300)
       }
     },
 
-    // 刷新事件
-    onClickRight () {
+    // 查询信标列表
+    getBeaconList (stucId) {
+      this.loadingShow = true;
+      this.overlayShow = true;
+      this.emptyShow = false;
+      this.loadText = '加载中...';
+      this.beaconList = [];
+      queryBeaconList({proId:this.proId,stucId}).then((res) => {
+        this.loadingShow = false;
+        this.overlayShow = false;
+        if (res && res.data.code == 200) {
+          if (res.data.data.length == 0) {
+            this.emptyShow = true
+          } else {
+            this.temporaryBeaconList = res.data.data;
+            this.totalCount = res.data.data.length;
+            this.temporaryBeaconList.forEach((item) => { return item.isShowExplain = false});
+            this.beaconList = this.temporaryBeaconList.slice((this.currentPage - 1) * this.pageSize,(this.currentPage - 1) * this.pageSize + this.pageSize);
+            this.$forceUpdate()
+          }
+        } else {
+          this.$dialog.alert({
+            message: `${res.data.msg}`,
+            closeOnPopstate: true
+          }).then(() => {
+          })
+        }
+      })
+      .catch((err) => {
+        this.loadingShow = false;
+        this.overlayShow = false;
+        this.$dialog.alert({
+            message: `${err}`,
+            closeOnPopstate: true
+          }).then(() => {
+        })
+      })
     },
 
-    // 查询信标列表事件
-    queryBeaconList(currentPage,pageSize) {}
+    // 轮询询信标列表
+    pollingGetBeaconList (stucId) {
+      this.isTimeoutContinue = false;
+      queryBeaconList({proId:this.proId,stucId}).then((res) => {
+        this.loadingShow = false;
+        this.overlayShow = false;
+        if (res && res.data.code == 200) {
+          this.isTimeoutContinue = true;
+          if (res.data.data.length == 0) {
+            this.emptyShow = true
+          } else {
+            this.emptyShow = false;
+            if (!this.currentBuilding) {
+              if (this.currentDepName != this.currentBuilding) { return };
+            } else {
+              if (this.currentDepName != this.currentBuilding.value) { return }
+            };
+            for (let i = 0, len = res.data.data.length; i < len; i++ ) {
+              for (let innerI = 0, innerLen = this.temporaryBeaconList.length; innerI < innerLen; innerI++ ) {
+                if (res.data.data[i]['depId'] == this.temporaryBeaconList[innerI]['depId']) {
+                  if (this.temporaryBeaconList[innerI].hasOwnProperty('isShowExplain')) {
+                    res.data.data[i]['isShowExplain'] = this.temporaryBeaconList[innerI]['isShowExplain']
+                  };
+                  this.temporaryBeaconList[innerI] = res.data.data[i]
+                }
+              }    
+            };
+            this.$forceUpdate()
+          }
+        }
+      })
+      .catch((err) => {
+      })
+    },
+
+    // 查询建筑信息
+    getStructure () {
+      this.buildingOption = [{text:'请选择',value:null}];
+      queryStructure(this.proId).then((res) => {
+        if (res && res.data.code == 200) {
+          if (res.data.data.length > 0) {
+            for (let item of res.data.data) {
+              this.buildingOption.push({
+                text: item.name,
+                value: item.id
+              })
+            }  
+          }
+        } else {
+          this.$dialog.alert({
+            message: `${res.data.msg}`,
+            closeOnPopstate: true
+          }).then(() => {
+          })
+        }
+      })
+      .catch((err) => {
+        this.$dialog.alert({
+            message: `${err}`,
+            closeOnPopstate: true
+          }).then(() => {
+        })
+      })
+    },
+
+    // 刷新事件
+    onClickRight () {
+      this.getBeaconList(!this.currentBuilding ? this.currentBuilding : this.currentBuilding.value)
+    }
   }
 };
 </script>
@@ -547,6 +719,7 @@ export default {
         .department-list-box {
             flex: 1;
             overflow: auto;
+            position: relative;
             .department-list {
                 padding: 8px 4px;
                 box-sizing: border-box;
@@ -561,6 +734,7 @@ export default {
                   .one-line-left {
                     display: flex;
                     align-items: center;
+                    flex: 1;
                     .signal-is-have-box {
                       display: flex;
                       flex-direction: column;
@@ -584,7 +758,9 @@ export default {
                     };
                     .department-box {
                       color: #101010;
-                      font-size: 16px
+                      font-size: 16px;
+                      word-break: break-all;
+                      flex: 1;
                     }
                   };
                   .one-line-right {
@@ -615,6 +791,9 @@ export default {
                         color: #101010;
                         &:nth-child(2) {
                           color: #0079FF
+                        };
+                        &:nth-child(4) {
+                          color: #E86F50
                         }
                       }
                     }
@@ -702,7 +881,13 @@ export default {
               text-align: center;
               color: #afafaf;
               font-size: 12px
-            }
+            };
+            /deep/ .van-empty {
+              position: absolute;
+              top: 50%;
+              left: 50%;
+              transform: translate(-50%,-50%);
+            } 
         }
     }    
   }

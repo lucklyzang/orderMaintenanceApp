@@ -287,3 +287,30 @@ export function guestCancel(id) {
         method: 'delete'
     })
 };
+
+// 查询信标列表
+export function queryBeaconList(data) {
+    return request({
+        url: 'nblink/hospital/beacon/config',
+        method: 'get',
+        params: data
+    })
+};
+
+// 设置信标打开范围
+export function setBeaconConfigRange(data) {
+    return request({
+        url: 'nblink/hospital/beacon/configRange',
+        method: 'put',
+        data
+    })
+};
+
+// 清空打卡点
+export function clearBeaconRange(data) {
+    return request({
+        url: 'nblink/hospital/beacon/clearRange',
+        method: 'delete',
+        params: data
+    })
+};

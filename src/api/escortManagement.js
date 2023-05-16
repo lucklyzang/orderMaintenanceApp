@@ -19,12 +19,21 @@ export function getTaskDetails(taskId) {
     })
 }
 
-// 打卡科室(包括蓝牙和手动打卡)
+// 打卡科室(手动打卡)
 export function clockingsSection(data) {
     return request({
         url: 'nblink/patrol/checkTask/app/punch',
         method: 'put',
         data
+    })
+}
+
+// 打卡科室(蓝牙打卡)
+export function bluetoothPunchSection(id,data) {
+    return request({
+        url: `nblink/patrol/checkTask/position/${id}`,
+        method: 'get',
+        params: data
     })
 }
 

@@ -128,7 +128,7 @@
 <script>
 import NavBar from "@/components/NavBar";
 import { mapGetters, mapMutations } from "vuex";
-import {getTaskDetails, clockingsSection, departmentClockFinsh} from '@/api/escortManagement.js'
+import {getTaskDetails, clockingsSection, bluetoothPunchSection, departmentClockFinsh} from '@/api/escortManagement.js'
 import {mixinsDeviceReturn} from '@/mixins/deviceReturnFunction';
 import ScrollSelection from "@/components/ScrollSelection";
 export default {
@@ -143,6 +143,8 @@ export default {
       overlayShow: false,
       explainMessage: '',
       isShowOperateBtn: false,
+      isBluetoothPunch: true,
+      isClickClose: false,
       eventTypeShow: false,
       manualClockingReasonRadio: '1',
       manualClockingReasonRadioList:[
@@ -239,19 +241,37 @@ export default {
 
     // 打卡地点弹框确认事件
     clockingPlaceSureEvent (val) {
-      if (val) {
-        this.currentClockingPlace =  val;
-        this.clockingPlaceShow = false;
-        this.manualclockingReasonShow = true;
-        this.explainMessage = ''
+      // 判断是否为蓝牙打卡
+      if (!this.isBluetoothPunch) {
+        if (val) {
+          this.currentClockingPlace =  val;
+          this.clockingPlaceShow = false;
+          this.manualclockingReasonShow = true;
+          this.explainMessage = ''
+        } else {
+          this.currentClockingPlace= '请选择';
+          this.clockingPlaceShow = false;
+          this.$toast({
+            type: 'fail',
+            message: '请先选择打卡地点'
+          })
+        }
       } else {
-        this.currentClockingPlace= '请选择';
-        this.clockingPlaceShow = false;
-        this.$toast({
-          type: 'fail',
-          message: '请先选择打卡地点'
-        })
-      }
+        if (val) {
+          this.currentClockingPlace =  val;
+          this.clockingPlaceShow = false;
+          this.explainMessage = '';
+          // 直接调取手动打卡接口
+          this.codeDepartmentNoFinsh(this.clockingPlaceOption.filter((item) => { return item['text'] == this.currentClockingPlace})[0]['value'],'加载中',this.currentClockingPlace,1,'');
+        } else {
+          this.currentClockingPlace= '请选择';
+          this.clockingPlaceShow = false;
+          this.$toast({
+            type: 'fail',
+            message: '请先选择打卡地点'
+          })
+        }
+      } 
     },
 
     // 打卡地点弹框取消事件
@@ -283,23 +303,22 @@ export default {
 
     // 手动打卡事件
     manualClockingWvent () {
-      this.clockingPlaceShow = true
+      this.clockingPlaceShow = true;
+      this.isBluetoothPunch = false
     },
 
     // 重新定位事件
     againLocationEvent () {
-      this.positioningShow = true;
-      this.overlayShow = true;
-      setTimeout(() => {
-        this.positioningEvent();
-        this.locationFailShow = true
-      },2000)
+      this.isBluetoothPunch = true;
+      this.isClickClose = false;
+      this.bluetoothPunchClock()
     },
 
     // 定位中关闭事件
     positioningEvent () {
       this.positioningShow = false;
-      this.overlayShow = false
+      this.overlayShow = false;
+      this.isClickClose = true
     },
 
     // 蓝牙打卡事件
@@ -307,10 +326,9 @@ export default {
       if (this.patrolTaskListMessage.state == 4) {
         return
       };
-      // this.positioningShow = true;
-      // this.overlayShow = true
-      // 手动打卡测试
-      this.locationFailShow = true
+      this.isBluetoothPunch = true;
+      this.isClickClose = false;
+      this.bluetoothPunchClock()
     },
 
     // 完成任务事件
@@ -365,7 +383,7 @@ export default {
       })
     },
 
-    // 打卡(手动和蓝牙)
+    // 打卡(手动)
     codeDepartmentNoFinsh (depId,text,depName,punchCardType,punchCardReason='') {
       this.loadingShow = true;
       this.overlayShow = true;
@@ -407,6 +425,44 @@ export default {
           type: 'fail',
           message: err
         })
+      })
+    },
+
+    // 打卡(蓝牙)
+    bluetoothPunchClock () {
+      this.positioningShow = true;
+      this.overlayShow = true
+      bluetoothPunchSection(this.patrolTaskListMessage.id,{ workerId: this.userInfo.id } // 当前登陆员工id
+      ).then((res) => {
+        if (this.isClickClose) { return };
+        if (res && res.data.code == 200) {
+          if (!res.data.data || res.data.data.length == 0) {
+            this.positioningEvent();
+            this.locationFailShow = true
+          } else if (res.data.data.length == 1) {
+            // 直接打卡
+            this.codeDepartmentNoFinsh(res.data.data['id'],'加载中',res.data.data['name'],1,'')
+          } else if (res.data.data.length > 1) {
+            // 选择打卡地点弹框的数据(弹出打卡地点列表选择框)
+            this.clockingPlaceOption = [];
+            for (let i = 0,len = res.data.data.length; i < len; i++) {
+              this.clockingPlaceOption.push({
+                id: i,
+                text: res.data.data[i]['name'],
+                value: res.data.data[i]['id']
+              })
+            };
+            this.clockingPlaceShow = true
+          }
+        } else {
+          this.positioningEvent();
+          this.locationFailShow = true
+        }
+      })
+      .catch((err) => {
+        if (this.isClickClose) { return };
+        this.positioningEvent();
+        this.locationFailShow = true
       })
     },
 
@@ -480,11 +536,6 @@ export default {
 
     // 手动打卡原因弹框确认事件
     manualclockingReasonSure () {
-    },
-
-    // 蓝牙连接回调
-    bluetoothConnectionCallback () {
-      this.codeDepartmentNoFinsh (this.patrolTaskListMessage.needSpacesthis.filter((item) => { return item['name'] == this.currentClockingPlace})[0]['id'],'加载中',this.currentClockingPlace,1)
     },
 
     // 手动打卡原因弹框关闭事件

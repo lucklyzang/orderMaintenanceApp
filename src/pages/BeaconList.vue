@@ -59,15 +59,15 @@
           <img :src="statusBackgroundPng" />
         </div>
         <div class="content-box">
-            <div class="info-box">
+            <div class="info-box" v-show="!isBleOpen">
                 <div class="info-content">当前蓝牙未打开，请打开手机蓝牙后再进行操作</div>
                 <div class="info-right" @click="turnNoBluetoothEvent">去打开</div>
             </div>
-            <div class="building-box" ref="buildingBox">
+            <div class="building-box" ref="buildingBox" v-show="isBleOpen">
                 <span>楼栋选择</span>
                 <SelectSearch ref="registrantOption" :itemData="buildingOption" :curData="currentBuilding" @change="buildingOptionChange" :isNeedSearch="false" />
             </div>
-            <div class="department-list-box" ref="departmentListBox">
+            <div class="department-list-box" ref="departmentListBox" v-show="isBleOpen">
                 <div class="department-list" v-for="(item,index) in beaconList" :key="index">
                   <div class="list-one-line">
                     <div class="one-line-left">
@@ -101,7 +101,7 @@
                       <span :class="{'setClockPointStyle':item.range}" @click="setClockEvent(item)">设置打卡</span>
                       <img :src="questionMarkPng" alt="疑问" @click="questionMarkEvent(item)" class="exclamation-point-png" />
                     </div>
-                    <div class="three-line-right">
+                    <div class="three-line-right" v-show="item.range">
                       <span @click="clearClockPointEvent(item)">清除打卡点</span>
                     </div>
                   </div>
@@ -138,10 +138,12 @@ export default {
   data() {
     return {
       overlayShow: false,
+      isLoadMore: true,
       windowTimer: null,
       isTimeoutContinue: true,
       loadingShow: false,
       emptyShow: false,
+      isBleOpen: true,
       deleteInfoShow: false,
       isAgainSetPointShow: false,
       isShowSuccessShow: false,
@@ -150,6 +152,7 @@ export default {
       timeOne: null,
       timeTwo: null,
       timeThree: null,
+      timeFour: null,
       currentDepName: null,
       isShowBeaconListNoMoreData: false,
       totalCount: '',
@@ -197,7 +200,12 @@ export default {
         }
       }, 10000);
       this.changeGlobalTimer(this.windowTimer)
-    }
+    };
+    // 轮询设备蓝牙是否打开
+    // this.windowTimer = window.setInterval(() => {
+    //   setTimeout(this.judgeIsOpenBluetooth(), 0)
+    // }, 2000);
+    // this.changeGlobalTimer(this.windowTimer)
   },
 
   beforeDestroy () {
@@ -212,6 +220,9 @@ export default {
     };
     if (this.windowTimer) {
       clearInterval(this.windowTimer)
+    };
+    if (this.timeFour) {
+      clearInterval(this.timeFour)
     }
   },
 
@@ -261,19 +272,28 @@ export default {
     // 打卡测试事件
     clockTestEvent (item) {
       if (item.beaconList.some((currentItem) => { return currentItem.rssi != 0}) && item.range) {
-        this.isShowSuccessShow = true
+        this.loadingShow = true;
+        this.overlayShow = true;
+        this.loadText = '打卡测试中...';
+        this.timeFour = setTimeout(() => {
+          this.loadingShow = false;
+          this.overlayShow = false;
+          this.isShowSuccessShow = true;
+          this.isSuccessIcon = true;
+          this.showIsSuccessText = '打卡成功!'
+        },2000)
       }
     },
 
     // 设置打卡事件
     setClockEvent (item) {
       if (item.beaconList.some((currentItem) => { return currentItem.rssi != 0})) {
-      };
-      if (item.range) {
-        this.depId = item.depId;
-        this.isAgainSetPointShow = true
-      } else {
-        this.setBeaconRange(item.depId)
+        if (item.range) {
+          this.depId = item.depId;
+          this.isAgainSetPointShow = true
+        } else {
+          this.setBeaconRange(item.depId)
+        }
       }
     },
 
@@ -369,12 +389,38 @@ export default {
 
     // 楼栋下拉框值改变事件
     buildingOptionChange (val) {
+      this.currentPage = 1;
+      this.isShowBeaconListNoMoreData = false;
+      this.isLoadMore = false;
       this.currentBuilding = val;
       this.getBeaconList(val.value)
     },
 
     // 打开蓝牙事件
-    turnNoBluetoothEvent () {},
+    turnNoBluetoothEvent () {
+      // 去往打开蓝牙设置页
+      try {
+        window.android.openBle()
+      } catch (err) {
+        this.$toast({
+          type: 'fail',
+          message: '该方法不存在'
+        })
+      }
+    },
+
+    // 判断设备是否打卡蓝牙
+    judgeIsOpenBluetooth () {
+      try {
+        this.isBleOpen = window.android.isBleOpen()
+      } catch (err) {
+        this.$toast({
+          type: 'fail',
+          message: '该方法不存在'
+        });
+        this.isBleOpen = false
+      }
+    },
 
     // 信标列表注册滚动事件
     initScrollChange () {
@@ -384,8 +430,8 @@ export default {
 
     // 信标列表加载事件
     beaconListLoadMore () {
+      if (!this.isLoadMore) { return };
       let boxBackScroll = this.$refs['departmentListBox'];
-      console.log(boxBackScroll.scrollTop,boxBackScroll.offsetHeight,boxBackScroll.scrollHeight);
       if (Math.ceil(boxBackScroll.scrollTop) + boxBackScroll.offsetHeight + this.$refs['buildingBox'].offsetHeight >= boxBackScroll.scrollHeight) {
         if (this.eventTime) {return};
         this.eventTime = 1;
@@ -428,6 +474,7 @@ export default {
       queryBeaconList({proId:this.proId,stucId}).then((res) => {
         this.loadingShow = false;
         this.overlayShow = false;
+        this.isLoadMore = true;
         if (res && res.data.code == 200) {
           if (res.data.data.length == 0) {
             this.emptyShow = true
@@ -447,6 +494,7 @@ export default {
         }
       })
       .catch((err) => {
+        this.isLoadMore = true;
         this.loadingShow = false;
         this.overlayShow = false;
         this.$dialog.alert({
@@ -459,6 +507,7 @@ export default {
 
     // 轮询询信标列表
     pollingGetBeaconList (stucId) {
+      console.log('科室id',stucId);
       this.isTimeoutContinue = false;
       queryBeaconList({proId:this.proId,stucId}).then((res) => {
         this.loadingShow = false;
@@ -477,13 +526,14 @@ export default {
             for (let i = 0, len = res.data.data.length; i < len; i++ ) {
               for (let innerI = 0, innerLen = this.temporaryBeaconList.length; innerI < innerLen; innerI++ ) {
                 if (res.data.data[i]['depId'] == this.temporaryBeaconList[innerI]['depId']) {
-                  if (this.temporaryBeaconList[innerI].hasOwnProperty('isShowExplain')) {
-                    res.data.data[i]['isShowExplain'] = this.temporaryBeaconList[innerI]['isShowExplain']
-                  };
-                  this.temporaryBeaconList[innerI] = res.data.data[i]
+                  res.data.data[i]['isShowExplain'] = this.temporaryBeaconList[innerI]['isShowExplain'];
+                  break
                 }
               }    
             };
+            // 更新已经加载出来的列表数据
+            this.temporaryBeaconList = res.data.data;
+            this.beaconList = this.temporaryBeaconList.slice(0,(this.currentPage - 1) * this.pageSize + this.pageSize);
             this.$forceUpdate()
           }
         }
@@ -524,6 +574,16 @@ export default {
 
     // 刷新事件
     onClickRight () {
+      if (!this.isBleOpen) {
+        this.$toast({
+          type: 'fail',
+          message: '请打开设备蓝牙'
+        });
+        return
+      };
+      this.currentPage = 1;
+      this.isLoadMore = false;
+      this.isShowBeaconListNoMoreData = false;
       this.getBeaconList(!this.currentBuilding ? this.currentBuilding : this.currentBuilding.value)
     }
   }

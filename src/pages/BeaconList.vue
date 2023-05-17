@@ -88,10 +88,10 @@
                         <span>{{ innerItem.number }}</span>
                       </div>
                       <div class="beacon-right">
-                        <span>当前信号:</span>
-                        <span>{{ innerItem.rssi == 0 ? "无信号" :  innerItem.rssi}}</span>
-                        <span>(-25dBm)</span>
-                        <span>{{ innerItem.dumpEnergy }}</span>
+                        <span class="span-one">当前信号:</span>
+                        <span class="span-two">{{ innerItem.rssi == 0 ? "无信号" : `${innerItem.rssi}dBm`}}</span>
+                        <span class="span-three" v-show="item.range">{{`(${innerItem.ranged}dBm)`}}</span>
+                        <span class="span-four">{{ innerItem.dumpEnergy ? innerItem.dumpEnergy < 2 ? `${innerItem.dumpEnergy}%` : '' : ''}}</span>
                       </div>
                     </div>
                   </div>
@@ -342,7 +342,7 @@ export default {
     deleteSure () {
     },
 
-    // 删除取消
+    // 删除打卡点取消
     deleteCancel () {
       this.overlayShow = true;
       this.loadingShow = true;
@@ -353,7 +353,10 @@ export default {
         if (res && res.data.code == 200) {
           this.isShowSuccessShow = true;
           this.isSuccessIcon = true;
-          this.showIsSuccessText = '清除打卡点成功!'
+          this.showIsSuccessText = '清除打卡点成功!';
+          this.currentPage = 1;
+          this.isLoadMore = false;
+          this.isShowBeaconListNoMoreData = false;
           this.getBeaconList(!this.currentBuilding ? this.currentBuilding : this.currentBuilding.value)
         } else {
           this.$dialog.alert({
@@ -376,11 +379,12 @@ export default {
 
     // 重新设置打卡点确定事件
     isAgainSetPointSureEvent () {
-      this.setBeaconRange(this.depId)
     },
 
     // 重新设置打卡点取消事件
-    isAgainSetPointCancelEvent () {},
+    isAgainSetPointCancelEvent () {
+      this.setBeaconRange(this.depId)
+    },
 
     // 重新设置打卡点关闭事件
     isAgainSetPointCloseEvent () {
@@ -849,13 +853,13 @@ export default {
                       flex: 1;
                       >span {
                         font-size: 10px;
-                        color: #101010;
-                        &:nth-child(2) {
-                          color: #0079FF
-                        };
-                        &:nth-child(4) {
-                          color: #E86F50
-                        }
+                        color: #101010
+                      };
+                      .span-two {
+                        color: #0079FF
+                      };
+                      .span-four {
+                        color: #E86F50
                       }
                     }
                   }

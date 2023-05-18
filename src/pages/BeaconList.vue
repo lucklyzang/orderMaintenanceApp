@@ -511,7 +511,6 @@ export default {
 
     // 轮询询信标列表
     pollingGetBeaconList (stucId) {
-      console.log('科室id',stucId);
       this.isTimeoutContinue = false;
       queryBeaconList({proId:this.proId,stucId}).then((res) => {
         this.loadingShow = false;

@@ -91,7 +91,7 @@
                         <span class="span-one">当前信号:</span>
                         <span class="span-two">{{ innerItem.rssi == 0 ? "无信号" : `${innerItem.rssi}dBm`}}</span>
                         <span class="span-three" v-show="item.range">{{`(${innerItem.ranged}dBm)`}}</span>
-                        <span class="span-four">{{ innerItem.dumpEnergy ? innerItem.dumpEnergy < 2 ? `${innerItem.dumpEnergy}%` : '' : ''}}</span>
+                        <span class="span-four">70%</span>
                       </div>
                     </div>
                   </div>
@@ -842,14 +842,22 @@ export default {
                     display: flex;
                     flex-flow: row nowrap;
                     .beacon-left {
-                      margin-right: 10px;
+                      width: 160px;
+                      margin-right: 4px;
+                      display: flex;
+                      flex-flow: row nowrap;
                       >span {
                         font-size: 10px;
-                        color: #101010
+                        color: #101010;
+                        &:nth-child(2) {
+                          flex: 1;
+                          .no-wrap()
+                        }
                       }
                     };
                     .beacon-right {
                       flex: 1;
+                      word-break: break-all;
                       >span {
                         font-size: 10px;
                         color: #101010

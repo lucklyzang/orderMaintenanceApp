@@ -91,14 +91,14 @@
                         <span class="span-one">当前信号:</span>
                         <span class="span-two">{{ innerItem.rssi == 0 ? "无信号" : `${innerItem.rssi}dBm`}}</span>
                         <span class="span-three" v-show="item.range">{{`(${innerItem.ranged}dBm)`}}</span>
-                        <span class="span-four">70%</span>
+                        <span class="span-four" v-show="innerItem.dumpEnergy != null">{{ innerItem.dumpEnergy < 2 ? `${innerItem.dumpEnergy}%` : ''}}</span>
                       </div>
                     </div>
                   </div>
                   <div class="list-three-line">
                     <div class="three-line-left">
                       <span :class="{'canTestStyle':item.beaconList.some((currentItem) => { return currentItem.rssi != 0}) && item.range}" @click="clockTestEvent(item)">打卡测试</span>
-                      <span :class="{'setClockPointStyle':item.range}" @click="setClockEvent(item)">设置打卡</span>
+                      <span :class="{'setClockPointStyle':item.range}" @click="setClockEvent(item)">设置打卡点</span>
                       <img :src="questionMarkPng" alt="疑问" @click="questionMarkEvent(item)" class="exclamation-point-png" />
                     </div>
                     <div class="three-line-right" v-show="item.range">

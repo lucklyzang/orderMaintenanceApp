@@ -127,6 +127,7 @@ import NavBar from "@/components/NavBar";
 import { mapGetters, mapMutations } from "vuex";
 import { queryStructure, queryBeaconList, setBeaconConfigRange, clearBeaconRange } from '@/api/escortManagement.js'
 import {mixinsDeviceReturn} from '@/mixins/deviceReturnFunction';
+import { IsPC } from '@/common/js/utils';
 import SelectSearch from "@/components/SelectSearch";
 export default {
   name: "BeaconList",
@@ -200,9 +201,11 @@ export default {
         }
       }, 10000);
       // 轮询设备蓝牙是否打开
-      this.windowTimer = window.setInterval(() => {
-        setTimeout(this.judgeIsOpenBluetooth(), 0)
-      }, 2000);
+      if (!IsPC()) {
+        this.windowTimer = window.setInterval(() => {
+          setTimeout(this.judgeIsOpenBluetooth(), 0)
+        }, 2000)
+      };  
       this.changeGlobalTimer(this.windowTimer)
     }
   },

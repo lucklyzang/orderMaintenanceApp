@@ -200,9 +200,9 @@ export default {
         }
       }, 10000);
       // 轮询设备蓝牙是否打开
-      // this.windowTimer = window.setInterval(() => {
-      //   setTimeout(this.judgeIsOpenBluetooth(), 0)
-      // }, 2000);
+      this.windowTimer = window.setInterval(() => {
+        setTimeout(this.judgeIsOpenBluetooth(), 0)
+      }, 2000);
       this.changeGlobalTimer(this.windowTimer)
     }
   },

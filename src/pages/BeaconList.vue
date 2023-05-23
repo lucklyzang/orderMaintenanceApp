@@ -893,7 +893,9 @@ export default {
                       display: inline-block;
                       font-size: 12px;
                       color: #fff;
-                      padding: 6px 10px;
+                      width: 74px;
+                      padding: 6px 2px;
+                      text-align: center;
                       border-radius: 4px;
                       box-sizing: border-box;
                       background: #BBBBBB;

@@ -59,15 +59,15 @@
           <img :src="statusBackgroundPng" />
         </div>
         <div class="content-box">
-            <div class="info-box" v-show="!isBleOpen">
+            <div class="info-box" v-show="!isBlueOpen">
                 <div class="info-content">当前蓝牙未打开，请打开手机蓝牙后再进行操作</div>
                 <div class="info-right" @click="turnNoBluetoothEvent">去打开</div>
             </div>
-            <div class="building-box" ref="buildingBox" v-show="isBleOpen">
+            <div class="building-box" ref="buildingBox" v-show="isBlueOpen">
                 <span>楼栋选择</span>
                 <SelectSearch ref="registrantOption" :itemData="buildingOption" :curData="currentBuilding" @change="buildingOptionChange" :isNeedSearch="false" />
             </div>
-            <div class="department-list-box" ref="departmentListBox" v-show="isBleOpen">
+            <div class="department-list-box" ref="departmentListBox" v-show="isBlueOpen">
                 <div class="department-list" v-for="(item,index) in beaconList" :key="index">
                   <div class="list-one-line">
                     <div class="one-line-left">
@@ -143,7 +143,7 @@ export default {
       isTimeoutContinue: true,
       loadingShow: false,
       emptyShow: false,
-      isBleOpen: true,
+      isBlueOpen: true,
       deleteInfoShow: false,
       isAgainSetPointShow: false,
       isShowSuccessShow: false,
@@ -192,20 +192,19 @@ export default {
     this.getStructure();
     // 查询信标信息
     this.getBeaconList('');
-    // 轮询信标信息列表
     if (!this.windowTimer) {
+      // 轮询信标信息列表
       this.windowTimer = window.setInterval(() => {
         if (this.isTimeoutContinue) {
           setTimeout(this.pollingGetBeaconList(!this.currentBuilding ? this.currentBuilding : this.currentBuilding.value), 0)
         }
       }, 10000);
+      // 轮询设备蓝牙是否打开
+      this.windowTimer = window.setInterval(() => {
+        setTimeout(this.judgeIsOpenBluetooth(), 0)
+      }, 2000);
       this.changeGlobalTimer(this.windowTimer)
-    };
-    // 轮询设备蓝牙是否打开
-    // this.windowTimer = window.setInterval(() => {
-    //   setTimeout(this.judgeIsOpenBluetooth(), 0)
-    // }, 2000);
-    // this.changeGlobalTimer(this.windowTimer)
+    }
   },
 
   beforeDestroy () {
@@ -416,13 +415,13 @@ export default {
     // 判断设备是否打卡蓝牙
     judgeIsOpenBluetooth () {
       try {
-        this.isBleOpen = window.android.isBleOpen()
+        this.isBlueOpen = window.android.isBleOpen()
       } catch (err) {
         this.$toast({
           type: 'fail',
           message: '该方法不存在'
         });
-        this.isBleOpen = false
+        this.isBlueOpen = false
       }
     },
 
@@ -577,7 +576,7 @@ export default {
 
     // 刷新事件
     onClickRight () {
-      if (!this.isBleOpen) {
+      if (!this.isBlueOpen) {
         this.$toast({
           type: 'fail',
           message: '请打开设备蓝牙'

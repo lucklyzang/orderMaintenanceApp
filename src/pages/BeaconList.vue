@@ -73,7 +73,7 @@
                     <div class="one-line-left">
                       <div class="signal-is-have-box">
                         <img :src="item.beaconList.every((currentItem) => { return currentItem.rssi == 0}) ? signalNoPng : item.beaconList.every((currentItem) => { return currentItem.rssi == 1}) ?  signalWeakPng : signalStrongPng " alt="信号标记" />
-                        <span :class="{'strongSignal':item.beaconList.some((currentItem) => { return currentItem.rssi == 2}),'weakSignal':item.beaconList.every((currentItem) => { return currentItem.rssi == 1})}">{{ item.beaconList.every((currentItem) => { return currentItem.rssi == 0}) ? '无信号' : item.beacons.every((currentItem) => { return currentItem.rssi == 1}) ? '信号弱' : '信号强'}}</span>
+                        <span :class="{'strongSignal':item.beaconList.some((currentItem) => { return currentItem.rssi == 2}),'weakSignal':item.beaconList.every((currentItem) => { return currentItem.rssi == 1})}">{{ item.beaconList.every((currentItem) => { return currentItem.rssi == 0}) ? '无信号' : item.beaconList.every((currentItem) => { return currentItem.rssi == 1}) ? '信号弱' : '信号强'}}</span>
                       </div>
                       <div class="department-box">{{ item.depName }}</div>
                     </div>

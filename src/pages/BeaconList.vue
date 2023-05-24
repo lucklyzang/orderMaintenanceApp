@@ -189,6 +189,10 @@ export default {
         this.$forceUpdate()
 			};
 		}, false);
+    // 判断用户是否打开了位置权限，没有打开，就弹框提示
+    if (!IsPC()) {
+      window.android.userBleuetooth()
+    };  
     // 查询建筑信息
     this.getStructure();
     // 查询信标信息
@@ -418,7 +422,11 @@ export default {
     // 判断设备是否打卡蓝牙
     judgeIsOpenBluetooth () {
       try {
-        this.isBlueOpen = window.android.isBleOpen()
+        if (window.android.isBleOpen() == 'true') {
+          this.isBlueOpen = true
+        } else {
+          this.isBlueOpen = false
+        }
       } catch (err) {
         this.$toast({
           type: 'fail',

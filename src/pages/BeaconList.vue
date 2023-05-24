@@ -98,7 +98,7 @@
                   <div class="list-three-line">
                     <div class="three-line-left">
                       <span :class="{'canTestStyle':item.beaconList.some((currentItem) => { return currentItem.rssi != 0}) && item.range}" @click="clockTestEvent(item)">打卡测试</span>
-                      <span :class="{'setClockPointStyle':item.range}" @click="setClockEvent(item)">设置打卡点</span>
+                      <span :class="{'setClockPointStyle':item.beaconList.some((currentItem) => { return currentItem.rssi != 0})}" @click="setClockEvent(item)">设置打卡点</span>
                       <img :src="questionMarkPng" alt="疑问" @click="questionMarkEvent(item)" class="exclamation-point-png" />
                     </div>
                     <div class="three-line-right" v-show="item.range">

@@ -945,17 +945,19 @@ export default {
                   left: 30%;
                   width: 55%;
                   border-radius: 4px;
-                  padding: 10px 6px;
+                  padding: 12px 8px;
                   box-sizing: border-box;
                   top: 97%;
                   z-index: 1;
                   background: #fff;
                   .explain-title {
+                    height: 16px;
+                    display: flex;
+                    align-items: center;
                     >img {
                       width: 14px;
                       height: 14px;
-                      margin-right: 6px;
-                      vertical-align: top
+                      margin-right: 4px
                     };
                     >span {
                       font-size: 12px;
@@ -963,7 +965,7 @@ export default {
                     }
                   };
                   .explain-content {
-                    margin-top: 10px;
+                    margin-top: 6px;
                     font-size: 12px;
                     color: #101010;
                     line-height: 20px;

@@ -191,7 +191,14 @@ export default {
 		}, false);
     // 判断用户是否打开了位置权限，没有打开，就弹框提示
     if (!IsPC()) {
-      window.android.userBleuetooth()
+      try {
+        window.android.userBleuetooth()
+      } catch (err) {
+        this.$toast({
+          type: 'fail',
+          message: `${err}`
+        })
+      }
     };  
     // 查询建筑信息
     this.getStructure();

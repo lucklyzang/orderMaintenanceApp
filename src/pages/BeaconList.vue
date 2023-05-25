@@ -314,7 +314,11 @@ export default {
         if (res && res.data.code == 200) {
           this.isShowSuccessShow = true;
           this.isSuccessIcon = true;
-          this.showIsSuccessText = '设置打卡点成功!'
+          this.showIsSuccessText = '设置打卡点成功!';
+          this.currentPage = 1;
+          this.isLoadMore = false;
+          this.isShowBeaconListNoMoreData = false;
+          this.getBeaconList(!this.currentBuilding ? this.currentBuilding : this.currentBuilding.value)
         } else {
           this.$dialog.alert({
             message: `${err}`,

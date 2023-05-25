@@ -441,7 +441,7 @@ export default {
             this.locationFailShow = true
           } else if (res.data.data.length == 1) {
             // 直接打卡
-            this.codeDepartmentNoFinsh(res.data.data['id'],'加载中',res.data.data['name'],1,'')
+            this.codeDepartmentNoFinsh(res.data.data[0]['id'],'加载中',res.data.data[0]['name'],1,'')
           } else if (res.data.data.length > 1) {
             // 选择打卡地点弹框的数据(弹出打卡地点列表选择框)
             this.clockingPlaceOption = [];

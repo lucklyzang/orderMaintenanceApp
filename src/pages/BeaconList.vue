@@ -192,7 +192,7 @@ export default {
     // 判断用户是否打开了位置权限，没有打开，就弹框提示
     if (!IsPC()) {
       try {
-        window.android.userBleuetooth()
+        window.android.useBluetooth()
       } catch (err) {
         this.$toast({
           type: 'fail',
@@ -425,7 +425,7 @@ export default {
       } catch (err) {
         this.$toast({
           type: 'fail',
-          message: '该方法不存在'
+          message: `${err}`
         })
       }
     },
@@ -441,7 +441,7 @@ export default {
       } catch (err) {
         this.$toast({
           type: 'fail',
-          message: '该方法不存在'
+          message: `${err}`
         });
         this.isBlueOpen = false
       }

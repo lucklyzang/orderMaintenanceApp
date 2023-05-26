@@ -148,21 +148,23 @@ export default {
         this.overlayShow = false;
         if (res && res.data.code == 200) {
           // 调取安卓方法发送地址(巡检任务信标打卡需要)
-          try {
-            let setUrl = `http://blink.blinktech.cn/nblink/hospital/beaconRecord/save/${this.userInfo.id}?proId=${this.userInfo.proIds[0]}&system=6`;
-            let res = window.android.setPostUrl(setUrl);
-            if (res != 'success' ) {
+          if (!IsPC()) {
+            try {
+              let setUrl = `http://blink.blinktech.cn/nblink/hospital/beaconRecord/save/${this.userInfo.id}?proId=${this.userInfo.proIds[0]}&system=6`;
+              let res = window.android.setPostUrl(setUrl);
+              if (res != 'success' ) {
+                this.$toast({
+                  type: 'fail',
+                  message: '设置失败'
+                })
+              }
+            } catch (err) {
               this.$toast({
                 type: 'fail',
                 message: '设置失败'
               })
             }
-          } catch (err) {
-            this.$toast({
-              type: 'fail',
-              message: '设置失败'
-            })
-          };
+          };  
           this.changeHospitalMessage(res.data.data);
           this.$router.push({ path: "/home" })
         } else {

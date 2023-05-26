@@ -98,11 +98,11 @@
                   <div class="list-three-line">
                     <div class="three-line-left">
                       <span :class="{'canTestStyle':item.beaconList.some((currentItem) => { return currentItem.rssi != 0}) && item.range}" @click="clockTestEvent(item)">打卡测试</span>
-                      <span :class="{'setClockPointStyle':item.beaconList.some((currentItem) => { return currentItem.rssi != 0})}" @click="setClockEvent(item)">设置打卡点</span>
+                      <span :class="{'setClockPointStyle':item.beaconList.some((currentItem) => { return currentItem.rssi != 0})}" @click="setClockEvent(item,index)">设置打卡点</span>
                       <img :src="questionMarkPng" alt="疑问" @click="questionMarkEvent(item)" class="exclamation-point-png" />
                     </div>
                     <div class="three-line-right" v-show="item.range">
-                      <span @click="clearClockPointEvent(item)">清除打卡点</span>
+                      <span @click="clearClockPointEvent(item,index)">清除打卡点</span>
                     </div>
                   </div>
                   <div class="explain-box" v-show="item.isShowExplain">
@@ -146,6 +146,7 @@ export default {
       emptyShow: false,
       isBlueOpen: true,
       deleteInfoShow: false,
+      deleteIndex: null,
       isAgainSetPointShow: false,
       isShowSuccessShow: false,
       showIsSuccessText: '打卡成功！',
@@ -277,8 +278,9 @@ export default {
     },
 
     // 清除打卡点事件
-    clearClockPointEvent (item) {
+    clearClockPointEvent (item,index) {
       this.depId = item.depId;
+      this.deleteIndex = index;
       this.deleteInfoShow = true
     },
 
@@ -299,8 +301,9 @@ export default {
     },
 
     // 设置打卡事件
-    setClockEvent (item) {
+    setClockEvent (item,index) {
       if (item.beaconList.some((currentItem) => { return currentItem.rssi != 0})) {
+        this.deleteIndex = index;
         if (item.range) {
           this.depId = item.depId;
           this.isAgainSetPointShow = true
@@ -322,10 +325,10 @@ export default {
           this.isShowSuccessShow = true;
           this.isSuccessIcon = true;
           this.showIsSuccessText = '设置打卡点成功!';
-          this.currentPage = 1;
           this.isLoadMore = false;
-          this.isShowBeaconListNoMoreData = false;
-          this.getBeaconList(!this.currentBuilding ? this.currentBuilding : this.currentBuilding.value)
+          this.temporaryBeaconList[this.deleteIndex]['range'] = true;
+          this.beaconList = this.temporaryBeaconList.slice(0,(this.currentPage - 1) * this.pageSize + this.pageSize);
+          this.isLoadMore = true
         } else {
           this.$dialog.alert({
             message: `${err}`,
@@ -371,10 +374,10 @@ export default {
           this.isShowSuccessShow = true;
           this.isSuccessIcon = true;
           this.showIsSuccessText = '清除打卡点成功!';
-          this.currentPage = 1;
           this.isLoadMore = false;
-          this.isShowBeaconListNoMoreData = false;
-          this.getBeaconList(!this.currentBuilding ? this.currentBuilding : this.currentBuilding.value)
+          this.temporaryBeaconList[this.deleteIndex]['range'] = false;
+          this.beaconList = this.temporaryBeaconList.slice(0,(this.currentPage - 1) * this.pageSize + this.pageSize);
+          this.isLoadMore = true
         } else {
           this.$dialog.alert({
             message: `${err}`,

@@ -536,6 +536,7 @@ export default {
     // 轮询询信标列表
     pollingGetBeaconList (stucId) {
       this.isTimeoutContinue = false;
+      this.emptyShow = false;
       queryBeaconList({proId:this.proId,stucId}).then((res) => {
         this.loadingShow = false;
         this.overlayShow = false;
@@ -544,7 +545,6 @@ export default {
           if (res.data.data.length == 0) {
             this.emptyShow = true
           } else {
-            this.emptyShow = false;
             if (!this.currentBuilding) {
               if (this.currentDepName != this.currentBuilding) { return };
             } else {

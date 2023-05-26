@@ -97,7 +97,7 @@
                   </div>
                   <div class="list-three-line">
                     <div class="three-line-left">
-                      <span :class="{'canTestStyle':item.beaconList.some((currentItem) => { return currentItem.rssi != 0}) && item.range}" @click="clockTestEvent(item)">打卡测试</span>
+                      <span :class="{'canTestStyle':item.beaconList.some((currentItem) => { return currentItem.rssi != 0}) && item.range}" @click="clockTestEvent(item,item.depId)">打卡测试</span>
                       <span :class="{'setClockPointStyle':item.beaconList.some((currentItem) => { return currentItem.rssi != 0})}" @click="setClockEvent(item,index)">设置打卡点</span>
                       <img :src="questionMarkPng" alt="疑问" @click="questionMarkEvent(item)" class="exclamation-point-png" />
                     </div>
@@ -125,7 +125,7 @@
 <script>
 import NavBar from "@/components/NavBar";
 import { mapGetters, mapMutations } from "vuex";
-import { queryStructure, queryBeaconList, setBeaconConfigRange, clearBeaconRange } from '@/api/escortManagement.js'
+import { queryStructure, queryBeaconList, setBeaconConfigRange, clearBeaconRange, beaconTest } from '@/api/escortManagement.js'
 import {mixinsDeviceReturn} from '@/mixins/deviceReturnFunction';
 import { IsPC } from '@/common/js/utils';
 import SelectSearch from "@/components/SelectSearch";
@@ -285,18 +285,43 @@ export default {
     },
 
     // 打卡测试事件
-    clockTestEvent (item) {
+    clockTestEvent (item,depId) {
       if (item.beaconList.some((currentItem) => { return currentItem.rssi != 0}) && item.range) {
         this.loadingShow = true;
         this.overlayShow = true;
         this.loadText = '打卡测试中...';
-        this.timeFour = setTimeout(() => {
+        beaconTest({depId,workerId:this.workerId}).then((res) => {
           this.loadingShow = false;
           this.overlayShow = false;
-          this.isShowSuccessShow = true;
-          this.isSuccessIcon = true;
-          this.showIsSuccessText = '打卡成功!'
-        },2000)
+          if (res && res.data.code == 200) {
+            if (res.data.data) {
+              this.isShowSuccessShow = true;
+              this.isSuccessIcon = true;
+              this.showIsSuccessText = '打卡成功!'
+            } else {
+              this.isShowSuccessShow = true;
+              this.isSuccessIcon = false;
+              this.showIsSuccessText = '打卡失败!'
+            }
+          } else {
+            this.loadingShow = false;
+            this.overlayShow = false;
+            this.$dialog.alert({
+              message: `${res.data.msg}`,
+              closeOnPopstate: true
+            }).then(() => {
+            })
+          }
+        })
+        .catch((err) => {
+          this.loadingShow = false;
+          this.overlayShow = false;
+          this.$dialog.alert({
+            message: `${err}`,
+            closeOnPopstate: true
+          }).then(() => {
+          })
+        })
       }
     },
 
@@ -322,16 +347,22 @@ export default {
         this.loadingShow = false;
         this.overlayShow = false;
         if (res && res.data.code == 200) {
-          this.isShowSuccessShow = true;
-          this.isSuccessIcon = true;
-          this.showIsSuccessText = '设置打卡点成功!';
-          this.isLoadMore = false;
-          this.temporaryBeaconList[this.deleteIndex]['range'] = true;
-          this.beaconList = this.temporaryBeaconList.slice(0,(this.currentPage - 1) * this.pageSize + this.pageSize);
-          this.isLoadMore = true
+          if (res.data.success) {
+            this.isShowSuccessShow = true;
+            this.isSuccessIcon = true;
+            this.showIsSuccessText = '设置打卡点成功!';
+            this.isLoadMore = false;
+            this.temporaryBeaconList[this.deleteIndex]['range'] = true;
+            this.beaconList = this.temporaryBeaconList.slice(0,(this.currentPage - 1) * this.pageSize + this.pageSize);
+            this.isLoadMore = true
+          } else {
+            this.isShowSuccessShow = true;
+            this.isSuccessIcon = false;
+            this.showIsSuccessText = '设置打卡点失败!';
+          }
         } else {
           this.$dialog.alert({
-            message: `${err}`,
+            message: `${res.data.msg}`,
             closeOnPopstate: true
           }).then(() => {
           })

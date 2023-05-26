@@ -323,3 +323,12 @@ export function clearBeaconRange(data) {
         params: data
     })
 };
+
+// 信标打卡测试
+export function beaconTest(data) {
+    return request({
+        url: 'nblink/hospital/beacon/checkInTest',
+        method: 'get',
+        params: data
+    })
+};

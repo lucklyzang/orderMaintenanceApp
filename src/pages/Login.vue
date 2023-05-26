@@ -161,7 +161,7 @@ export default {
             } catch (err) {
               this.$toast({
                 type: 'fail',
-                message: '设置失败'
+                message: `${err}`
               })
             }
           };  

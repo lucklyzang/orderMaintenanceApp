@@ -210,7 +210,6 @@ export default {
     // 图片上传预览
     previewFileOne() {
       let file = document.getElementById("demo1").files[0];
-      console.log('图片文件流',file);
       let _this = this;
       let reader = new FileReader();
       let isLt2M = file.size / 1024 / 1024 < 16;
@@ -232,7 +231,6 @@ export default {
           img.src = result;
           img.onload = function () {
             let src = compress(img);
-             console.log('压缩后的路劲',src);
             _this.resultImgList.push(src);
             _this.photoBox = false;
             _this.overlayShow = false

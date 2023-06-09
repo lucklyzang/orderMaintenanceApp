@@ -343,7 +343,7 @@ export default {
 
     // 查询登记用户
     getRegisterUser() {
-      this.loadingText = '查询中...';
+      this.loadText = '查询中...';
       this.loadingShow = true;
       this.overlayShow = true;
       this.goalDepartmentOption = [];
@@ -353,7 +353,7 @@ export default {
           text: '请选择',
           value: null
         }],
-        this.loadingText = '';
+        this.loadText = '';
         this.loadingShow = false;
         this.overlayShow = false;
         if (res && res.data.code == 200) {
@@ -368,7 +368,7 @@ export default {
         }
       })
       .catch((err) => {
-        this.loadingText = '';
+        this.loadText = '';
         this.loadingShow = false;
         this.overlayShow = false;
         this.$dialog.alert({

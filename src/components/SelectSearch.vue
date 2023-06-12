@@ -71,6 +71,7 @@ import { deepClone } from '@/common/js/utils'
   watch: {
     curData: {
         handler: function(newVal, oldVal) {
+			this.datalist = this.itemData;
 		   //单选
 		   if (!this.multiple) {
 			 if (newVal == null || !isNaN(newVal)) {
@@ -81,7 +82,6 @@ import { deepClone } from '@/common/js/utils'
 		   	 	this.currentFullValue = this.datalist.length > 0 ? this.datalist.filter((item) => { return item.value == newVal['value']})[0] : null
 			 }
 		   } else {
-			    this.datalist = this.itemData;
 			    if (newVal == null) {
 					this.current = this.datalist.length > 0 ? this.datalist.filter((item) => { return item.value == newVal})[0]['text'] : '';
 				} else {

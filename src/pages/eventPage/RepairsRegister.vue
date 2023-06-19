@@ -553,6 +553,9 @@ export default {
           closeOnPopstate: true
         }).then(() => {
         });
+        _this.$refs.inputFile.value = null;
+        _this.photoBox = false;
+        _this.overlayShow = false
         return
       };  
       reader.addEventListener("load", function () {

@@ -222,8 +222,8 @@ export default {
           .then(() => {});
           _this.$refs.inputFile.value = null;
           _this.photoBox = false;
-          _this.overlayShow = false
-          return;
+          _this.overlayShow = false;
+          return
       }
       reader.addEventListener(
         "load",

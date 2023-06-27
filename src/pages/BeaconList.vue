@@ -211,7 +211,7 @@ export default {
         if (this.isTimeoutContinue) {
           setTimeout(this.pollingGetBeaconList(!this.currentBuilding ? this.currentBuilding : this.currentBuilding.value), 0)
         }
-      }, 10000);
+      }, 1000);
       // 轮询设备蓝牙是否打开
       if (!IsPC()) {
         this.windowTimer = window.setInterval(() => {

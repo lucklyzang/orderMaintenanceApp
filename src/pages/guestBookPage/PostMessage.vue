@@ -63,7 +63,8 @@
             id="demo2"
             @change="previewFileTwo"
             type="file"
-            accept="image/camera"
+            accept="image/camera" 
+            capture="camera"
           />拍照
         </div>
         <div class="photo-cancel" @click="photoCancel">取消</div>

@@ -30,7 +30,7 @@
         </div>
         <div class="photo-graph">
           <van-icon name="photograph" />
-          <input name="uploadImg2" id="demo2"  @change="previewFileTwo" type="file" accept="image/camera" apture="camera"/>拍照
+          <input name="uploadImg2" id="demo2"  @change="previewFileTwo" type="file" accept="image/camera" capture="camera"/>拍照
         </div>
         <div class="photo-cancel" @click="photoCancel">取消</div>
       </div>

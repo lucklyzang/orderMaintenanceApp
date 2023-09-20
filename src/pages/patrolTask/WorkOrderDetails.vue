@@ -47,6 +47,12 @@
                     </div>
                 </div>
             </div>
+            <div class="signature-box" v-if="patrolTaskListMessage.state ==4">
+                <div>任务结束签字</div>
+                <div class="image-box">
+                  <img :src="completeElectronicSignature">
+                </div>
+            </div>
         </div>
     </div>
     <div class="task-operation-box" v-if="patrolTaskListMessage.state !=4 && isShowOperateBtn">
@@ -146,6 +152,7 @@ export default {
       isBluetoothPunch: true,
       isClickClose: false,
       eventTypeShow: false,
+      completeElectronicSignature: '',
       manualClockingReasonRadio: '1',
       manualClockingReasonRadioList:[
         {
@@ -356,6 +363,8 @@ export default {
           this.loadText = '';
           this.queryDataSuccess = true;
           this.changePatrolTaskListMessage(res.data.data);
+          this.completeElectronicSignature = res.data.data['signImage'];
+          console.log('单条任务详情',res.data.data);
           // 选择打卡地点弹框的数据
           this.clockingPlaceOption = [];
           for (let i = 0,len = this.patrolTaskListMessage['needSpaces'].length; i < len; i++) {
@@ -918,34 +927,52 @@ export default {
         .task-create-time {
             margin-bottom: 6px;
         };
-        .patrol-site {
-            flex: 1;
-            padding: 14px 8px;
-            box-sizing: border-box;
-            display: flex;
-            flex-direction: column;
-            font-size: 14px;
-            color: #101010;
-            .patrol-site-list-box {
-                display: flex;
-                flex-wrap: wrap;
-                margin-top: 10px;
-                .patrol-site-list {
-                    height: 32px;
-                    line-height: 32px;
-                    border-radius: 4px;
-                    text-align: center;
-                    padding: 0 6px;
-                    color: #fff;
-                    box-sizing: border-box;
-                    background: #b1b1b1;
-                    margin-right: 8px;
-                    margin-bottom: 8px
-                };
-                .patrolSiteListStyle {
-                    background: #1684FC
-                }
+        .signature-box {
+          padding: 0 8px;
+          box-sizing: border-box;
+          display: flex;
+          flex-direction: column;
+          font-size: 14px;
+          color: #101010;
+          .image-box {
+            background: #e3e3e3;
+            margin-top: 14px;
+            >img {
+              width: 100%;
+              max-height: 200px
             }
+          }
+        };
+        .patrol-site {
+          // flex: 1;
+          max-height: 300px;
+          padding: 14px 8px;
+          box-sizing: border-box;
+          display: flex;
+          flex-direction: column;
+          font-size: 14px;
+          overflow: auto;
+          color: #101010;
+          .patrol-site-list-box {
+              display: flex;
+              flex-wrap: wrap;
+              margin-top: 14px;
+              .patrol-site-list {
+                  height: 32px;
+                  line-height: 32px;
+                  border-radius: 4px;
+                  text-align: center;
+                  padding: 0 6px;
+                  color: #fff;
+                  box-sizing: border-box;
+                  background: #b1b1b1;
+                  margin-right: 8px;
+                  margin-bottom: 8px
+              };
+              .patrolSiteListStyle {
+                  background: #1684FC
+              }
+          }
         }
     }    
   };

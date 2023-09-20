@@ -42,7 +42,7 @@ import ElectronicSignature from '@/components/ElectronicSignature'
 import { mapGetters, mapMutations } from "vuex";
 import { taskComplete } from '@/api/escortManagement.js'
 import {getAliyunSign} from '@/api/login.js'
-import { base64ImgtoFile } from '@/common/js/utils'
+import { base64ImgtoFile, rotateBase64Img } from '@/common/js/utils'
 import {mixinsDeviceReturn} from '@/mixins/deviceReturnFunction';
 import axios from 'axios'
 export default {
@@ -125,13 +125,18 @@ export default {
     },
 
     // 签名确认
-    async sure () {
+    sure () {
       this.$refs.mychild.commitSure();
       if (this.currentElectronicSignature == this.originalSignature || !this.currentElectronicSignature) {
         this.$toast('签名不能为空');
         return
       };
-      // 上传图片到阿里云服务器
+      // canvas签名旋转
+      rotateBase64Img(this.currentElectronicSignature,-90,this.signatureRotateCallback)
+    },
+
+    async signatureRotateCallback (signatureValue) {
+     // 上传图片到阿里云服务器
       this.loadText ='提交中';
       this.overlayShow = true;
       this.loadingShow = true;
@@ -139,13 +144,13 @@ export default {
         // 判断签名信息是否过期
         if (new Date().getTime()/1000 - this.timeMessage['expire']  >= -30) {
           await this.getSign();
-          await this.uploadImageToOss(this.currentElectronicSignature)
+          await this.uploadImageToOss(signatureValue)
         } else {
-          await this.uploadImageToOss(this.currentElectronicSignature)
+          await this.uploadImageToOss(signatureValue)
         }
       } else {
         await this.getSign();
-        await this.uploadImageToOss(this.currentElectronicSignature)
+        await this.uploadImageToOss(signatureValue)
       };
       // 完成任务接口
       taskComplete({
@@ -171,8 +176,7 @@ export default {
         type: 'fail',
         message: err
       })
-    });
-    console.log('签名',this.currentElectronicSignature)
+    })
   },
 
     // 获取阿里云签名接口

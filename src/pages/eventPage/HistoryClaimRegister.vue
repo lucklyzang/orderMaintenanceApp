@@ -1157,7 +1157,16 @@ export default {
           this.$toast('领取人身份证不能为空');
           return
         };
-         if (this.getMessage.some((item) => { return item.getPersonSignature == ''})) {
+        // 校验身份证号
+        let regIdCard = /(^\d{15}$)|(^\d{18}$)|(^\d{17}(\d|X|x)$)/;
+        if (this.getMessage.some((item) => { return !regIdCard.test(item.getPersonIdNumber) == true })) {
+          this.$toast({
+            message: '身份证格式格式有误,请重新输入!',
+            position: 'bottom'
+          });
+          return
+        };
+        if (this.getMessage.some((item) => { return item.getPersonSignature == ''})) {
           this.$toast('领取人签字不能为空');
           return
         };

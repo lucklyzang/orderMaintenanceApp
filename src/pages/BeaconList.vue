@@ -204,12 +204,12 @@ export default {
     // 查询建筑信息
     this.getStructure();
     // 查询信标信息
-    this.getBeaconList('');
+    this.getBeaconList('',this.workerId);
     if (!this.windowTimer) {
       // 轮询信标信息列表
       this.windowTimer = window.setInterval(() => {
         if (this.isTimeoutContinue) {
-          setTimeout(this.pollingGetBeaconList(!this.currentBuilding ? this.currentBuilding : this.currentBuilding.value), 0)
+          setTimeout(this.pollingGetBeaconList(!this.currentBuilding ? this.currentBuilding : this.currentBuilding.value,this.workerId), 0)
         }
       }, 1000);
       // 轮询设备蓝牙是否打开
@@ -333,17 +333,17 @@ export default {
           this.depId = item.depId;
           this.isAgainSetPointShow = true
         } else {
-          this.setBeaconRange(item.depId)
+          this.setBeaconRange(item.depId,this.workerId)
         }
       }
     },
 
     // 设置信标打开范围
-    setBeaconRange (depId) {
+    setBeaconRange (depId,workerId) {
       this.loadingShow = true;
       this.overlayShow = true;
       this.loadText = '设置中...';
-      setBeaconConfigRange({depId,proId:this.proId}).then((res) => {
+      setBeaconConfigRange({depId,proId:this.proId,workerId}).then((res) => {
         this.loadingShow = false;
         this.overlayShow = false;
         if (res && res.data.code == 200) {
@@ -434,7 +434,7 @@ export default {
 
     // 重新设置打卡点取消事件
     isAgainSetPointCancelEvent () {
-      this.setBeaconRange(this.depId)
+      this.setBeaconRange(this.depId,this.workerId)
     },
 
     // 重新设置打卡点关闭事件
@@ -448,7 +448,7 @@ export default {
       this.isShowBeaconListNoMoreData = false;
       this.isLoadMore = false;
       this.currentBuilding = val;
-      this.getBeaconList(val.value)
+      this.getBeaconList(val.value,this.workerId)
     },
 
     // 打开蓝牙事件
@@ -524,13 +524,13 @@ export default {
     },
 
     // 查询信标列表
-    getBeaconList (stucId) {
+    getBeaconList (stucId,workerId) {
       this.loadingShow = true;
       this.overlayShow = true;
       this.emptyShow = false;
       this.loadText = '加载中...';
       this.beaconList = [];
-      queryBeaconList({proId:this.proId,stucId}).then((res) => {
+      queryBeaconList({proId:this.proId,stucId,workerId}).then((res) => {
         this.loadingShow = false;
         this.overlayShow = false;
         this.isLoadMore = true;
@@ -565,16 +565,16 @@ export default {
     },
 
     // 轮询询信标列表
-    pollingGetBeaconList (stucId) {
+    pollingGetBeaconList (stucId,workerId) {
       this.isTimeoutContinue = false;
       this.emptyShow = false;
-      queryBeaconList({proId:this.proId,stucId}).then((res) => {
+      queryBeaconList({proId:this.proId,stucId,workerId}).then((res) => {
         this.loadingShow = false;
         this.overlayShow = false;
         if (res && res.data.code == 200) {
           this.isTimeoutContinue = true;
           if (res.data.data.length == 0) {
-            this.emptyShow = true
+            // this.emptyShow = true
           } else {
             if (!this.currentBuilding) {
               if (this.currentDepName != this.currentBuilding) { return };
@@ -642,7 +642,7 @@ export default {
       this.currentPage = 1;
       this.isLoadMore = false;
       this.isShowBeaconListNoMoreData = false;
-      this.getBeaconList(!this.currentBuilding ? this.currentBuilding : this.currentBuilding.value)
+      this.getBeaconList(!this.currentBuilding ? this.currentBuilding : this.currentBuilding.value,this.workerId)
     }
   }
 };

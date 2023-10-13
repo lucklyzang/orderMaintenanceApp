@@ -227,6 +227,12 @@ export default {
             case '4' :
                 return '节假日和周末'
                 break;
+            case '5' :
+                return '每月'
+                break;
+            case '6' :
+                return '每季度'
+                break;
         }
     },
 

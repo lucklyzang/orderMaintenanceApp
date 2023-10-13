@@ -561,20 +561,26 @@ export default {
 
     // 任务集类型转换
     taskSetTransition (num) {
-      switch(num) {
-        case '1' :
-          return '每天'
-          break;
-        case '2' :
-          return '每周'
-          break;
-        case '3' :
-          return '工作日'
-          break;
-        case '4' :
-          return '节假日和周末'
-          break;
-      }
+        switch(num) {
+            case '1' :
+                return '每天'
+                break;
+            case '2' :
+                return '每周'
+                break;
+            case '3' :
+                return '工作日'
+                break;
+            case '4' :
+                return '节假日和周末'
+                break;
+            case '5' :
+                return '每月'
+                break;
+            case '6' :
+                return '每季度'
+                break;
+        }
     }
   }
 };

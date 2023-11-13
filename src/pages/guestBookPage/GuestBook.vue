@@ -13,7 +13,7 @@
         <div class="content-box">
             <div class="action-bar">
                 <div class="action-bar-left">
-                  <van-checkbox v-model="storageRadio" shape="square" @change="checkboxChangeEvent">只看我参与得任务</van-checkbox>
+                  <van-checkbox v-model="storageRadio" shape="square" @change="checkboxChangeEvent">只看我参与的任务</van-checkbox>
                 </div>
             </div>
             <div class="backlog-task-list-box" ref="scrollBacklogTask">

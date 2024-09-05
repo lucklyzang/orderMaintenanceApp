@@ -665,7 +665,9 @@ export default {
             };
             if (isInitial) {
               if (this.currentGoalDepartment != '请选择') {
-                this.getSpacesByDepartmentId(this.goalDepartmentOption.filter((item) => { return item['text'] == this.currentGoalDepartment})[0]['value'],this.structureOption.filter((item) => { return item['text'] == this.currentStructure})[0]['value'],false)
+                if (this.goalDepartmentOption.filter((item) => { return item['text'] == this.currentGoalDepartment}).length > 0 && this.structureOption.filter((item) => { return item['text'] == this.currentStructure}).length > 0) {
+                  this.getSpacesByDepartmentId(this.goalDepartmentOption.filter((item) => { return item['text'] == this.currentGoalDepartment})[0]['value'],this.structureOption.filter((item) => { return item['text'] == this.currentStructure})[0]['value'],false)
+                }
               }
             }  
           };

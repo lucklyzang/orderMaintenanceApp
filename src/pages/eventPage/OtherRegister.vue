@@ -26,6 +26,8 @@
       <div class="choose-photo-box" v-show="photoBox">
         <div class="choose-photo">
           <van-icon name="photo" />
+            <!-- accept="image/*"相册
+            accept="image/*,.camera"拍照 -->
           <input name="uploadImg1" ref="inputFile" id="demo1" @change="previewFileOne" type="file" accept="image/album"/>从图库中选择
         </div>
         <div class="photo-graph">

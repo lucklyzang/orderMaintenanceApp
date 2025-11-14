@@ -1659,7 +1659,6 @@ export default {
             casuallyTemporaryStorageClaimRegisterMessage[temporaryIndex]['images'] = this.problemPicturesList;
             casuallyTemporaryStorageClaimRegisterMessage[temporaryIndex]['structureName'] = this.currentStructure == '请选择' ? '' : this.currentStructure;
             casuallyTemporaryStorageClaimRegisterMessage[temporaryIndex]['depName'] = this.currentGoalDepartment == '请选择' ? '' : this.currentGoalDepartment;
-            casuallyTemporaryStorageClaimRegisterMessage[temporaryIndex]['roomName'] = this.currentGoalSpaces == '请选择' ? '' : this.currentGoalSpaces
           } else {
             casuallyTemporaryStorageClaimRegisterMessage.push({
               id: uuidv4(),

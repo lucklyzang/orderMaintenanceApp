@@ -944,7 +944,6 @@ export default {
             casuallyTemporaryStorageRepairsRegisterMessage[temporaryIndex]['images'] = this.problemPicturesList;
             casuallyTemporaryStorageRepairsRegisterMessage[temporaryIndex]['structureName'] = this.currentStructure == '请选择' ? '' : this.currentStructure;
             casuallyTemporaryStorageRepairsRegisterMessage[temporaryIndex]['depName'] = this.currentGoalDepartment == '请选择' ? '' : this.currentGoalDepartment;
-            casuallyTemporaryStorageRepairsRegisterMessage[temporaryIndex]['roomName'] = this.currentGoalSpaces == '请选择' ? '' : this.currentGoalSpaces
           } else {
             casuallyTemporaryStorageRepairsRegisterMessage.push({
               id: uuidv4(),

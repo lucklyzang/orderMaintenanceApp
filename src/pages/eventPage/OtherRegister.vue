@@ -1043,7 +1043,6 @@ export default {
             casuallyTemporaryStorageOtherRegisterMessage[temporaryIndex]['images'] = this.problemPicturesList;
             casuallyTemporaryStorageOtherRegisterMessage[temporaryIndex]['structureName'] = this.currentStructure == '请选择' ? '' : this.currentStructure;
             casuallyTemporaryStorageOtherRegisterMessage[temporaryIndex]['depName'] = this.currentGoalDepartment == '请选择' ? '' : this.currentGoalDepartment;
-            casuallyTemporaryStorageOtherRegisterMessage[temporaryIndex]['roomName'] = this.currentGoalSpaces == '请选择' ? '' : this.currentGoalSpaces
           } else {
             casuallyTemporaryStorageOtherRegisterMessage.push({
               id: uuidv4(),

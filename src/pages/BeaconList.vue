@@ -579,6 +579,7 @@ export default {
             if (this.emptyShow) { return };
             this.emptyShow = true;
           } else {
+            this.emptyShow = false;
             if (!this.currentBuilding) {
               if (this.currentDepName != this.currentBuilding) { return };
             } else {

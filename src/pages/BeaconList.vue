@@ -567,14 +567,17 @@ export default {
     // 轮询询信标列表
     pollingGetBeaconList (stucId,workerId) {
       this.isTimeoutContinue = false;
-      this.emptyShow = false;
+      if (!this.emptyShow) { 
+        this.emptyShow = false;
+      };
       queryBeaconList({proId:this.proId,stucId,workerId}).then((res) => {
         this.loadingShow = false;
         this.overlayShow = false;
         if (res && res.data.code == 200) {
           this.isTimeoutContinue = true;
           if (res.data.data.length == 0) {
-            // this.emptyShow = true
+            if (this.emptyShow) { return };
+            this.emptyShow = true;
           } else {
             if (!this.currentBuilding) {
               if (this.currentDepName != this.currentBuilding) { return };

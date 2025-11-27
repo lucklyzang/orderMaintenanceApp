@@ -706,7 +706,10 @@ export default {
               return '已报修'
               break;
           case 3 :
-              return '已完成/已取消'
+              return '已完成'
+              break;
+          case 6 :
+              return '已取消'
               break
         }
       } else if (eventType == 2) {

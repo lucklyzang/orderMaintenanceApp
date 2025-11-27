@@ -1153,11 +1153,11 @@ export default {
                       .no-wrap()
                   };
                   .backlog-task-top-right {
-                      width: 70px;
-                      text-align: center;
+                      width: 150px;
+                      text-align: right;
                       span {
                           display: inline-block;
-                          width: 62px;
+                          width: 100%;
                           height: 22px;
                           text-align: right;
                           line-height: 22px;

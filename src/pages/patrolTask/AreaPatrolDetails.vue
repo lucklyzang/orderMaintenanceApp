@@ -41,7 +41,7 @@
         </div>
     </div>
     <div class="task-operation-box" v-show="departmentCheckList.checkItemList.length > 0 && patrolTaskListMessage.state != 4">
-      <div class="task-complete" v-preventReClick="[sureEvent]">确 认</div>
+      <div class="task-complete" v-preventReClick @click="sureEvent">确 认</div>
     </div>
     <!-- 事件类型选择弹窗 -->
     <div class="event-type-box">

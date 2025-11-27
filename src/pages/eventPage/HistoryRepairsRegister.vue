@@ -258,7 +258,8 @@ export default {
           this.currentFindTime = res.data.data['findTime'];
           this.problemPicturesList = res.data.data['images'];
           this.problemOverview = res.data.data['description'];
-          this.taskDescribe = res.data.data['remark']
+          this.taskDescribe = res.data.data['remark'];
+          this.taskType = res.data.data['taskType'];
         } else {
           this.$dialog.alert({
             message: `${res.data.msg}`,

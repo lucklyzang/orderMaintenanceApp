@@ -754,7 +754,7 @@ export default {
         if (item.state == -1) {
           this.$router.push({path: '/repairsRegister',query:{eventId: item.id}})
           //已报修
-        } else if (item.state == 0 || item.state == 3) {
+        } else if (item.state == 0 || item.state == 3 || item.state == 6) {
           this.$router.push({path: '/historyRepairsRegister',query:{eventId: item.id}})
         }
       } else if (item.eventType == 2) {
